@@ -16,9 +16,16 @@ def calculate_center(contours):
 
 def find_bounding_box_frame(gray_frame):
     ### config noise frame ###
-    blurred = cv2.GaussianBlur(gray_frame, (85,85), 0)
+    ### if no crop system ###
+    # blurred = cv2.GaussianBlur(gray_frame, (85,85), 0)
+    # _, thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # kernel = np.ones((300, 300), np.uint8)
+    # thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+
+    ### if crop system ###
+    blurred = cv2.GaussianBlur(gray_frame, (5,5), 0)
     _, thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    kernel = np.ones((300, 300), np.uint8)
+    kernel = np.ones((30, 30), np.uint8)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
     ### end config noise frame ###
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -40,7 +47,7 @@ def main():
     x_center_frame = 0
     y_center_frame = 0
 
-    image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test9.png')
+    image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test10.png')
     frame = cv2.flip(image, 0)
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
