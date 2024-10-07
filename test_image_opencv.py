@@ -27,6 +27,7 @@ def find_bounding_box_frame(gray_frame):
     _, thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     kernel = np.ones((30, 30), np.uint8)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+
     ### end config noise frame ###
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contours, thresh
@@ -103,6 +104,5 @@ def main():
     cv2.imshow("test_image", frame_with_contours) 
     cv2.waitKey()
     cv2.destroyAllWindows()
-
 
 main()

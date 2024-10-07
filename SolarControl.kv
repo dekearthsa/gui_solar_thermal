@@ -74,9 +74,9 @@ MainFrameWidget:
             keep_ratio: True
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: .2
+            size_hint_y: .45
             GridLayout:
-                rows: 2
+                rows: 5
                 Label:
                     id: auto_lable_mode
                     text: "Auto mode stopped"
@@ -88,6 +88,64 @@ MainFrameWidget:
                         Rectangle:
                             pos:self.pos
                             size:self.size
+                GridLayout:
+                    cols: 2
+                    BoxLayout:
+                        Label:
+                            text: 'Center target positon'
+                            bold: True
+                            font_size: 25
+                        Label:
+                            id: auto_center_target_position
+                            text:'Null'
+                            bold: True
+                            font_size: 25
+
+                    BoxLayout:
+                        Label:
+                            text: 'Center frame positon'
+                            bold: True
+                            font_size: 25
+                        Label:
+                            id: auto_center_frame_position
+                            text:'Null'
+                            bold: True
+                            font_size: 25
+                GridLayout:
+                    cols: 2
+                    Label:
+                        text: 'Error center'
+                        bold: True
+                        font_size: 25
+                    Label:
+                        id: auto_error_center
+                        text: 'Null'
+                        bold: True
+                        font_size: 25
+                GridLayout:
+                    cols: 1
+                    # BoxLayout:
+                    #     Label:
+                    #         text: 'Bounding box target'
+                    #         bold: True
+                    #         font_size: 25
+                    #     Label:
+                    #         id: auto_bounding_target_position_x
+                    #         text:'X Null'
+                    #         bold: True
+                    #         font_size: 25
+
+                    BoxLayout:
+                        Label:
+                            text: 'Bounding box frame'
+                            bold: True
+                            font_size: 25
+                        Label:
+                            id: auto_bounding_frame_position
+                            text:'Null'
+                            bold: True
+                            font_size: 25
+
                 GridLayout:
                     cols: 2
                     Button:
