@@ -48,7 +48,7 @@ def main():
     x_center_frame = 0
     y_center_frame = 0
 
-    image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test10.png')
+    image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test9.png')
     frame = cv2.flip(image, 0)
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
@@ -101,7 +101,7 @@ def main():
     frame_with_contours = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     # Displaying the image
-    cv2.imshow("test_image", frame_with_contours) 
+    cv2.imshow("test_image", debug_thresh_light) 
     cv2.waitKey()
     cv2.destroyAllWindows()
 

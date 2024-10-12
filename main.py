@@ -15,6 +15,8 @@ from kivy.uix.stacklayout import StackLayout
 
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.properties import ListProperty
+from kivy.core.window import Window
 
 ### from kivy.core.window import Window ### windows fix 
 from kivy.uix.textinput import TextInput
@@ -24,23 +26,22 @@ import cv2
 import requests
 import time
 import numpy as np
+import json 
 
 
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(ManualScreen, self).__init__(**kwargs)
         # self.parent_screen = parent_screen 
         self.capture = None
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # self.parent_screen = parent_screen 
-        self.capture = None
+
 
     def call_open_camera(self):
         if not self.capture:
             self.capture = cv2.VideoCapture(0)
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+            self.ids.camera_status.text = "Manual menu || camera status on"
 
     def find_bounding_box_frame(self,gray_frame):
         ### if no crop system ###
@@ -99,7 +100,10 @@ class ManualScreen(Screen):
                 bounding_box_frame_h = 0
 
                 ### open camera system ###
-                image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test10.png')
+                with open('./data/setting/setting.json', 'r') as file:
+                    data = json.load(file)
+                
+                image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test9.png')
                 frame = cv2.flip(image, 0) # flip frame
                 frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # convert to grayscale
                 
@@ -158,7 +162,7 @@ class ManualScreen(Screen):
                 convert_frame_to_kivy.blit_buffer(buffer, colorfmt='rgb', bufferfmt='ubyte') # luminance
                 
                 ### send frame to frontend ###
-                self.ids.cam_image.texture = convert_frame_to_kivy
+                self.ids.manual_cam_image.texture = convert_frame_to_kivy
                 self.ids.manual_center_target_position.text = "X: " + str(center_x_light[0])+"px"+ " " + "Y: " + str(center_y_light[0])+"px" ### light center target must have 1 center
                 self.ids.manual_center_frame_position.text =  "X: "+  str(center_x_frame[0])+"px"+ " " + "Y: " + str(center_y_frame[0])+"px" ### frame center target must have 1 center
                 self.ids.manual_bounding_frame_position.text =  "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
@@ -171,6 +175,7 @@ class ManualScreen(Screen):
             self.capture.release()
             self.capture = None
             Clock.unschedule(self.update_frame)
+            self.ids.camera_status.text = "Manual menu || camera status off"
 
 
     def push_upper(self):
@@ -257,6 +262,7 @@ class SetAutoScreen(Screen):
 
                 ### open camera system ###
                 image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test10.png')
+
                 frame = cv2.flip(image, 0) # flip frame
                 frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # convert to grayscale
                 
