@@ -34,7 +34,6 @@ MainFrameWidget:
         # Area for camera image and cropping interaction
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: 0.8
             canvas:
                 Color:
                     rgba: 1, 1, 1, 1
@@ -43,9 +42,14 @@ MainFrameWidget:
                     size: self.size
             Image:
                 id: manual_cam_image
+                size: self.size
                 allow_stretch: True
                 keep_ratio: True
-                # Image will take touch events via the parent `ManualScreen`
+                # pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                # Ensure the Image widget doesn't consume touch events
+                on_touch_down: None
+                on_touch_move: None
+                on_touch_up: None
 
         
 
@@ -197,9 +201,16 @@ MainFrameWidget:
                 text: 'Auto menu || camera status off'
                 bold: True
         Image:
-            id: cam_image
+            id: auto_cam_image
+            size: self.size
             allow_stretch: True
             keep_ratio: True
+            # pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            # Ensure the Image widget doesn't consume touch events
+            on_touch_down: None
+            on_touch_move: None
+            on_touch_up: None
+            
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: .45
