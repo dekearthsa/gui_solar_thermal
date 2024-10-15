@@ -35,123 +35,100 @@ from kivy.graphics.texture import Texture
 from kivy.clock import Clock
 
 
-
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
-        super(ManualScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.capture = None
         self.dragging = False
-        self.start_x = 0
-        self.start_y = 0
-        self.end_x = 0
-        self.end_y = 0
+        self.start_pos = (0, 0)
+        self.end_pos = (0, 0)
         self.crop_area = None  # To store the crop area coordinates
-        self.rect = None  
+        self.rect = None
 
     def on_touch_down(self, touch):
-        if self.ids.manual_cam_image.collide_point(*touch.pos):
+        img_widget = self.ids.manual_cam_image
+        if img_widget.collide_point(*touch.pos):
             self.dragging = True
-            self.start_x, self.start_y = touch.pos
-            self.end_x, self.end_y = touch.pos
+            self.start_pos = touch.pos
+            self.end_pos = touch.pos
             # Draw rectangle for visual feedback
             with self.canvas:
                 Color(1, 0, 0, 0.3)  # Red with transparency
-                self.rect = Rectangle(pos=(self.start_x, self.start_y), size=(0, 0))
+                self.rect = Rectangle(pos=self.start_pos, size=(0, 0))
             return True
-        return super(ManualScreen, self).on_touch_down(touch)
+        return super().on_touch_down(touch)
 
     def on_touch_move(self, touch):
         if self.dragging:
-            self.end_x, self.end_y = touch.pos
+            self.end_pos = touch.pos
             # Update rectangle size
-            self.rect.size = (self.end_x - self.start_x, self.end_y - self.start_y)
+            new_size = (self.end_pos[0] - self.start_pos[0], self.end_pos[1] - self.start_pos[1])
+            self.rect.size = new_size
             return True
-        return super(ManualScreen, self).on_touch_move(touch)
+        return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
         if self.dragging:
             self.dragging = False
-            self.end_x, self.end_y = touch.pos
+            self.end_pos = touch.pos
             # Remove the rectangle from the canvas
             self.canvas.remove(self.rect)
             self.rect = None
             # Calculate crop area
             self.calculate_crop_area()
             return True
-        return super(ManualScreen, self).on_touch_up(touch)
-
+        return super().on_touch_up(touch)
 
     def calculate_crop_area(self):
-        # Get the image widget
         img_widget = self.ids.manual_cam_image
-        # Get the widget position and size
         widget_x, widget_y = img_widget.pos
         widget_width, widget_height = img_widget.size
-        # Get the frame size
+
         ret, frame = self.capture.read()
         if ret:
             img_height, img_width = frame.shape[:2]
-            # Calculate scaling factors
             scale_x = img_width / widget_width
             scale_y = img_height / widget_height
 
             # Map start and end points to image coordinates
-            start_x = (self.start_x - widget_x) * scale_x
-            start_y = (self.start_y - widget_y) * scale_y
-            end_x = (self.end_x - widget_x) * scale_x
-            end_y = (self.end_y - widget_y) * scale_y
+            start_x = (self.start_pos[0] - widget_x) * scale_x
+            start_y = (self.start_pos[1] - widget_y) * scale_y
+            end_x = (self.end_pos[0] - widget_x) * scale_x
+            end_y = (self.end_pos[1] - widget_y) * scale_y
 
-            # Adjust for coordinate system difference (Kivy's y-axis is bottom to top)
+            # Adjust for Kivy's y-axis (bottom to top)
             start_y = img_height - start_y
             end_y = img_height - end_y
 
-            # Ensure coordinates are within bounds
-            x1 = int(max(0, min(start_x, end_x)))
-            y1 = int(max(0, min(start_y, end_y)))
-            x2 = int(min(img_width, max(start_x, end_x)))
-            y2 = int(min(img_height, max(start_y, end_y)))
-
+            # Ensure coordinates are within bounds and correctly ordered
+            x1, x2 = sorted((int(max(0, min(start_x, end_x))), int(min(img_width, max(start_x, end_x)))))
+            y1, y2 = sorted((int(max(0, min(start_y, end_y))), int(min(img_height, max(start_y, end_y)))))
+            
             self.crop_area = (x1, y1, x2, y2)
             print(f"Crop area in image coordinates: {self.crop_area}")
 
-    def find_bounding_box_frame(self,gray_frame):
-        ### remove noise ###
-        blurred = cv2.GaussianBlur(gray_frame, (5,5), 0)
-        _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        kernel = np.ones((30, 30), np.uint8)
+    def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
+        blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
+        _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        kernel = np.ones(morph_kernel_size, np.uint8)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        return contours, thresh
 
-        ### end config noise frame ###
-        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        return contours, thresh
-    
-    def find_bounding_box_light(self,gray_frame):
-        ### config noise target ###
-        blurred = cv2.GaussianBlur(gray_frame, (55, 55), 0) ## Gaussian blur to reduce noise
-        _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY)
-        kernel = np.ones((3, 3), np.uint8)
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        ### end config noise target ###
-        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        return contours, thresh
-    
-    def calculate_center(self, contours):
-        array_center_x = []
-        array_center_y = []
-        for i in contours: 
-            m = cv2.moments(i)
-            if m['m00'] != 0:
-                cx = int(m['m10']/m['m00'])
-                cy = int(m['m01']/m['m00'])
-                array_center_x.append(cx)
-                array_center_y.append(cy)
-        return (array_center_x, array_center_y)
+    def calculate_centers(self, contours):
+        centers = [(
+            int(m['m10'] / m['m00']),
+            int(m['m01'] / m['m00'])
+        ) for cnt in contours if (m := cv2.moments(cnt))['m00'] != 0]
+        if not centers:
+            return [], []
+        center_x, center_y = zip(*centers)
+        return list(center_x), list(center_y)
 
     def call_open_camera(self):
         if not self.capture:
-            video_path = "./test_target.mp4"
+            video_path = "./test_target.mp4"  # Replace with 0 for webcam
             self.capture = cv2.VideoCapture(video_path)
-            # self.capture = cv2.VideoCapture(0)
             if not self.capture.isOpened():
                 print("Error: Could not open camera.")
                 self.ids.camera_status.text = "Error: Could not open camera"
@@ -160,12 +137,11 @@ class ManualScreen(Screen):
             self.ids.camera_status.text = "Manual menu || camera status on"
 
     def update_frame(self, dt):
+        
+
         if self.capture:
             ret, frame = self.capture.read()
             if ret:
-                # Flip the frame if necessary
-                # frame = cv2.flip(frame, 0)
-
                 # Apply cropping if crop_area is defined
                 if self.crop_area:
                     x1, y1, x2, y2 = self.crop_area
@@ -174,82 +150,76 @@ class ManualScreen(Screen):
                         # print("Warning: Cropped frame is empty.")
                         return
 
-                frame = cv2.flip(frame, 0) # flip frame
+                frame = cv2.flip(frame, 0)  # Flip frame vertically
                 frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                ### convert frame to black and white
-                contours_frame, debug_thresh_frame = self.find_bounding_box_frame(frame_gray)
-                contours_light, debug_thresh_light = self.find_bounding_box_light(frame_gray)
+                # Find contours for frame and light targets
+                contours_frame, _ = self.find_bounding_boxes(
+                    frame_gray, blur_kernel=(5, 5), thresh_val=80, morph_kernel_size=(30, 30)
+                )
+                contours_light, _ = self.find_bounding_boxes(
+                    frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
+                )
 
-                ### find the center of frame ###
-                center_x_light, center_y_light = self.calculate_center(contours_light)
-                center_x_frame, center_y_frame = self.calculate_center(contours_frame)
+                # Calculate centers
+                centers_light = self.calculate_centers(contours_light)
+                centers_frame = self.calculate_centers(contours_frame)
 
-                print(len(center_x_frame) + len(center_x_light))
-                if len(center_x_frame) + len(center_x_light) == 2: ## if not == 2 it detect more than 2 frame!
-                    ### draw main center of target ###
-                    center_color_target = 0
-                    for idx,el in  enumerate(center_x_light):
-                        cv2.circle(frame, (center_x_light[idx], center_y_light[idx]), 5,(255,0,center_color_target),-1 )
-                        # cv2.putText(frame, "center_x_light: "+ str(center_x_light[idx]) + " " + "center_y_light: "+str(center_y_light[idx]) ,(center_x_light[idx] - 200, center_y_light[idx] + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,center_color_target), 3)
-                        center_color_target += 100
-                        x_center_light = center_x_light[idx]
-                        y_center_light = center_y_light[idx]
+                total_centers = len(centers_light[0]) + len(centers_frame[0])
 
-                    ### draw main center of frame ###
-                    center_color_frame = 0
-                    for idx,el in  enumerate(center_x_frame):
-                        cv2.circle(frame, (center_x_frame[idx], center_y_frame[idx]), 5,(0,255,center_color_frame),-1 )
-                        # cv2.putText(frame, "center_x_frame: "+ str(center_x_frame[idx]) + " " + "center_y_frame: "+str(center_y_frame[idx]) ,(center_x_frame[idx], center_y_frame[idx] + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,center_color_frame), 3)
-                        center_color_frame += 100
-                        x_center_frame = center_x_frame[idx]
-                        y_center_frame = center_y_frame[idx]
+                if total_centers == 2:
+                    bounding_box_frame_x = 0
+                    bounding_box_frame_y = 0
+                    bounding_box_frame_w = 0
+                    bounding_box_frame_h = 0
+                    # Draw centers and bounding boxes
+                    for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                        cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
 
-                    ### draw bounding box of target ###
-                    area_color_target = 0
+                    for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
+                        cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+
                     for cnt in contours_light:
-                        x,y,w,h = cv2.boundingRect(cnt)
-                        # cv2.putText(frame, "X:"+str(x) + " " + "Y:"+str(y) +" "+ "W:"+str(w) +" "+ "H:"+str(h),(x,y+50), cv2.FONT_HERSHEY_SIMPLEX, 1,  (255,0,area_color_target), 4)
-                        cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),5)
-                        area_color_target += 100
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                    ### draw bounding box of frame ###
-                    area_color_bounding_box_frame = 0
                     for cnt in contours_frame:
-                        x,y,w,h = cv2.boundingRect(cnt)
-                        # cv2.putText(frame, "X:"+str(x) + " " + "Y:"+str(y) +" "+ "W:"+str(w) +" "+ "H:"+str(h),(x,y+50), cv2.FONT_HERSHEY_SIMPLEX, 1,  (0,255,area_color_bounding_box_frame), 4)
-                        cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,area_color_bounding_box_frame),5)
-                        area_color_bounding_box_frame += 100
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         bounding_box_frame_x = x
                         bounding_box_frame_y = y
                         bounding_box_frame_w = w
                         bounding_box_frame_h = h
 
-                    ### warp all draw in same image frame ### 
-                    frame_with_contours = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    # Convert frame to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                    ### convert frame to kivy texture ###
-                    buffer = frame_with_contours.tobytes()
-                    convert_frame_to_kivy = Texture.create(size=(frame_with_contours.shape[1], frame_with_contours.shape[0]), colorfmt='rgb')
-                    convert_frame_to_kivy.blit_buffer(buffer, colorfmt='rgb', bufferfmt='ubyte') # luminance
-                    
-                    ### send frame to frontend ###
-                    self.ids.manual_cam_image.texture = convert_frame_to_kivy
-                    self.ids.manual_center_target_position.text = "X: " + str(center_x_light[0])+"px"+ " " + "Y: " + str(center_y_light[0])+"px" ### light center target must have 1 center
-                    self.ids.manual_center_frame_position.text =  "X: "+  str(center_x_frame[0])+"px"+ " " + "Y: " + str(center_y_frame[0])+"px" ### frame center target must have 1 center
-                    self.ids.manual_bounding_frame_position.text =  "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
-                    self.ids.manual_error_center.text = "X: " + str(x_center_frame - x_center_light)+"px" + " " + "Y: " + str(y_center_frame - y_center_light) + "px"
+                    # Convert frame to Kivy texture
+                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                    self.ids.manual_cam_image.texture = texture
+
+                    # Update UI labels
+                    if centers_light[0] and centers_frame[0]:
+                        self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
+                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
+                        error_x = centers_frame[0][0] - centers_light[0][0]
+                        error_y = centers_frame[1][0] - centers_light[1][0]
+                        self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                        self.ids.manual_bounding_frame_position.text = "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
                 else:
-                    frame_with_contours = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    buffer = frame_with_contours.tobytes()
-                    convert_frame_to_kivy = Texture.create(size=(frame_with_contours.shape[1], frame_with_contours.shape[0]), colorfmt='rgb')
-                    convert_frame_to_kivy.blit_buffer(buffer, colorfmt='rgb', bufferfmt='ubyte')
-                    self.ids.manual_cam_image.texture = convert_frame_to_kivy
-                    self.ids.manual_center_target_position.text = "Cannot detect target frame!" + " " + "count target more than 2"+" " + str(len(center_x_frame) + len(center_x_light))  ### light center target must have 1 center
-                    self.ids.manual_center_frame_position.text =  "Cannot detect target frame!" + " " + "count target more than 2" +" "+ str(len(center_x_frame) + len(center_x_light))### frame center target must have 1 center
-                    self.ids.manual_bounding_frame_position.text =  "Cannot detect target frame!"+ " " + "count target more than 2"+" "  + str(len(center_x_frame) + len(center_x_light))
-                    self.ids.manual_error_center.text = "Cannot detect target frame!"+ " " + "count target more than 2"+" "  + str(len(center_x_frame) + len(center_x_light))
+                    # Convert frame to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                    self.ids.manual_cam_image.texture = texture
 
+                    # Update UI labels with error
+                    error_msg = f"Cannot detect target frame! Count targets: {total_centers}"
+                    self.ids.manual_center_target_position.text = error_msg
+                    self.ids.manual_center_frame_position.text = error_msg
+                    self.ids.manual_bounding_frame_position.text = error_msg
+                    self.ids.manual_error_center.text = error_msg
 
     def call_close_camera(self):
         if self.capture:
@@ -257,6 +227,23 @@ class ManualScreen(Screen):
             self.capture = None
             Clock.unschedule(self.update_frame)
             self.ids.camera_status.text = "Manual menu || camera status off"
+
+    def cancel_crop(self):
+        ### Cancels the current crop area selection and reverts to the original video frame.
+        if self.crop_area:
+            print("Crop area canceled.")
+            self.crop_area = None
+            # Optionally, update UI to reflect that cropping has been canceled
+            self.ids.manual_center_target_position.text = "Crop canceled."
+            self.ids.manual_center_frame_position.text = "Crop canceled."
+            self.ids.manual_bounding_frame_position.text = "Crop canceled."
+            self.ids.manual_error_center.text = "Crop canceled."
+        
+        if self.dragging:
+            self.dragging = False
+            if self.rect:
+                self.canvas.remove(self.rect)
+                self.rect = None
 
     def push_upper(self):
         print("Upper")
@@ -275,16 +262,95 @@ class SetAutoScreen(Screen):
         super(SetAutoScreen, self).__init__(**kwargs)
         self.capture = None
         self.dragging = False
-        self.start_x = 0
-        self.start_y = 0
-        self.end_x = 0
-        self.end_y = 0
+        self.start_pos = (0, 0)
+        self.end_pos = (0, 0)
         self.crop_area = None  # To store the crop area coordinates
-        self.rect = None  
+        self.rect = None
+
+    def on_touch_down(self, touch):
+        img_widget = self.ids.auto_cam_image
+        if img_widget.collide_point(*touch.pos):
+            self.dragging = True
+            self.start_pos = touch.pos
+            self.end_pos = touch.pos
+            # Draw rectangle for visual feedback
+            with self.canvas:
+                Color(1, 0, 0, 0.3)  # Red with transparency
+                self.rect = Rectangle(pos=self.start_pos, size=(0, 0))
+            return True
+        return super().on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if self.dragging:
+            self.end_pos = touch.pos
+            # Update rectangle size
+            new_size = (self.end_pos[0] - self.start_pos[0], self.end_pos[1] - self.start_pos[1])
+            self.rect.size = new_size
+            return True
+        return super().on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        if self.dragging:
+            self.dragging = False
+            self.end_pos = touch.pos
+            # Remove the rectangle from the canvas
+            self.canvas.remove(self.rect)
+            self.rect = None
+            # Calculate crop area
+            self.calculate_crop_area()
+            return True
+        return super().on_touch_up(touch)
+
+    def calculate_crop_area(self):
+        img_widget = self.ids.auto_cam_image
+        widget_x, widget_y = img_widget.pos
+        widget_width, widget_height = img_widget.size
+
+        ret, frame = self.capture.read()
+        if ret:
+            img_height, img_width = frame.shape[:2]
+            scale_x = img_width / widget_width
+            scale_y = img_height / widget_height
+
+            # Map start and end points to image coordinates
+            start_x = (self.start_pos[0] - widget_x) * scale_x
+            start_y = (self.start_pos[1] - widget_y) * scale_y
+            end_x = (self.end_pos[0] - widget_x) * scale_x
+            end_y = (self.end_pos[1] - widget_y) * scale_y
+
+            # Adjust for Kivy's y-axis (bottom to top)
+            start_y = img_height - start_y
+            end_y = img_height - end_y
+
+            # Ensure coordinates are within bounds and correctly ordered
+            x1, x2 = sorted((int(max(0, min(start_x, end_x))), int(min(img_width, max(start_x, end_x)))))
+            y1, y2 = sorted((int(max(0, min(start_y, end_y))), int(min(img_height, max(start_y, end_y)))))
+            
+            self.crop_area = (x1, y1, x2, y2)
+            print(f"Crop area in image coordinates: {self.crop_area}")
+
+    def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
+        blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
+        _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        kernel = np.ones(morph_kernel_size, np.uint8)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        return contours, thresh
+
+    def calculate_centers(self, contours):
+        centers = [(
+            int(m['m10'] / m['m00']),
+            int(m['m01'] / m['m00'])
+        ) for cnt in contours if (m := cv2.moments(cnt))['m00'] != 0]
+        if not centers:
+            return [], []
+        center_x, center_y = zip(*centers)
+        return list(center_x), list(center_y)
 
     def call_open_camera(self):
         if not self.capture:
-            self.capture = cv2.VideoCapture(0)
+            video_path = "./test_target.mp4"  # Replace with 0 for webcam
+            self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
                 print("Error: Could not open camera.")
                 self.ids.camera_status_auto_mode.text = "Error: Could not open camera"
@@ -292,171 +358,88 @@ class SetAutoScreen(Screen):
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
             self.ids.camera_status_auto_mode.text = "Auto menu || camera status on"
 
-    def on_touch_down(self, touch):
-        if self.ids.auto_cam_image.collide_point(*touch.pos):
-            self.dragging = True
-            self.start_x, self.start_y = touch.pos
-            self.end_x, self.end_y = touch.pos
-            # Draw rectangle for visual feedback
-            with self.canvas:
-                Color(1, 0, 0, 0.3)  # Red with transparency
-                self.rect = Rectangle(pos=(self.start_x, self.start_y), size=(0, 0))
-            return True
-        return super(SetAutoScreen, self).on_touch_down(touch)
-
-    def on_touch_move(self, touch):
-        if self.dragging:
-            self.end_x, self.end_y = touch.pos
-            # Update rectangle size
-            self.rect.size = (self.end_x - self.start_x, self.end_y - self.start_y)
-            return True
-        return super(SetAutoScreen, self).on_touch_move(touch)
-
-    def on_touch_up(self, touch):
-        if self.dragging:
-            self.dragging = False
-            self.end_x, self.end_y = touch.pos
-            # Remove the rectangle from the canvas
-            self.canvas.remove(self.rect)
-            self.rect = None
-            # Calculate crop area
-            self.calculate_crop_area()
-            return True
-        return super(SetAutoScreen, self).on_touch_up(touch)
-
-    def calculate_crop_area(self):
-        # Get the image widget
-        img_widget = self.ids.auto_cam_image
-        # Get the widget position and size
-        widget_x, widget_y = img_widget.pos
-        widget_width, widget_height = img_widget.size
-        # Get the frame size
-        ret, frame = self.capture.read()
-        if ret:
-            img_height, img_width = frame.shape[:2]
-            # Calculate scaling factors
-            scale_x = img_width / widget_width
-            scale_y = img_height / widget_height
-
-            # Map start and end points to image coordinates
-            start_x = (self.start_x - widget_x) * scale_x
-            start_y = (self.start_y - widget_y) * scale_y
-            end_x = (self.end_x - widget_x) * scale_x
-            end_y = (self.end_y - widget_y) * scale_y
-
-            # Adjust for coordinate system difference (Kivy's y-axis is bottom to top)
-            start_y = img_height - start_y
-            end_y = img_height - end_y
-
-            # Ensure coordinates are within bounds
-            x1 = int(max(0, min(start_x, end_x)))
-            y1 = int(max(0, min(start_y, end_y)))
-            x2 = int(min(img_width, max(start_x, end_x)))
-            y2 = int(min(img_height, max(start_y, end_y)))
-
-            self.crop_area = (x1, y1, x2, y2)
-            print(f"Crop area in image coordinates: {self.crop_area}")
-
-    def find_bounding_box_frame(self, gray_frame):
-        ### remove noise ###
-        blurred = cv2.GaussianBlur(gray_frame, (5,5), 0)
-        _, thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        kernel = np.ones((30, 30), np.uint8)
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-
-        ### end config noise frame ###
-        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        return contours, thresh
-    
-    def find_bounding_box_light(self, gray_frame):
-        ### config noise target ###
-        blurred = cv2.GaussianBlur(gray_frame, (55, 55), 0)  # Gaussian blur to reduce noise
-        _, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY)
-        kernel = np.ones((3, 3), np.uint8)
-        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        ### end config noise target ###
-        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        return contours, thresh
-    
-    def calculate_center(self, contours):
-        array_center_x = []
-        array_center_y = []
-        for i in contours: 
-            m = cv2.moments(i)
-            if m['m00'] != 0:
-                cx = int(m['m10'] / m['m00'])
-                cy = int(m['m01'] / m['m00'])
-                array_center_x.append(cx)
-                array_center_y.append(cy)
-        return (array_center_x, array_center_y)
-
     def update_frame(self, dt):
         if self.capture:
             ret, frame = self.capture.read()
             if ret:
-                # Flip the frame if necessary
-                # frame = cv2.flip(frame, 0)
-
                 # Apply cropping if crop_area is defined
                 if self.crop_area:
                     x1, y1, x2, y2 = self.crop_area
                     frame = frame[y1:y2, x1:x2]
                     if frame.size == 0:
-                        # print("Warning: Cropped frame is empty.")
+                        print("Warning: Cropped frame is empty.")
                         return
 
-                # Now proceed with your existing image processing
-                frame = cv2.flip(frame, 0)  # flip frame
+                frame = cv2.flip(frame, 0)  # Flip frame vertically
                 frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                ### convert frame to black and white
-                contours_frame, debug_thresh_frame = self.find_bounding_box_frame(frame_gray)
-                contours_light, debug_thresh_light = self.find_bounding_box_light(frame_gray)
+                # Find contours for frame and light targets
+                contours_frame, _ = self.find_bounding_boxes(
+                    frame_gray, blur_kernel=(5, 5), thresh_val=80, morph_kernel_size=(30, 30)
+                )
+                contours_light, _ = self.find_bounding_boxes(
+                    frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
+                )
 
-                ### find the center of frame ###
-                center_x_light, center_y_light = self.calculate_center(contours_light)
-                center_x_frame, center_y_frame = self.calculate_center(contours_frame)
+                # Calculate centers
+                centers_light = self.calculate_centers(contours_light)
+                centers_frame = self.calculate_centers(contours_frame)
 
-                ### draw main center of target ###
-                center_color_target = 0
-                for idx, el in enumerate(center_x_light):
-                    cv2.circle(frame, (center_x_light[idx], center_y_light[idx]), 14, (255, 0, center_color_target), -1)
-                    center_color_target += 100
+                total_centers = len(centers_light[0]) + len(centers_frame[0])
 
-                ### draw main center of frame ###
-                center_color_frame = 0
-                for idx, el in enumerate(center_x_frame):
-                    cv2.circle(frame, (center_x_frame[idx], center_y_frame[idx]), 14, (0, 255, center_color_frame), -1)
-                    center_color_frame += 100
+                if total_centers == 2:
+                    bounding_box_frame_x = 0
+                    bounding_box_frame_y = 0
+                    bounding_box_frame_w = 0
+                    bounding_box_frame_h = 0
+                    # Draw centers and bounding boxes
+                    for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                        cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
 
-                ### draw bounding box of target ###
-                area_color_target = 0
-                for cnt in contours_light:
-                    x, y, w, h = cv2.boundingRect(cnt)
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 10)
-                    area_color_target += 100
+                    for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
+                        cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
 
-                ### draw bounding box of frame ###
-                area_color_bounding_box_frame = 0
-                for cnt in contours_frame:
-                    x, y, w, h = cv2.boundingRect(cnt)
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, area_color_bounding_box_frame), 10)
-                    area_color_bounding_box_frame += 100
+                    for cnt in contours_light:
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                ### warp all draw in same image frame ### 
-                frame_with_contours = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    for cnt in contours_frame:
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        bounding_box_frame_x = x
+                        bounding_box_frame_y = y
+                        bounding_box_frame_w = w
+                        bounding_box_frame_h = h
 
-                ### convert frame to kivy texture ###
-                buffer = frame_with_contours.tobytes()
-                convert_frame_to_kivy = Texture.create(size=(frame_with_contours.shape[1], frame_with_contours.shape[0]), colorfmt='rgb')
-                convert_frame_to_kivy.blit_buffer(buffer, colorfmt='rgb', bufferfmt='ubyte')
+                    # Convert frame to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                ### send frame to frontend ###
-                self.ids.auto_cam_image.texture = convert_frame_to_kivy
-                self.ids.auto_center_target_position.text = "X: " + str(center_x_light[0]) + "px" + " Y: " + str(center_y_light[0]) + "px"
-                self.ids.auto_center_frame_position.text = "X: " + str(center_x_frame[0]) + "px" + " Y: " + str(center_y_frame[0]) + "px"
-                self.ids.auto_bounding_frame_position.text = "X: " + str(x) + "px Y: " + str(y) + "px W: " + str(w) + "px H: " + str(h) + "px"
-                self.ids.auto_error_center.text = "X: " + str(center_x_frame[0] - center_x_light[0]) + "px Y: " + str(center_y_frame[0] - center_y_light[0]) + "px"
+                    # Convert frame to Kivy texture
+                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                    self.ids.auto_cam_image.texture = texture
+
+                    # Update UI labels
+                    if centers_light[0] and centers_frame[0]:
+                        self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
+                        self.ids.auto_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
+                        error_x = centers_frame[0][0] - centers_light[0][0]
+                        error_y = centers_frame[1][0] - centers_light[1][0]
+                        self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                        self.ids.auto_bounding_frame_position.text = "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
+                else:
+                    # Convert frame to RGB
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                    self.ids.auto_cam_image.texture = texture
+
+                    # Update UI labels with error
+                    error_msg = f"Cannot detect target frame! Count targets: {total_centers}"
+                    self.ids.auto_center_target_position.text = error_msg
+                    self.ids.auto_center_frame_position.text = error_msg
+                    self.ids.auto_bounding_frame_position.text = error_msg
+                    self.ids.auto_error_center.text = error_msg
 
     def call_close_camera(self):
         if self.capture:
@@ -464,6 +447,23 @@ class SetAutoScreen(Screen):
             self.capture = None
             Clock.unschedule(self.update_frame)
             self.ids.camera_status.text = "Auto menu || camera status off"
+
+    def cancel_crop(self):
+        ### Cancels the current crop area selection and reverts to the original video frame.
+        if self.crop_area:
+            print("Crop area canceled.")
+            self.crop_area = None
+            # Optionally, update UI to reflect that cropping has been canceled
+            self.ids.auto_center_target_position.text = "Crop canceled."
+            self.ids.auto_center_frame_position.text = "Crop canceled."
+            self.ids.auto_bounding_frame_position.text = "Crop canceled."
+            self.ids.auto_error_center.text = "Crop canceled."
+        
+        if self.dragging:
+            self.dragging = False
+            if self.rect:
+                self.canvas.remove(self.rect)
+                self.rect = None
 
 class ListHelioStatsIp(RecycleView):
     def __init__(self, **kwargs):
@@ -479,8 +479,34 @@ class ListCameraIp(RecycleView):
             json_data = json.load(file)
             self.data = [{'text': item} for item in  json_data.get('camera_url',[])]
 
-class SettingScreen(Screen):
+class Description(Screen):
+    pass
 
+class FileChooserPopup(BoxLayout):
+    def __init__(self, load, cancel, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.spacing = 10
+        self.padding = 10
+
+        # Initialize FileChooser
+        self.filechooser = FileChooserIconView(filters=['*.json'], path=os.getcwd())
+        self.add_widget(self.filechooser)
+
+        # Buttons Layout
+        button_layout = BoxLayout(size_hint=(1, 0.1), spacing=10)
+        load_button = Button(text="Load")
+        cancel_button = Button(text="Cancel")
+        button_layout.add_widget(load_button)
+        button_layout.add_widget(cancel_button)
+        self.add_widget(button_layout)
+
+        # Bind buttons
+        load_button.bind(on_release=lambda x: load(self.filechooser.path, self.filechooser.selection))
+        cancel_button.bind(on_release=lambda x: cancel())
+
+class UploadConnectionPage(Screen):
+    
     SAVE_DIR = os.path.join(os.getcwd(), 'data', 'setting')
     SAVE_FILE = 'connection.json'
     SAVE_PATH = os.path.join(SAVE_DIR, SAVE_FILE)
@@ -578,29 +604,6 @@ class SettingScreen(Screen):
                         size_hint=(0.6, 0.4))
         popup_button.bind(on_release=popup.dismiss)
         popup.open()
-
-class FileChooserPopup(BoxLayout):
-    def __init__(self, load, cancel, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.spacing = 10
-        self.padding = 10
-
-        # Initialize FileChooser
-        self.filechooser = FileChooserIconView(filters=['*.json'], path=os.getcwd())
-        self.add_widget(self.filechooser)
-
-        # Buttons Layout
-        button_layout = BoxLayout(size_hint=(1, 0.1), spacing=10)
-        load_button = Button(text="Load")
-        cancel_button = Button(text="Cancel")
-        button_layout.add_widget(load_button)
-        button_layout.add_widget(cancel_button)
-        self.add_widget(button_layout)
-
-        # Bind buttons
-        load_button.bind(on_release=lambda x: load(self.filechooser.path, self.filechooser.selection))
-        cancel_button.bind(on_release=lambda x: cancel())
 
 class LabHeaderWidget(BoxLayout):
     pass

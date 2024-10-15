@@ -1,8 +1,10 @@
 {
     "helio_stats_ip": [
-        "192.168.1.1"
+        "192.168.1.1",
+        "192.168.1.2"
     ],
     "camera_url": [
-        "192.168.1.1"
+        "rtsp://username:password@camera_ip:port/stream",
+        "rtsp://username:password@camera_ip:port/stream2"
     ]
 }

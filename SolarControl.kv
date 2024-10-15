@@ -18,7 +18,7 @@ MainFrameWidget:
 
         # Camera control buttons
         GridLayout:
-            cols: 2
+            cols: 3
             size_hint_y: .1
             Button:
                 text: 'Stop camera'
@@ -28,6 +28,10 @@ MainFrameWidget:
                 text: 'Start camera'
                 background_color: (.4, .4, .4, 1)
                 on_press: root.call_open_camera()
+            Button:
+                text: "Cancel crop"
+                background_color: (.4, .4, .4, 1)
+                on_press: root.cancel_crop()
 
         # Area for camera image and cropping interaction
         BoxLayout:
@@ -226,24 +230,28 @@ MainFrameWidget:
                             font_size: 25
 
                 GridLayout:
-                    cols: 2
+                    cols: 3
                     Button:
                         text: 'Auto off'
                         on_press: root.call_close_camera()
                     Button:
                         text: 'Auto on'
                         on_press: root.call_open_camera()
+                    Button:
+                        text: "Cancel crop"
+                        background_color: (.4, .4, .4, 1)
+                        on_press: root.cancel_crop()
 
 <ListHelioStatsIp>:
     viewclass: 'Label' 
     orientation: "vertical"
-    spacing: 40
-    padding:10, 10
-    space_x: self.size[0]/3
+    # spacing: 40
+    # padding:10, 10
+    # space_x: self.size[0]/3
     RecycleBoxLayout: 
         color:(0, 0.7, 0.4, 0.8) 
         default_size: None, dp(56) 
-        default_size_hint: 0.4, None 
+        default_size_hint: 1, None 
         size_hint_y: None
         height: self.minimum_height 
         orientation: 'vertical'
@@ -251,19 +259,19 @@ MainFrameWidget:
 <ListCameraIp>:
     viewclass: 'Label' 
     orientation: "vertical"
-    spacing: 40
-    padding:10, 10
-    space_x: self.size[0]/3
+    # spacing: 40
+    # padding:10, 10
+    # space_x: self.size[0]/3
     RecycleBoxLayout: 
         color:(0, 0.7, 0.4, 0.8) 
         default_size: None, dp(56) 
-        default_size_hint: 0.4, None 
+        default_size_hint: 1, None 
         size_hint_y: None
         height: self.minimum_height 
         orientation: 'vertical'
 
 
-<SettingScreen>:
+<Description>:
     BoxLayout:
         orientation: 'vertical'
         GridLayout:
@@ -272,42 +280,47 @@ MainFrameWidget:
                 orientation: 'vertical'
                 Label:
                     text: "Helio stats ip"
-                ListHelioStatsIp:
+                ScrollView:
+                    ListHelioStatsIp:
             BoxLayout:
                 orientation: 'vertical'
                 Label:
                     text: 'Camera ip'
-                ListCameraIp:
-        BoxLayout:
-            orientation: 'vertical'
-            GridLayout:
+                ScrollView:
+                    ListCameraIp:
         
+
+<UploadConnectionPage>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Syntax for adding Helio stats and camera ip'
+        Image:
+            source: './exmaple_syntax.png'
+
         ## select connection file ##
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 10
-            spacing: 10
-            Label:
-                text: 'Upload and Display JSON File'
-                font_size: '20sp'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        Label:
+            text: 'Upload and Display JSON File'
+            font_size: '20sp'
+            size_hint_y: None
+            height: '40dp'
+        Button:
+            text: 'Select JSON File'
+            size_hint_y: None
+            height: '50dp'
+            on_release: root.open_file_dialog()
+        ScrollView:
+            GridLayout:
+                id: json_display
+                cols: 1
                 size_hint_y: None
-                height: '40dp'
-            Button:
-                text: 'Select JSON File'
-                size_hint_y: None
-                height: '50dp'
-                on_release: root.open_file_dialog()
-            ScrollView:
-                GridLayout:
-                    id: json_display
-                    cols: 1
-                    size_hint_y: None
-                    height: self.minimum_height
-                    padding: 10
-                    spacing: 10
-
-                    
-
+                height: self.minimum_height
+                padding: 10
+                spacing: 10
 
 <LabHeaderWidget>:
     orientation: 'vertical'
@@ -327,8 +340,11 @@ MainFrameWidget:
             text: "Auto mode"
             on_press: root.ids.screen_manager.current = 'auto'
         Button:
-            text: "Setting"
-            on_press: root.ids.screen_manager.current = 'setting'
+            text: "Description"
+            on_press: root.ids.screen_manager.current = 'description'
+        Button:
+            text: "Connection upload"
+            on_press: root.ids.screen_manager.current = 'upload_connection'
 
     ScreenManager:
         id: screen_manager
@@ -336,6 +352,8 @@ MainFrameWidget:
             name: 'manual'
         SetAutoScreen:
             name: 'auto'
-        SettingScreen:
-            name: 'setting'
+        Description:
+            name: 'description'
+        UploadConnectionPage:
+            name: 'upload_connection'
 
