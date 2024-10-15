@@ -470,8 +470,8 @@ class SettingScreen(Screen):
         self.on_fetch_data()
 
     def on_fetch_data(self):
-        self.ids.list_helio_stats_ip.data = [{'text': item} for item in ["item1", "item2", "item3"]]
-        print(self.ids.list_helio_stats_ip)
+        # self.ids.list_helio_stats_ip.data = [{'text': item} for item in ["item1", "item2", "item3"]]
+        # print(self.ids.list_helio_stats_ip)
         # try:
         #     with open('./data/setting/setting.json', 'r') as file:
         #         data = json.load(file)
