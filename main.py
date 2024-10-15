@@ -44,7 +44,9 @@ class ManualScreen(Screen):
 
     def call_open_camera(self):
         if not self.capture:
-            self.capture = cv2.VideoCapture(0)
+            video_path = "./test_target.mp4"
+            self.capture = cv2.VideoCapture(video_path)
+            # self.capture = cv2.VideoCapture(0)
             if not self.capture.isOpened():
                 print("Error: Could not open camera.")
                 self.ids.camera_status.text = "Error: Could not open camera"
@@ -129,7 +131,7 @@ class ManualScreen(Screen):
         ### if crop system ###
         ### remove noise ###
         blurred = cv2.GaussianBlur(gray_frame, (5,5), 0)
-        _, thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         kernel = np.ones((30, 30), np.uint8)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
 
@@ -140,7 +142,7 @@ class ManualScreen(Screen):
     def find_bounding_box_light(self,gray_frame):
         ### config noise target ###
         blurred = cv2.GaussianBlur(gray_frame, (55, 55), 0) ## Gaussian blur to reduce noise
-        _, thresh = cv2.threshold(blurred, 180, 255, cv2.THRESH_BINARY)
+        _, thresh = cv2.threshold(blurred, 80, 255, cv2.THRESH_BINARY)
         kernel = np.ones((3, 3), np.uint8)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         ### end config noise target ###
@@ -191,7 +193,7 @@ class ManualScreen(Screen):
                 ### draw main center of target ###
                 center_color_target = 0
                 for idx,el in  enumerate(center_x_light):
-                    cv2.circle(frame, (center_x_light[idx], center_y_light[idx]), 14,(255,0,center_color_target),-1 )
+                    cv2.circle(frame, (center_x_light[idx], center_y_light[idx]), 5,(255,0,center_color_target),-1 )
                     # cv2.putText(frame, "center_x_light: "+ str(center_x_light[idx]) + " " + "center_y_light: "+str(center_y_light[idx]) ,(center_x_light[idx] - 200, center_y_light[idx] + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,center_color_target), 3)
                     center_color_target += 100
                     x_center_light = center_x_light[idx]
@@ -200,7 +202,7 @@ class ManualScreen(Screen):
                 ### draw main center of frame ###
                 center_color_frame = 0
                 for idx,el in  enumerate(center_x_frame):
-                    cv2.circle(frame, (center_x_frame[idx], center_y_frame[idx]), 14,(0,255,center_color_frame),-1 )
+                    cv2.circle(frame, (center_x_frame[idx], center_y_frame[idx]), 5,(0,255,center_color_frame),-1 )
                     # cv2.putText(frame, "center_x_frame: "+ str(center_x_frame[idx]) + " " + "center_y_frame: "+str(center_y_frame[idx]) ,(center_x_frame[idx], center_y_frame[idx] + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,center_color_frame), 3)
                     center_color_frame += 100
                     x_center_frame = center_x_frame[idx]

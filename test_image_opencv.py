@@ -48,8 +48,11 @@ def main():
     x_center_frame = 0
     y_center_frame = 0
 
-    image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test9.png')
-    frame = cv2.flip(image, 0)
+    # image = cv2.imread('/Users/pcsishun/project_solar_thermal/gui_solar_control/test9.png')
+    # frame = cv2.flip(image, 0)
+    video_path = './test_target.mp4'
+    capture = cv2.VideoCapture(video_path)
+    ret, frame = capture.read()
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     ### convert frame to black and white
