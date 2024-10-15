@@ -8,10 +8,9 @@ from kivy.graphics import Rectangle, Color
 # import requests
 # import time
 
-
-class SetAutoScreen(Screen):
+class ManualScreen(Screen):
     def __init__(self, **kwargs):
-        super(SetAutoScreen, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.capture = None
         self.dragging = False
         self.start_pos = (0, 0)
@@ -20,7 +19,7 @@ class SetAutoScreen(Screen):
         self.rect = None
 
     def on_touch_down(self, touch):
-        img_widget = self.ids.auto_cam_image
+        img_widget = self.ids.manual_cam_image
         if img_widget.collide_point(*touch.pos):
             self.dragging = True
             self.start_pos = touch.pos
@@ -54,7 +53,7 @@ class SetAutoScreen(Screen):
         return super().on_touch_up(touch)
 
     def calculate_crop_area(self):
-        img_widget = self.ids.auto_cam_image
+        img_widget = self.ids.manual_cam_image
         widget_x, widget_y = img_widget.pos
         widget_width, widget_height = img_widget.size
 
@@ -105,12 +104,14 @@ class SetAutoScreen(Screen):
             self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
                 print("Error: Could not open camera.")
-                self.ids.camera_status_auto_mode.text = "Error: Could not open camera"
+                self.ids.camera_status.text = "Error: Could not open camera"
                 return
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-            self.ids.camera_status_auto_mode.text = "Auto menu || camera status on"
+            self.ids.camera_status.text = "Manual menu || camera status on"
 
     def update_frame(self, dt):
+        
+
         if self.capture:
             ret, frame = self.capture.read()
             if ret:
@@ -119,7 +120,7 @@ class SetAutoScreen(Screen):
                     x1, y1, x2, y2 = self.crop_area
                     frame = frame[y1:y2, x1:x2]
                     if frame.size == 0:
-                        print("Warning: Cropped frame is empty.")
+                        # print("Warning: Cropped frame is empty.")
                         return
 
                 frame = cv2.flip(frame, 0)  # Flip frame vertically
@@ -169,36 +170,36 @@ class SetAutoScreen(Screen):
                     # Convert frame to Kivy texture
                     texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
                     texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                    self.ids.auto_cam_image.texture = texture
+                    self.ids.manual_cam_image.texture = texture
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
-                        self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                        self.ids.auto_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
+                        self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
+                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
                         error_x = centers_frame[0][0] - centers_light[0][0]
                         error_y = centers_frame[1][0] - centers_light[1][0]
-                        self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
-                        self.ids.auto_bounding_frame_position.text = "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
+                        self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                        self.ids.manual_bounding_frame_position.text = "X: " + str(bounding_box_frame_x)+"px" + " " + "Y: " + str(bounding_box_frame_y)+"px" + " " + "W: " + str(bounding_box_frame_w)+"px" + " " + "H: " + str(bounding_box_frame_h)+"px"
                 else:
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
                     texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                    self.ids.auto_cam_image.texture = texture
+                    self.ids.manual_cam_image.texture = texture
 
                     # Update UI labels with error
                     error_msg = f"Cannot detect target frame! Count targets: {total_centers}"
-                    self.ids.auto_center_target_position.text = error_msg
-                    self.ids.auto_center_frame_position.text = error_msg
-                    self.ids.auto_bounding_frame_position.text = error_msg
-                    self.ids.auto_error_center.text = error_msg
+                    self.ids.manual_center_target_position.text = error_msg
+                    self.ids.manual_center_frame_position.text = error_msg
+                    self.ids.manual_bounding_frame_position.text = error_msg
+                    self.ids.manual_error_center.text = error_msg
 
     def call_close_camera(self):
         if self.capture:
             self.capture.release()
             self.capture = None
             Clock.unschedule(self.update_frame)
-            self.ids.camera_status_auto_mode.text = "Auto menu || camera status off"
+            self.ids.camera_status.text = "Manual menu || camera status off"
 
     def cancel_crop(self):
         ### Cancels the current crop area selection and reverts to the original video frame.
@@ -206,13 +207,25 @@ class SetAutoScreen(Screen):
             print("Crop area canceled.")
             self.crop_area = None
             # Optionally, update UI to reflect that cropping has been canceled
-            self.ids.auto_center_target_position.text = "Crop canceled."
-            self.ids.auto_center_frame_position.text = "Crop canceled."
-            self.ids.auto_bounding_frame_position.text = "Crop canceled."
-            self.ids.auto_error_center.text = "Crop canceled."
+            self.ids.manual_center_target_position.text = "Crop canceled."
+            self.ids.manual_center_frame_position.text = "Crop canceled."
+            self.ids.manual_bounding_frame_position.text = "Crop canceled."
+            self.ids.manual_error_center.text = "Crop canceled."
         
         if self.dragging:
             self.dragging = False
             if self.rect:
                 self.canvas.remove(self.rect)
                 self.rect = None
+
+    def push_upper(self):
+        print("Upper")
+
+    def push_left(self):
+        print("Left")
+
+    def push_down(self):
+        print("Down")
+
+    def push_right(self):
+        print("Right")
