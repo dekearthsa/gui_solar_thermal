@@ -470,6 +470,7 @@ class SettingScreen(Screen):
         self.on_fetch_data()
 
     def on_fetch_data(self):
+        pass
         # self.ids.list_helio_stats_ip.data = [{'text': item} for item in ["item1", "item2", "item3"]]
         # print(self.ids.list_helio_stats_ip)
         # try:
