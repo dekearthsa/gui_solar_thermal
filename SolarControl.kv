@@ -4,11 +4,9 @@ MainFrameWidget:
 <MainFrameWidget>:
     LabHeaderWidget:
 
-
 <ManualScreen>:
     BoxLayout:
         orientation: 'vertical'
-
         # Camera status label
         BoxLayout:
             orientation: 'vertical'
@@ -50,8 +48,6 @@ MainFrameWidget:
                 on_touch_down: None
                 on_touch_move: None
                 on_touch_up: None
-
-        
 
         BoxLayout:
             pos_hint: {"center_x":.5}
@@ -289,54 +285,86 @@ MainFrameWidget:
 <SettingScreen>:
     BoxLayout:
         orientation: 'vertical'
-        size_hint_y: .5
-    GridLayout:
-        rows: 4
+        GridLayout:
+            cols: 2
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: "Helio stats ip"
+
+                RecycleView:
+                    id: list_helio_stats_ip
+                    viewclass: 'Label'  # Each item will be a Label widget
+                    RecycleBoxLayout:
+                        default_size: None, dp(40)
+                        default_size_hint: 1, None
+                        size_hint_y: None
+                        height: self.minimum_height
+                        orientation: 'vertical'
+
+
+                    
+            # BoxLayout:
+            #     orientation: 'vertical'
+            #     Label:
+            #         text:"Camera ip"
+            #     BoxLayout:
+            #         orientation: 'vertical'
+            #         GridLayout:
+            #             cols: 2
+            #             Label:
+            #                 id: list_camera_ip
+            #                 text: "null"
+            #             Button:
+            #                 text: 'remove'
+
+
         BoxLayout:
-            orientation: 'horizontal'
-            Label:
-                text: 'Helio stat id'
-                size_hint_x: .2
-            TextInput:
-                id: helio_stat_input
-                hint_text: "Helio stats ID"
-                multiline: False
+            orientation: 'vertical'
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: 'Camera setting'
+                    halign: 'left'
+                    bold: True
+                    text_size: self.size  # Ensures the text fits within the Label's width
+                    padding_x: 10  # Optional: Add padding if you want to move it a bit inwar
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: .32
+                    TextInput:
+                        id: camera_ip
+                        hint_text: "Enter camera ip"
+                    Button:
+                        width: 120
+                        size_hint_x: None
+                        text: 'add'
+                        on_press: root.func_adding_camera_array_ip()
+            
         BoxLayout:
-            orientation: 'horizontal'
+            orientation: 'vertical'
             Label:
-                text: 'IPv4'
-                size_hint_x: .2
-            TextInput:
-                id: ipv4_input
-                hint_text: "input IPv4"
-                multiline: False
-        BoxLayout:
-            orientation: 'horizontal'
-            Label:
-                text: 'Camera Url'
-                size_hint_x: .2
-            TextInput:
-                id: ip_cam_input
-                hint_text: "Camera url"
-                multiline: False
-        Button:
-            text: 'Submit'
-            on_press: root.haddle_submit_url()
-    # BoxLayout:
-    #     orientation: 'vertical'
-    #     Label:
-    #         id: display_helio_stats_id
-    #         text: "Helio stats ID:"
-    #         font_size: 32
-    #     Label:
-    #         id: display_ipv4
-    #         text: "IPv4 Null"
-    #         font_size: 32
-    #     Label:
-    #         id: display_cam_text
-    #         text: "Camera url Null"
-    #         font_size: 32
-        
+                text: 'Helio stats setting'
+                halign: 'left'
+                bold: True
+                text_size: self.size  # Ensures the text fits within the Label's width
+                padding_x: 10  # Optional: Add padding if you want to move it a bit inwar
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: .32
+                TextInput:
+                    id: helio_stats_id
+                    hint_text: "Enter helio stats id"
+                TextInput:
+                    id: helio_stats_ip
+                    hint_text: "Enter helio stats ip"
+                Button:
+                    width: 120
+                    size_hint_x: None
+                    text: 'add'
+                    on_press: root.func_adding_array_helio_stats()
+                    
+
 
 <LabHeaderWidget>:
     orientation: 'vertical'

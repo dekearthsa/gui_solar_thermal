@@ -1,3 +1,4 @@
+from kivy.uix.actionbar import Label
 from kivy.app import App
 from kivy.metrics import dp
 
@@ -462,8 +463,30 @@ class SetAutoScreen(Screen):
             Clock.unschedule(self.update_frame)
             self.ids.camera_status.text = "Auto menu || camera status off"
 
-
 class SettingScreen(Screen):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.on_fetch_data()
+
+    def on_fetch_data(self):
+        self.ids.list_helio_stats_ip.data = [{'text': item} for item in ["item1", "item2", "item3"]]
+        print(self.ids.list_helio_stats_ip)
+        # try:
+        #     with open('./data/setting/setting.json', 'r') as file:
+        #         data = json.load(file)
+        #         # Process the data into the format expected by RecycleView
+        #         self.helio_stats_data = [{'text': str(item)} for item in data.get('helio_stats_ip', [])]
+        #         print(self.helio_stats_data)
+        # except (FileNotFoundError, json.JSONDecodeError) as e:
+        #     print(f"Error loading JSON data: {e}")
+        #     self.helio_stats_data = []  
+            
+    def func_adding_array_helio_stats(self):
+        pass
+    def func_adding_camera_array_ip(self):
+        pass
+
     def haddle_submit_url(self):
         helio_stats_input_id = self.ids.helio_stat_input.text
         url_ip_input = self.ids.ipv4_input.text
@@ -481,9 +504,6 @@ class MainFrameWidget(BoxLayout):
 
 class SolarControlApp(App):
     pass
-    # def build(self):
-
-    #     return sm
 
 if __name__ == "__main__":
     SolarControlApp().run()

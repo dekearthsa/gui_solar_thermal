@@ -1,16 +1,5 @@
 {
-    "IPv4": [
-        "192.168.1.1"
-    ],
-    "Camera_url": [
-        "192.168.1.1"
-    ],
+
     "helio_stat_id_selection": "",
-    "crop_status": false,
-    "crop_setting": {
-        "x": 0,
-        "y": 0,
-        "w": 0,
-        "h": 0
-    }
+    "crop_status": false
 }
