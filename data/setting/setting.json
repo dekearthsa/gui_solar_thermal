@@ -1,5 +1,6 @@
 {
-
     "helio_stat_id_selection": "",
-    "crop_status": false
+    "crop_status": false,
+    "is_light_target_threshold": 0,
+    "limit_center": 2
 }
