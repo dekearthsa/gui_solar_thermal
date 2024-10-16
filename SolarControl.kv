@@ -74,7 +74,7 @@ MainFrameWidget:
                     size: self.size
 
             GridLayout:
-                rows: 4
+                rows: 5
                 BoxLayout:
                     Label:
                         text: 'Center target'
@@ -106,7 +106,6 @@ MainFrameWidget:
                         text: 'Null'
                         bold: True
                         font_size: 25
-
                 GridLayout:
                     cols: 1
                     BoxLayout:
@@ -119,6 +118,18 @@ MainFrameWidget:
                             text:'Null'
                             bold: True
                             font_size: 25
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Button:
+                        text: 'reset crop image'
+                        on_press: root.reset_crop_value()
+                    Button:
+                        text: "save crop image"
+                        on_press: root.save_crop_value_image()
+                    Button:
+                        id: using_crop_value_status
+                        text: "using crop off"
+                        on_press: root.active_crop_value()
             GridLayout:
                 cols: 2
                 spacing: 20

@@ -101,8 +101,9 @@ class SetAutoScreen(Screen):
 
     def call_open_camera(self):
         if not self.capture:
-            video_path = "../test_target.mp4"  # Replace with 0 for webcam
-            self.capture = cv2.VideoCapture(video_path)
+            # video_path = "./test_target.mp4"  # Replace with 0 for webcam
+            camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+            self.capture = cv2.VideoCapture(camera_connection)
             if not self.capture.isOpened():
                 print("Error: Could not open camera.")
                 self.ids.camera_status_auto_mode.text = "Error: Could not open camera"
