@@ -10,11 +10,53 @@
 #:import SetAutoScreen camera_control.auto_screen_widget.SetAutoScreen
 #:import ManualScreen camera_control.manual_screen_widget.ManualScreen
 
+### command 
+#:import ControllerManual command.manual_command.ControllerManual
 
 MainFrameWidget: 
 
 <MainFrameWidget>:
     LabHeaderWidget:
+
+<ControllerManual>:
+    orientation: 'vertical'
+    # size_hint_y: .5
+    GridLayout:
+        cols: 2
+        spacing: 5
+        GridLayout:
+            rows: 3
+            GridLayout:
+                cols: 3
+                Label:
+                    text:""
+                Button:
+                    text: 'Upper'
+                    on_press: root.push_upper()
+                Label:
+                    text:""
+            GridLayout:
+                cols: 3
+                Button:
+                    text: 'left'
+                    on_press: root.push_left()
+                Label:
+                    text:"..."
+                Button:
+                    text:'right'
+                    on_press: root.push_right()
+            GridLayout:
+                cols: 3
+                Label:
+                    text:""
+                Button:
+                    text: 'Down'
+                    on_press: root.push_down()
+                Label:
+                    text:""
+        Button:
+            text: 'Capture'
+            size_hint_x: .35
 
 <ManualScreen>:
     BoxLayout:
@@ -75,18 +117,18 @@ MainFrameWidget:
         # Information and controls
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: .3
-            spacing: 10
+            size_hint_y: .17
+            spacing: 5
 
             # Left side: Information labels
             GridLayout:
                 cols: 1
-                spacing: 10
+                spacing: 1
 
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: '40dp'
+                    height: '30dp'
 
                     Label:
                         text: 'Center Target'
@@ -102,7 +144,7 @@ MainFrameWidget:
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: '40dp'
+                    height: '30dp'
 
                     Label:
                         text: 'Center Frame'
@@ -118,7 +160,7 @@ MainFrameWidget:
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: '40dp'
+                    height: '30dp'
 
                     Label:
                         text: 'Error Center'
@@ -134,7 +176,7 @@ MainFrameWidget:
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: '40dp'
+                    height: '30dp'
 
                     Label:
                         text: 'Bounding Frame'
@@ -150,7 +192,7 @@ MainFrameWidget:
                 GridLayout:
                     cols: 2
                     size_hint_y: None
-                    height: '40dp'
+                    height: '30dp'
 
                     Label:
                         text: 'Using Crop'
@@ -182,6 +224,7 @@ MainFrameWidget:
                     text: 'Crop Mode'
                     on_press: root.active_crop_value()
                     background_color: (.4, .4, .4, 1)
+            ControllerManual:
 
 <SetAutoScreen>:
     BoxLayout:
@@ -280,7 +323,7 @@ MainFrameWidget:
                         text: "Cancel crop"
                         background_color: (.4, .4, .4, 1)
                         on_press: root.cancel_crop()
-
+    
 <ListHelioStatsIp>:
     viewclass: 'Label' 
     orientation: "vertical"

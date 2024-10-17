@@ -203,6 +203,7 @@ class ManualScreen(Screen):
         with img_widget.canvas.after:
             Color(0, 1, 0, 1)  # Green color
             self.polygon_lines = Line(points=points, width=2, close=True)
+        self.remove_draw_point_marker()
 
     def crop_image(self):
         """Perform cropping based on selected mode."""
@@ -319,7 +320,22 @@ class ManualScreen(Screen):
             return frame  # Not enough points to perform transform
 
         # Order points: top-left, top-right, bottom-right, bottom-left
+        # print(self.selected_points)
         pts = self.order_points(np.array(self.selected_points, dtype='float32'))
+
+        # Calculate the bounding rectangle of the selected polygon
+        min_x = np.min(pts[:, 0])
+        max_x = np.max(pts[:, 0])
+        min_y = np.min(pts[:, 1])
+        max_y = np.max(pts[:, 1])
+        w = max_x - min_x
+        h = max_y - min_y
+
+        # Store the bounding box coordinates
+        self.bb_x = int(min_x)
+        self.bb_y = int(min_y)
+        self.bb_w = int(w)
+        self.bb_h = int(h)
 
         # Compute width and height of the new image
         width_a = np.linalg.norm(pts[0] - pts[1])
@@ -329,7 +345,6 @@ class ManualScreen(Screen):
         height_a = np.linalg.norm(pts[0] - pts[3])
         height_b = np.linalg.norm(pts[1] - pts[2])
         max_height = max(int(height_a), int(height_b))
-
         # Destination points for perspective transform
         dst = np.array([
             [0, 0],
@@ -382,8 +397,26 @@ class ManualScreen(Screen):
             img_y1 = max(0, min(img_y1, self.ids.manual_cam_image.texture.height - 1))
             img_x2 = max(0, min(img_x2, self.ids.manual_cam_image.texture.width - 1))
             img_y2 = max(0, min(img_y2, self.ids.manual_cam_image.texture.height - 1))
+            
+            # print(img_x1, img_y1, img_x2, img_y2)
+            # self.bb_x = img_x1
+            # self.bb_y = img_y1
+            # self.bb_w = img_x2
+            # self.bb_h = img_y2
 
             self.crop_area = (min(img_x1, img_x2), min(img_y1, img_y2), max(img_x1, img_x2), max(img_y1, img_y2))
+
+    def remove_draw_point_marker(self):
+        # Clear point markers
+        img_widget = self.ids.manual_cam_image
+        for marker in self.point_markers:
+            img_widget.canvas.after.remove(marker)
+        self.point_markers = []
+
+        # Remove polygon lines
+        if self.polygon_lines:
+            img_widget.canvas.after.remove(self.polygon_lines)
+            self.polygon_lines = None
 
     def reset_selection(self):
         """Reset the selected points and clear drawings."""
@@ -588,12 +621,20 @@ class ManualScreen(Screen):
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
 
                 else:
-                    # Rectangle Cropping Mode (existing functionality)
-                    if self.crop_area:
-                        x1, y1, x2, y2 = self.crop_area
-                        frame = frame[y1:y2, x1:x2]
-                        if frame.size == 0:
-                            return
+                    try:
+                        with open('./data/setting/setting.json', 'r') as file:
+                            setting_system = json.load(file)
+                    except Exception as e:
+                        self.show_popup("Error", f"Failed to load settings: {e}")
+                        return
+                    
+                    x1 = setting_system['static_contour']['x']
+                    y1 = setting_system['static_contour']['y']
+                    x2 = setting_system['static_contour']['w']
+                    y2 = setting_system['static_contour']['h']
+                    frame = frame[y1:y2, x1:x2]
+                    if frame.size == 0:
+                        return
 
                     frame = cv2.flip(frame, 0)  # Flip frame vertically
                     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -678,3 +719,5 @@ class ManualScreen(Screen):
             core_image = CoreImage(image_standby_path).texture
             self.ids.manual_cam_image.texture = core_image
             self.ids.camera_status.text = "Manual menu || camera status off"
+
+    
