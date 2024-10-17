@@ -17,15 +17,15 @@ class ManualScreen(Screen):
         self.polygon_lines = None      # Line instruction for the polygon
         self.point_markers = []        # Ellipse instructions for points
         self.crop_area = None          # To store the crop area coordinates (if using rectangle)
-        self.bb_x = 0
-        self.bb_y = 0
-        self.bb_w = 0
-        self.bb_h = 0
-        self.reset_bb_x = 0
-        self.reset_bb_y = 0
-        self.reset_bb_w = 1600
-        self.reset_bb_h = 1100
-        Clock.schedule_once(lambda dt: self.fetch_status())
+        self.bb_x = 0                  # Store x crop 
+        self.bb_y = 0                  # Store y crop 
+        self.bb_w = 0                  # Store w crop 
+        self.bb_h = 0                  # Store h crop 
+        self.reset_bb_x = 0            # Reset x frame 
+        self.reset_bb_y = 0            # Reset y frame 
+        self.reset_bb_w = 1600         # Reset w frame 
+        self.reset_bb_h = 1100         # Reset h frame 
+        Clock.schedule_once(lambda dt: self.fetch_status()) # Fetch status is_use_contour from json setting file
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
@@ -328,14 +328,12 @@ class ManualScreen(Screen):
         max_x = np.max(pts[:, 0])
         min_y = np.min(pts[:, 1])
         max_y = np.max(pts[:, 1])
-        w = max_x - min_x
-        h = max_y - min_y
 
         # Store the bounding box coordinates
         self.bb_x = int(min_x)
         self.bb_y = int(min_y)
-        self.bb_w = int(w)
-        self.bb_h = int(h)
+        self.bb_w = int(max_x)
+        self.bb_h = int(max_y)
 
         # Compute width and height of the new image
         width_a = np.linalg.norm(pts[0] - pts[1])
@@ -706,8 +704,8 @@ class ManualScreen(Screen):
     def show_popup(self, title, message):
         """Display a popup with a given title and message."""
         popup = Popup(title=title,
-                      content=Label(text=message),
-                      size_hint=(None, None), size=(400, 200))
+                    content=Label(text=message),
+                    size_hint=(None, None), size=(400, 200))
         popup.open()
 
     def call_close_camera(self):

@@ -5,9 +5,9 @@
     "limit_center": 2,
     "is_use_contour": true,
     "static_contour": {
-        "x": 136,
-        "y": 75,
-        "w": 363,
-        "h": 234
+        "x": 186,
+        "y": 133,
+        "w": 457,
+        "h": 290
     }
 }
