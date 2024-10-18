@@ -138,7 +138,7 @@ class ManualScreen(Screen):
 
     def on_touch_move(self, touch):
         """Handle touch move events for rectangle cropping."""
-        img_widget = self.ids.manual_cam_image
+        # img_widget = self.ids.manual_cam_image
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -639,7 +639,7 @@ class ManualScreen(Screen):
 
                     # Find contours for frame and light targets
                     contours_frame, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(7, 7), thresh_val=100, morph_kernel_size=(30, 30)
+                        frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
                     )
                     contours_light, _ = self.find_bounding_boxes(
                         frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
@@ -713,7 +713,7 @@ class ManualScreen(Screen):
             self.capture.release()
             self.capture = None
             Clock.unschedule(self.update_frame)
-            image_standby_path = "./images/sample_image.png"
+            image_standby_path = "./images/sample_image_2.png"
             core_image = CoreImage(image_standby_path).texture
             self.ids.manual_cam_image.texture = core_image
             self.ids.camera_status.text = "Manual menu || camera status off"
