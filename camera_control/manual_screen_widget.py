@@ -17,15 +17,6 @@ class ManualScreen(Screen):
         self.polygon_lines = None      # Line instruction for the polygon
         self.point_markers = []        # Ellipse instructions for points
         self.crop_area = None          # To store the crop area coordinates (if using rectangle)
-        
-        # self.bb_x = 0                  # Store x crop 
-        # self.bb_y = 0                  # Store y crop 
-        # self.bb_w = 0                  # Store w crop 
-        # self.bb_h = 0                  # Store h crop 
-        # self.reset_bb_x = 0            # Reset x frame 
-        # self.reset_bb_y = 0            # Reset y frame 
-        # self.reset_bb_w = 1600         # Reset w frame 
-        # self.reset_bb_h = 1100         # Reset h frame 
 
         self.perspective_transform = [[0,0,0], [0,0,0],[0,0,0]]
         self.max_width = 0
@@ -670,17 +661,6 @@ class ManualScreen(Screen):
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
 
                 else:
-                    # try:
-                    #     with open('./data/setting/setting.json', 'r') as file:
-                    #         setting_system = json.load(file)
-                    # except Exception as e:
-                    #     self.show_popup("Error", f"Failed to load settings: {e}")
-                    #     return
-                    
-                    # x1 = setting_system['static_contour']['x']
-                    # y1 = setting_system['static_contour']['y']
-                    # x2 = setting_system['static_contour']['w']
-                    # y2 = setting_system['static_contour']['h']
                     try:
                             
                         frame = self.apply_crop_methods(frame)
