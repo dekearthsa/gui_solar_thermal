@@ -17,14 +17,24 @@ class ManualScreen(Screen):
         self.polygon_lines = None      # Line instruction for the polygon
         self.point_markers = []        # Ellipse instructions for points
         self.crop_area = None          # To store the crop area coordinates (if using rectangle)
-        self.bb_x = 0                  # Store x crop 
-        self.bb_y = 0                  # Store y crop 
-        self.bb_w = 0                  # Store w crop 
-        self.bb_h = 0                  # Store h crop 
-        self.reset_bb_x = 0            # Reset x frame 
-        self.reset_bb_y = 0            # Reset y frame 
-        self.reset_bb_w = 1600         # Reset w frame 
-        self.reset_bb_h = 1100         # Reset h frame 
+        
+        # self.bb_x = 0                  # Store x crop 
+        # self.bb_y = 0                  # Store y crop 
+        # self.bb_w = 0                  # Store w crop 
+        # self.bb_h = 0                  # Store h crop 
+        # self.reset_bb_x = 0            # Reset x frame 
+        # self.reset_bb_y = 0            # Reset y frame 
+        # self.reset_bb_w = 1600         # Reset w frame 
+        # self.reset_bb_h = 1100         # Reset h frame 
+
+        self.perspective_transform = [[0,0,0], [0,0,0],[0,0,0]]
+        self.max_width = 0
+        self.max_height = 0
+        
+        self.reset_perspective_transform = [[0,0,0], [0,0,0],[0,0,0]]
+        self.reset_max_width = 0
+        self.reset_max_height = 0
+
         Clock.schedule_once(lambda dt: self.fetch_status()) # Fetch status is_use_contour from json setting file
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
@@ -313,6 +323,34 @@ class ManualScreen(Screen):
 
         return rect
 
+    def is_valid_quadrilateral(self, pts):
+        """Check if the four points form a valid quadrilateral."""
+        if len(pts) != 4:
+            return False
+
+        # Calculate the area using the shoelace formula
+        area = 0.5 * abs(
+            pts[0][0]*pts[1][1] + pts[1][0]*pts[2][1] +
+            pts[2][0]*pts[3][1] + pts[3][0]*pts[0][1] -
+            pts[1][0]*pts[0][1] - pts[2][0]*pts[1][1] -
+            pts[3][0]*pts[2][1] - pts[0][0]*pts[3][1]
+        )
+
+        # Area should be positive and above a minimum threshold
+        return area > 100  # Adjust the threshold as needed
+    
+    # if is_use_contour status active using this function #
+    def apply_crop_methods(self, frame):
+
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file)
+
+        M = np.array(setting_data['perspective_transform'])
+        max_width = setting_data['max_width']
+        max_height = setting_data['max_height']
+        warped = cv2.warpPerspective(frame, M, (max_width, max_height))
+        return warped
+
     def apply_perspective_transform(self, frame):
         """Apply perspective transform based on selected polygon points."""
         if len(self.selected_points) != 4:
@@ -323,17 +361,9 @@ class ManualScreen(Screen):
         # print(self.selected_points)
         pts = self.order_points(np.array(self.selected_points, dtype='float32'))
 
-        # Calculate the bounding rectangle of the selected polygon
-        min_x = np.min(pts[:, 0])
-        max_x = np.max(pts[:, 0])
-        min_y = np.min(pts[:, 1])
-        max_y = np.max(pts[:, 1])
-
-        # Store the bounding box coordinates
-        self.bb_x = int(min_x)
-        self.bb_y = int(min_y)
-        self.bb_w = int(max_x)
-        self.bb_h = int(max_y)
+        if not self.is_valid_quadrilateral(pts):
+            self.show_popup("Error", "Selected points do not form a valid quadrilateral.")
+            return frame
 
         # Compute width and height of the new image
         width_a = np.linalg.norm(pts[0] - pts[1])
@@ -353,8 +383,13 @@ class ManualScreen(Screen):
 
         # Compute the perspective transform matrix
         M = cv2.getPerspectiveTransform(pts, dst)
+        
+        # update crop value
+        self.perspective_transform = M
+        self.max_width = max_width
+        self.max_height = max_height
+        
 
-        # Perform the warp
         warped = cv2.warpPerspective(frame, M, (max_width, max_height))
         return warped
 
@@ -396,11 +431,7 @@ class ManualScreen(Screen):
             img_x2 = max(0, min(img_x2, self.ids.manual_cam_image.texture.width - 1))
             img_y2 = max(0, min(img_y2, self.ids.manual_cam_image.texture.height - 1))
             
-            # print(img_x1, img_y1, img_x2, img_y2)
-            # self.bb_x = img_x1
-            # self.bb_y = img_y1
-            # self.bb_w = img_x2
-            # self.bb_h = img_y2
+
 
             self.crop_area = (min(img_x1, img_x2), min(img_y1, img_y2), max(img_x1, img_x2), max(img_y1, img_y2))
 
@@ -469,10 +500,14 @@ class ManualScreen(Screen):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
 
-            setting_data['static_contour']['x'] = self.reset_bb_x
-            setting_data['static_contour']['y'] = self.reset_bb_y
-            setting_data['static_contour']['w'] = self.reset_bb_w
-            setting_data['static_contour']['h'] = self.reset_bb_h
+            # setting_data['static_contour']['x'] = self.reset_bb_x
+            # setting_data['static_contour']['y'] = self.reset_bb_y
+            # setting_data['static_contour']['w'] = self.reset_bb_w
+            # setting_data['static_contour']['h'] = self.reset_bb_h
+
+            setting_data['perspective_transform'] = self.reset_perspective_transform
+            setting_data['max_width'] = self.reset_max_width
+            setting_data['max_height'] = self.reset_max_height
 
             with open('./data/setting/setting.json', 'w') as file:
                 json.dump(setting_data, file, indent=4)
@@ -485,10 +520,26 @@ class ManualScreen(Screen):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
 
-            setting_data['static_contour']['x'] = self.bb_x
-            setting_data['static_contour']['y'] = self.bb_y
-            setting_data['static_contour']['w'] = self.bb_w
-            setting_data['static_contour']['h'] = self.bb_h
+            # setting_data['static_contour']['x'] = self.bb_x
+            # setting_data['static_contour']['y'] = self.bb_y
+            # setting_data['static_contour']['w'] = self.bb_w
+            # setting_data['static_contour']['h'] = self.bb_h
+
+            # print(self.perspective_transform)
+            # setting_data['perspective_transform'] = self.perspective_transform
+
+            array_1d = []
+            for value_list in self.perspective_transform:
+                array_2d = []
+                for el in value_list:
+                    array_2d.append(el)
+                array_1d.append(array_2d)
+
+            # print(array_1d)
+
+            setting_data['perspective_transform'] = array_1d
+            setting_data['max_width'] = self.max_width
+            setting_data['max_height'] = self.max_height
 
             with open('./data/setting/setting.json', 'w') as file:
                 json.dump(setting_data, file, indent=4)
@@ -619,88 +670,93 @@ class ManualScreen(Screen):
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
 
                 else:
+                    # try:
+                    #     with open('./data/setting/setting.json', 'r') as file:
+                    #         setting_system = json.load(file)
+                    # except Exception as e:
+                    #     self.show_popup("Error", f"Failed to load settings: {e}")
+                    #     return
+                    
+                    # x1 = setting_system['static_contour']['x']
+                    # y1 = setting_system['static_contour']['y']
+                    # x2 = setting_system['static_contour']['w']
+                    # y2 = setting_system['static_contour']['h']
                     try:
-                        with open('./data/setting/setting.json', 'r') as file:
-                            setting_system = json.load(file)
+                            
+                        frame = self.apply_crop_methods(frame)
+                        if frame.size == 0:
+                            return
+
+                        frame = cv2.flip(frame, 0)  # Flip frame vertically
+                        frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+                        # Find contours for frame and light targets
+                        contours_frame, _ = self.find_bounding_boxes(
+                            frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
+                        )
+                        contours_light, _ = self.find_bounding_boxes(
+                            frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
+                        )
+
+                        # Calculate centers
+                        centers_light = self.calculate_centers(contours_light)
+                        centers_frame = self.calculate_centers(contours_frame)
+
+                        bounding_box_frame_x = 0
+                        bounding_box_frame_y = 0
+                        bounding_box_frame_w = 0
+                        bounding_box_frame_h = 0
+
+                        min_area = 100
+                        # Draw centers and bounding boxes
+                        for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                            c_area = cv2.contourArea(contours_light[idx])
+                            if min_area < c_area:
+                                cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                                cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+                        for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
+                            c_area = cv2.contourArea(contours_frame[idx])
+                            if min_area < c_area:
+                                cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+                                cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+                        for cnt in contours_light:
+                            area = cv2.contourArea(cnt)
+                            if min_area < area:
+                                x, y, w, h = cv2.boundingRect(cnt)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+                        for cnt in contours_frame:
+                            area = cv2.contourArea(cnt)
+                            if min_area < area:
+                                x, y, w, h = cv2.boundingRect(cnt)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                                bounding_box_frame_x = x
+                                bounding_box_frame_y = y
+                                bounding_box_frame_w = w
+                                bounding_box_frame_h = h
+
+                        # Convert frame to RGB
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                        # Convert frame to Kivy texture
+                        texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                        texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                        self.ids.manual_cam_image.texture = texture
+
+                        # Update UI labels
+                        if centers_light[0] and centers_frame[0]:
+                            self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
+                            self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
+                            error_x = centers_frame[0][0] - centers_light[0][0]
+                            error_y = centers_frame[1][0] - centers_light[1][0]
+                            self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                            self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                     except Exception as e:
-                        self.show_popup("Error", f"Failed to load settings: {e}")
+                        self.show_popup("Error", f"Save crop value first!")
                         return
                     
-                    x1 = setting_system['static_contour']['x']
-                    y1 = setting_system['static_contour']['y']
-                    x2 = setting_system['static_contour']['w']
-                    y2 = setting_system['static_contour']['h']
-                    frame = frame[y1:y2, x1:x2]
-                    if frame.size == 0:
-                        return
-
-                    frame = cv2.flip(frame, 0)  # Flip frame vertically
-                    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                    # Find contours for frame and light targets
-                    contours_frame, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
-                    )
-                    contours_light, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
-                    )
-
-                    # Calculate centers
-                    centers_light = self.calculate_centers(contours_light)
-                    centers_frame = self.calculate_centers(contours_frame)
-
-                    bounding_box_frame_x = 0
-                    bounding_box_frame_y = 0
-                    bounding_box_frame_w = 0
-                    bounding_box_frame_h = 0
-
-                    min_area = 100
-                    # Draw centers and bounding boxes
-                    for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        c_area = cv2.contourArea(contours_light[idx])
-                        if min_area < c_area:
-                            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                            cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-
-                    for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
-                        c_area = cv2.contourArea(contours_frame[idx])
-                        if min_area < c_area:
-                            cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-                            cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-                    for cnt in contours_light:
-                        area = cv2.contourArea(cnt)
-                        if min_area < area:
-                            x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-                    for cnt in contours_frame:
-                        area = cv2.contourArea(cnt)
-                        if min_area < area:
-                            x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                            bounding_box_frame_x = x
-                            bounding_box_frame_y = y
-                            bounding_box_frame_w = w
-                            bounding_box_frame_h = h
-
-                    # Convert frame to RGB
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                    # Convert frame to Kivy texture
-                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
-                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                    self.ids.manual_cam_image.texture = texture
-
-                    # Update UI labels
-                    if centers_light[0] and centers_frame[0]:
-                        self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
-                        error_x = centers_frame[0][0] - centers_light[0][0]
-                        error_y = centers_frame[1][0] - centers_light[1][0]
-                        self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
-                        self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-
     def show_popup(self, title, message):
         """Display a popup with a given title and message."""
         popup = Popup(title=title,
