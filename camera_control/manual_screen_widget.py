@@ -467,15 +467,20 @@ class ManualScreen(Screen):
         except Exception as e:
             self.show_popup("Error", f"Failed to load settings: {e}")
             return
+        
+        is_crop_full_frame = self.__recheck_perspective_transform(setting_data['perspective_transform'])
 
-        setting_data['is_use_contour'] = not setting_data.get('is_use_contour', False)
+        if is_crop_full_frame == False:
+            setting_data['is_use_contour'] = not setting_data.get('is_use_contour', False)
+            try:
+                with open('./data/setting/setting.json', 'w') as file:
+                    json.dump(setting_data, file, indent=4)
+            except Exception as e:
+                self.show_popup("Error", f"Failed to save settings: {e}")
+                return
+        # else:
+        #     pass
 
-        try:
-            with open('./data/setting/setting.json', 'w') as file:
-                json.dump(setting_data, file, indent=4)
-        except Exception as e:
-            self.show_popup("Error", f"Failed to save settings: {e}")
-            return
 
         # Update the status label
         if not setting_data['is_use_contour']:
@@ -490,12 +495,8 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-
-            # setting_data['static_contour']['x'] = self.reset_bb_x
-            # setting_data['static_contour']['y'] = self.reset_bb_y
-            # setting_data['static_contour']['w'] = self.reset_bb_w
-            # setting_data['static_contour']['h'] = self.reset_bb_h
-
+                
+            setting_data['is_use_contour'] = False
             setting_data['perspective_transform'] = self.reset_perspective_transform
             setting_data['max_width'] = self.reset_max_width
             setting_data['max_height'] = self.reset_max_height
@@ -510,14 +511,6 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-
-            # setting_data['static_contour']['x'] = self.bb_x
-            # setting_data['static_contour']['y'] = self.bb_y
-            # setting_data['static_contour']['w'] = self.bb_w
-            # setting_data['static_contour']['h'] = self.bb_h
-
-            # print(self.perspective_transform)
-            # setting_data['perspective_transform'] = self.perspective_transform
 
             array_1d = []
             for value_list in self.perspective_transform:
@@ -572,6 +565,15 @@ class ManualScreen(Screen):
                 return
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
             self.ids.camera_status.text = "Manual menu || Camera status: On"
+
+    def __recheck_perspective_transform(self,perspective):
+        for el_array in  perspective:
+            for val in el_array:
+                if val != 0:
+                    return False
+                else:
+                    pass
+        return True
 
     def update_frame(self, dt):
         """Read frames from the capture and process them."""
@@ -659,14 +661,14 @@ class ManualScreen(Screen):
                         error_y = centers_frame[1][0] - centers_light[1][0]
                         self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-
+                
+                ### using crop data ###
                 else:
                     try:
-                            
                         frame = self.apply_crop_methods(frame)
                         if frame.size == 0:
                             return
-
+                        
                         frame = cv2.flip(frame, 0)  # Flip frame vertically
                         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -736,6 +738,7 @@ class ManualScreen(Screen):
                     except Exception as e:
                         self.show_popup("Error", f"Save crop value first!")
                         return
+
                     
     def show_popup(self, title, message):
         """Display a popup with a given title and message."""

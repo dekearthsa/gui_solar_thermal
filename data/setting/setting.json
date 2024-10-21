@@ -3,24 +3,24 @@
     "crop_status": false,
     "is_light_target_threshold": 0,
     "limit_center": 2,
-    "is_use_contour": true,
+    "is_use_contour": false,
     "perspective_transform": [
         [
-            0.8335108105160304,
-            -0.10151734230643969,
-            -143.70581256178943
+            0,
+            0,
+            0
         ],
         [
-            -0.030010921786431218,
-            0.7284469197251949,
-            -87.59915242897588
+            0,
+            0,
+            0
         ],
         [
-            -9.28979924518631e-05,
-            -0.0009013322965094851,
-            1.0
+            0,
+            0,
+            0
         ]
     ],
-    "max_width": 267,
-    "max_height": 157
+    "max_width": 0,
+    "max_height": 0
 }

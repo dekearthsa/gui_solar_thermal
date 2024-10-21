@@ -61,13 +61,13 @@ MainFrameWidget:
 <ManualScreen>:
     BoxLayout:
         orientation: 'vertical'
-        padding: 10
-        spacing: 10
+        padding: 5
+        spacing: 5
 
         # Camera status label
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: .1
+            size_hint_y: .05
             Label:
                 id: camera_status
                 text: 'Manual menu || Camera status: Off'
@@ -76,9 +76,9 @@ MainFrameWidget:
         # Camera control buttons
         GridLayout:
             cols: 3
-            size_hint_y: .1
-            spacing: 10
-            padding: 10
+            size_hint_y: .05
+            spacing: 5
+            padding: 5
 
             Button:
                 text: 'Stop Camera'
@@ -205,11 +205,10 @@ MainFrameWidget:
                         bold: True
                         font_size: 20
 
-            # Right side: Control buttons
+            # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
                 cols: 3
                 spacing: 10
-
                 Button:
                     text: 'Reset Crop'
                     on_press: root.reset_crop_value()
