@@ -109,5 +109,3 @@
 #     cv2.destroyAllWindows()
 
 # main()
-
-for  ii

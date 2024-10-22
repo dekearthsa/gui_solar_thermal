@@ -23,23 +23,39 @@ class UploadConnectionPage(Screen):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
+    def __check__list_connection(self, data):
+        print(data)
+        if data['helio_stats_ip']:
+            if data['camera_url']:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
     def load(self, path, selection):
         if selection:
             selected_path = selection[0]
             try:
                 with open(selected_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                self.display_json(data)
-                self.save_json(data)
-                self.dismiss_popup()
-                self.show_popup("Success", f'JSON saved to {self.SAVE_PATH}')
+                is_format = self.__check__list_connection(data)
+                if is_format == True:
+                    self.display_json(data)
+                    self.save_json(data)
+                    self.dismiss_popup()
+                    self.show_popup("Success", f'JSON saved to {self.SAVE_PATH}')
+                else:
+                    self.show_popup("Invalid json format", f'Invalid json format!')
+            
             except json.JSONDecodeError as jde:
                 self.show_popup("JSON Error", f"Invalid JSON file:\n{str(jde)}")
             except Exception as e:
                 self.show_popup("Error", str(e))
+
         else:
             self.show_popup("Selection Error", "No file selected.")
-            error_popup.open()
 
     def dismiss_popup(self):
         if self._popup:

@@ -32,7 +32,7 @@ class ManualScreen(Screen):
         self.status_text = 'Ready'     # Initialize status text
 
     def get_image_display_size_and_pos(self):
-        """Calculate the actual displayed image size and position within the widget."""
+        ### Calculate the actual displayed image size and position within the widget.
         img_widget = self.ids.manual_cam_image
         if not img_widget.texture:
             return None, None, None, None  # Texture not loaded yet
@@ -57,7 +57,7 @@ class ManualScreen(Screen):
         return display_width, display_height, pos_x, pos_y
 
     def map_touch_to_image_coords(self, touch_pos):
-        """Map touch coordinates to image pixel coordinates."""
+        ### Map touch coordinates to image pixel coordinates.
         display_width, display_height, pos_x, pos_y = self.get_image_display_size_and_pos()
         if display_width is None:
             return None, None  # Image not loaded
@@ -82,7 +82,7 @@ class ManualScreen(Screen):
         return img_x, img_y
 
     def on_touch_down(self, touch):
-        """Handle touch events for selecting points."""
+        ### Handle touch events for selecting points.### 
         img_widget = self.ids.manual_cam_image
         if img_widget.collide_point(*touch.pos):
             # Check cropping mode
@@ -138,7 +138,7 @@ class ManualScreen(Screen):
         return super().on_touch_down(touch)
 
     def on_touch_move(self, touch):
-        """Handle touch move events for rectangle cropping."""
+        ### Handle touch move events for rectangle cropping.### 
         # img_widget = self.ids.manual_cam_image
         try:
             with open('./data/setting/setting.json', 'r') as file:
@@ -161,7 +161,7 @@ class ManualScreen(Screen):
             return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
-        """Handle touch up events."""
+        ###Handle touch up events.###
         img_widget = self.ids.manual_cam_image
         try:
             with open('./data/setting/setting.json', 'r') as file:
@@ -187,7 +187,7 @@ class ManualScreen(Screen):
             return super().on_touch_up(touch)
 
     def draw_polygon(self):
-        """Draw lines connecting the selected points to form a polygon."""
+        ###Draw lines connecting the selected points to form a polygon.###
         img_widget = self.ids.manual_cam_image
 
         # Get display size and position
@@ -207,7 +207,7 @@ class ManualScreen(Screen):
         self.remove_draw_point_marker()
 
     def crop_image(self):
-        """Perform cropping based on selected mode."""
+        ###Perform cropping based on selected mode.###
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_system = json.load(file)
@@ -266,7 +266,6 @@ class ManualScreen(Screen):
 
             # Reset selections after cropping
             self.reset_selection()
-
             self.show_popup("Success", "Image cropped successfully!")
 
         else:
@@ -300,7 +299,7 @@ class ManualScreen(Screen):
             self.show_popup("Success", "Image cropped successfully!")
 
     def order_points(self, pts):
-        """Order points in the order: top-left, top-right, bottom-right, bottom-left."""
+        ###Order points in the order: top-left, top-right, bottom-right, bottom-left.###
         rect = np.zeros((4, 2), dtype="float32")
 
         # Sum and difference to find corners
@@ -315,7 +314,7 @@ class ManualScreen(Screen):
         return rect
 
     def is_valid_quadrilateral(self, pts):
-        """Check if the four points form a valid quadrilateral."""
+        ###Check if the four points form a valid quadrilateral.###
         if len(pts) != 4:
             return False
 
@@ -343,7 +342,7 @@ class ManualScreen(Screen):
         return warped
 
     def apply_perspective_transform(self, frame):
-        """Apply perspective transform based on selected polygon points."""
+        ###Apply perspective transform based on selected polygon points.###
         if len(self.selected_points) != 4:
             self.show_popup("Error", "Exactly 4 points are required.")
             return frame  # Not enough points to perform transform
@@ -385,7 +384,7 @@ class ManualScreen(Screen):
         return warped
 
     def fetch_status(self):
-        """Fetch settings from JSON and update UI accordingly."""
+        ###Fetch settings from JSON and update UI accordingly.###
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -400,7 +399,7 @@ class ManualScreen(Screen):
             self.ids.using_crop_value_status.text = "Using Crop: On"
 
     def calculate_crop_area(self):
-        """Calculate and set the crop area for rectangle cropping."""
+        ###Calculate and set the crop area for rectangle cropping.###
         if self.rect:
             pos = self.rect.pos
             size = self.rect.size
@@ -439,7 +438,7 @@ class ManualScreen(Screen):
             self.polygon_lines = None
 
     def reset_selection(self):
-        """Reset the selected points and clear drawings."""
+        ###Reset the selected points and clear drawings.###
         self.selected_points = []
         self.status_text = 'Selection reset. Select points by clicking on the image.'
 
@@ -460,7 +459,7 @@ class ManualScreen(Screen):
             self.rect = None
 
     def active_crop_value(self):
-        """Toggle the cropping mode between polygon and rectangle."""
+        ###Toggle the cropping mode between polygon and rectangle.###
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -491,11 +490,11 @@ class ManualScreen(Screen):
             self.reset_selection()
 
     def reset_crop_value(self):
-        """Reset crop values to default in the settings JSON."""
+        ###Reset crop values to default in the settings JSON.###
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-                
+
             setting_data['is_use_contour'] = False
             setting_data['perspective_transform'] = self.reset_perspective_transform
             setting_data['max_width'] = self.reset_max_width
@@ -507,7 +506,7 @@ class ManualScreen(Screen):
             self.show_popup("Error", f"Failed to reset crop values: {e}")
 
     def save_crop_value_image(self):
-        """Save the current crop area to the settings JSON."""
+        ###Save the current crop area to the settings JSON.###
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -531,7 +530,7 @@ class ManualScreen(Screen):
             self.show_popup("Error", f"Failed to save crop values: {e}")
 
     def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
-        """Find contours in the frame based on the specified parameters."""
+        ###Find contours in the frame based on the specified parameters.###
         blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
         _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         kernel = np.ones(morph_kernel_size, np.uint8)
@@ -540,7 +539,7 @@ class ManualScreen(Screen):
         return contours, thresh
 
     def calculate_centers(self, contours):
-        """Calculate the centers of the given contours."""
+        ###Calculate the centers of the given contours.###
         centers = []
         for cnt in contours:
             M = cv2.moments(cnt)
@@ -554,7 +553,7 @@ class ManualScreen(Screen):
         return list(center_x), list(center_y)
 
     def call_open_camera(self):
-        """Initialize video capture and start updating frames."""
+        ###Initialize video capture and start updating frames.###
         if not self.capture:
             video_path = "./test_target1.mp4"  # For video file
             # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
@@ -576,7 +575,7 @@ class ManualScreen(Screen):
         return True
 
     def update_frame(self, dt):
-        """Read frames from the capture and process them."""
+        ###Read frames from the capture and process them.###
         if self.capture:
             ret, frame = self.capture.read()
             if ret:
@@ -739,9 +738,8 @@ class ManualScreen(Screen):
                         self.show_popup("Error", f"Save crop value first!")
                         return
 
-                    
     def show_popup(self, title, message):
-        """Display a popup with a given title and message."""
+        ###Display a popup with a given title and message.###
         popup = Popup(title=title,
                     content=Label(text=message),
                     size_hint=(None, None), size=(400, 200))
