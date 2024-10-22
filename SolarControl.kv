@@ -207,8 +207,32 @@ MainFrameWidget:
 
             # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
-                cols: 3
-                spacing: 10
+                cols: 5
+                spacing: 5
+                GridLayout:
+                    rows: 2
+                    Label:
+                        id: selected_label_camera
+                        text: "None"
+                    Spinner:
+                        id: spinner_camera
+                        text: 'Select Camera'
+                        size_hint: None, None
+                        size: 200, 44
+                        pos_hint: {'center_x': 0.5}
+                        on_text: root.select_drop_down_menu_camera(self, self.text)
+                GridLayout:
+                    rows: 2
+                    Label:
+                        id: selected_label_helio_stats
+                        text: "None"
+                    Spinner:
+                        id: spinner_helio_stats
+                        text: 'Select helio'
+                        size_hint: None, None
+                        size: 200, 44
+                        pos_hint: {'center_x': 0.5}
+                        on_text: root.select_drop_down_menu_helio_stats(self, self.text)
                 Button:
                     text: 'Reset Crop'
                     on_press: root.reset_crop_value()
@@ -282,8 +306,8 @@ MainFrameWidget:
                 on_touch_up: None
 
         # Information and controls
-        BoxLayout:
-            orientation: 'horizontal'
+        GridLayout:
+            cols: 5
             size_hint_y: .17
             spacing: 5
 
@@ -371,6 +395,34 @@ MainFrameWidget:
                         text: "Using Crop: Off"
                         bold: True
                         font_size: 20
+            
+            ### helio stats and camera selectiom ###
+            GridLayout:
+                rows: 2
+                size_hint_x: .23
+                Label:
+                    id: selected_label_camera
+                    text: "None"
+                Spinner:
+                    id: spinner_camera
+                    text: 'Select Camera'
+                    size_hint: None, None
+                    size: 200, 44
+                    pos_hint: {'center_x': 0.5}
+                    on_text: root.select_drop_down_menu_camera(self, self.text)
+            GridLayout:
+                rows: 2
+                size_hint_x: .23
+                Label:
+                    id: selected_label_helio_stats
+                    text: "None"
+                Spinner:
+                    id: spinner_helio_stats
+                    text: 'Select helio'
+                    size_hint: None, None
+                    size: 200, 44
+                    pos_hint: {'center_x': 0.5}
+                    on_text: root.select_drop_down_menu_helio_stats(self, self.text)
 
             # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
@@ -390,6 +442,14 @@ MainFrameWidget:
                     text: 'Crop Mode'
                     on_press: root.active_crop_value()
                     background_color: (.4, .4, .4, 1)
+
+            BoxLayout:
+                Button:
+                    id: auto_mode
+                    text: 'Auto off'
+                    on_press: root.active_auto_mode()
+                    
+                
 
 
 <ListHelioStatsIp>:
@@ -455,7 +515,7 @@ MainFrameWidget:
         Label:
             text: 'Syntax for adding Helio stats and camera ip'
         Image:
-            source: './exmaple_syntax.png'
+            source: './images/connection_array.png'
 
         ## select connection file ##
     BoxLayout:

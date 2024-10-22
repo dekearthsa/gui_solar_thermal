@@ -12,6 +12,7 @@ from kivy.core.image import Image as CoreImage
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.is_auto = False
         self.capture = None
         self.selected_points = []      # List to store selected points as (x, y) in image coordinates
         self.polygon_lines = None      # Line instruction for the polygon
@@ -30,6 +31,7 @@ class SetAutoScreen(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
+        Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -755,4 +757,20 @@ class SetAutoScreen(Screen):
             self.ids.auto_cam_image.texture = core_image
             self.ids.auto_camera_status.text = "Auto menu || camera status off"
 
+    def fetch_helio_stats_data(self):
+        with open('./data/setting/connection.json', 'r') as file:
+            data = json.load(file)
+        self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
+        self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
     
+    def select_drop_down_menu_camera(self,spinner, text):
+        self.ids.selected_label_camera.text = f"ID: {text}"
+
+    def select_drop_down_menu_helio_stats(self, spinner, text):
+        self.ids.selected_label_helio_stats.text = f"ID: {text}"
+
+    def active_auto_mode(self):
+        if self.is_auto == False:
+            self.ids.auto_mode.text = "Auto on"
+        else: 
+            self.ids.auto_mode.text = "Auto off"

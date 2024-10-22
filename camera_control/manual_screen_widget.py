@@ -30,6 +30,7 @@ class ManualScreen(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
+        Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -477,8 +478,6 @@ class ManualScreen(Screen):
             except Exception as e:
                 self.show_popup("Error", f"Failed to save settings: {e}")
                 return
-        # else:
-        #     pass
 
 
         # Update the status label
@@ -754,5 +753,18 @@ class ManualScreen(Screen):
             core_image = CoreImage(image_standby_path).texture
             self.ids.manual_cam_image.texture = core_image
             self.ids.camera_status.text = "Manual menu || camera status off"
+
+    def fetch_helio_stats_data(self):
+        with open('./data/setting/connection.json', 'r') as file:
+            data = json.load(file)
+        self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
+        self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
+    
+    def select_drop_down_menu_camera(self,spinner, text):
+        self.ids.selected_label_camera.text = f"ID: {text}"
+
+    def select_drop_down_menu_helio_stats(self, spinner, text):
+        self.ids.selected_label_helio_stats.text = f"ID: {text}"
+        
 
     

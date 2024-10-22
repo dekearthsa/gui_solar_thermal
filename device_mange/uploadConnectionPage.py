@@ -52,7 +52,7 @@ class UploadConnectionPage(Screen):
             except json.JSONDecodeError as jde:
                 self.show_popup("JSON Error", f"Invalid JSON file:\n{str(jde)}")
             except Exception as e:
-                self.show_popup("Error", str(e))
+                self.show_popup("Invalid json format", f'Invalid json format! \n{str(data)}')
 
         else:
             self.show_popup("Selection Error", "No file selected.")

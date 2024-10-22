@@ -19,7 +19,7 @@
             "url": "rtsp://username:password@camera_ip:port/stream"
         },
         {
-            "id": "camera-1",
+            "id": "camera-2",
             "url": "rtsp://username:password@camera_ip:port/stream2"
         }
     ]
