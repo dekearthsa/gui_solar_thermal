@@ -8,6 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+# from ..command import manual_command
 
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
@@ -479,7 +480,6 @@ class ManualScreen(Screen):
                 self.show_popup("Error", f"Failed to save settings: {e}")
                 return
 
-
         # Update the status label
         if not setting_data['is_use_contour']:
             self.ids.using_crop_value_status.text = "Using Crop: Off"
@@ -550,11 +550,18 @@ class ManualScreen(Screen):
             return [], []
         center_x, center_y = zip(*centers)
         return list(center_x), list(center_y)
+    
+    def __calulate_centers_frame(self, frame):
+        h, w = frame.shape[:2]
+        center_x = w // 2
+        center_y = h // 2
+        center = (center_x, center_y)
+        return center
 
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
         if not self.capture:
-            video_path = "./test_target1.mp4"  # For video file
+            video_path = "./vid_2.avi"  # For video file
             # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
             self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
@@ -597,21 +604,25 @@ class ManualScreen(Screen):
                     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
                     # Find contours for frame and light targets
-                    contours_frame, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(7, 7), thresh_val=80, morph_kernel_size=(10, 10)
-                    )
+                    # contours_frame, _ = self.find_bounding_boxes(
+                    #     frame_gray, blur_kernel=(3, 3), thresh_val=0, morph_kernel_size=(5, 5)
+                    # )
+                    
                     contours_light, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
+                        frame_gray, blur_kernel=(23, 23), thresh_val=80, morph_kernel_size=(3, 3)
                     )
 
                     # Calculate centers
                     centers_light = self.calculate_centers(contours_light)
-                    centers_frame = self.calculate_centers(contours_frame)
+                    ### using contours frame 
+                    # centers_frame = self.calculate_centers(contours_frame)
+                    ### calulate center of frame
+                    centers_frame = self.__calulate_centers_frame(frame)
 
-                    bounding_box_frame_x = 0
-                    bounding_box_frame_y = 0
-                    bounding_box_frame_w = 0
-                    bounding_box_frame_h = 0
+                    bounding_box_frame_x = centers_frame[0]
+                    bounding_box_frame_y = centers_frame[1]
+                    bounding_box_frame_w = setting_system['max_width']
+                    bounding_box_frame_h = setting_system['max_height']
 
                     min_area = 100
                     # Draw centers and bounding boxes
@@ -621,11 +632,17 @@ class ManualScreen(Screen):
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                    for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
-                        c_area = cv2.contourArea(contours_frame[idx])
-                        if min_area < c_area:
-                            cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-                            cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    ### draw center of frame from contours center frame
+                    # for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
+                    #     c_area = cv2.contourArea(contours_frame[idx])
+                    #     if min_area < c_area:
+                    #         cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+                    #         cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+                    ### draw center of frame
+                    cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
+                    cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
@@ -633,15 +650,15 @@ class ManualScreen(Screen):
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                    for cnt in contours_frame:
-                        area = cv2.contourArea(cnt)
-                        if min_area < area:
-                            x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                            bounding_box_frame_x = x
-                            bounding_box_frame_y = y
-                            bounding_box_frame_w = w
-                            bounding_box_frame_h = h
+                    # for cnt in contours_frame:
+                    #     area = cv2.contourArea(cnt)
+                    #     if min_area < area:
+                    #         x, y, w, h = cv2.boundingRect(cnt)
+                    #         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    #         bounding_box_frame_x = x
+                    #         bounding_box_frame_y = y
+                    #         bounding_box_frame_w = w
+                    #         bounding_box_frame_h = h
 
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -654,9 +671,9 @@ class ManualScreen(Screen):
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
                         self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
-                        error_x = centers_frame[0][0] - centers_light[0][0]
-                        error_y = centers_frame[1][0] - centers_light[1][0]
+                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
+                        error_x = centers_frame[0] - centers_light[0][0]
+                        error_y = centers_frame[1] - centers_light[1][0]
                         self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                 
@@ -671,21 +688,25 @@ class ManualScreen(Screen):
                         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
                         # Find contours for frame and light targets
-                        contours_frame, _ = self.find_bounding_boxes(
-                            frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
-                        )
+                        # contours_frame, _ = self.find_bounding_boxes(
+                        #     frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
+                        # )
                         contours_light, _ = self.find_bounding_boxes(
                             frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
                         )
+                        
 
                         # Calculate centers
                         centers_light = self.calculate_centers(contours_light)
-                        centers_frame = self.calculate_centers(contours_frame)
+                        ### using contours frame 
+                        # centers_frame = self.calculate_centers(contours_frame)
+                        ### calulate center of frame
+                        centers_frame = self.__calulate_centers_frame(frame)
 
-                        bounding_box_frame_x = 0
-                        bounding_box_frame_y = 0
-                        bounding_box_frame_w = 0
-                        bounding_box_frame_h = 0
+                        bounding_box_frame_x = centers_frame[0]
+                        bounding_box_frame_y = centers_frame[1]
+                        bounding_box_frame_w = setting_system['max_width']
+                        bounding_box_frame_h = setting_system['max_height']
 
                         min_area = 100
                         # Draw centers and bounding boxes
@@ -694,12 +715,16 @@ class ManualScreen(Screen):
                             if min_area < c_area:
                                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                                 cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        ### draw center of frame from contours center frame
+                        # for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
+                        #     c_area = cv2.contourArea(contours_frame[idx])
+                        #     if min_area < c_area:
+                        #         cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+                        #         cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                        for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
-                            c_area = cv2.contourArea(contours_frame[idx])
-                            if min_area < c_area:
-                                cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-                                cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        ### draw center of frame
+                        cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
+                        cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                         for cnt in contours_light:
                             area = cv2.contourArea(cnt)
@@ -707,15 +732,15 @@ class ManualScreen(Screen):
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                        for cnt in contours_frame:
-                            area = cv2.contourArea(cnt)
-                            if min_area < area:
-                                x, y, w, h = cv2.boundingRect(cnt)
-                                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                                bounding_box_frame_x = x
-                                bounding_box_frame_y = y
-                                bounding_box_frame_w = w
-                                bounding_box_frame_h = h
+                        # for cnt in contours_frame:
+                        #     area = cv2.contourArea(cnt)
+                        #     if min_area < area:
+                        #         x, y, w, h = cv2.boundingRect(cnt)
+                        #         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        #         bounding_box_frame_x = x
+                        #         bounding_box_frame_y = y
+                        #         bounding_box_frame_w = w
+                        #         bounding_box_frame_h = h
 
                         # Convert frame to RGB
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -728,11 +753,14 @@ class ManualScreen(Screen):
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
                             self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                            self.ids.manual_center_frame_position.text = f"X: {centers_frame[0][0]}px Y: {centers_frame[1][0]}px"
-                            error_x = centers_frame[0][0] - centers_light[0][0]
-                            error_y = centers_frame[1][0] - centers_light[1][0]
+                            self.ids.manual_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
+                            error_x = centers_frame[0] - centers_light[0][0]
+                            error_y = centers_frame[1] - centers_light[1][0]
                             self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
+                            # controller = self.ids.controller_manual
+                            # controller.x_error = error_x
+                            # controller.y_error = error_y
                     except Exception as e:
                         self.show_popup("Error", f"Save crop value first!")
                         return

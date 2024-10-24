@@ -772,5 +772,7 @@ class SetAutoScreen(Screen):
     def active_auto_mode(self):
         if self.is_auto == False:
             self.ids.auto_mode.text = "Auto on"
+            self.is_auto = True
         else: 
             self.ids.auto_mode.text = "Auto off"
+            self.is_auto = False

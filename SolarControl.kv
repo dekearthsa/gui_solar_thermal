@@ -13,6 +13,9 @@
 ### command 
 #:import ControllerManual command.manual_command.ControllerManual
 
+### animation 
+#:import BlinkSpot animation.blinking.BlinkSpot
+
 MainFrameWidget: 
 
 <MainFrameWidget>:
@@ -57,6 +60,7 @@ MainFrameWidget:
         Button:
             text: 'Capture'
             size_hint_x: .35
+            on_press: root.update_and_submit()
 
 <ManualScreen>:
     BoxLayout:
@@ -248,6 +252,8 @@ MainFrameWidget:
                     on_press: root.active_crop_value()
                     background_color: (.4, .4, .4, 1)
             ControllerManual:
+                id: controller_manual
+                error_center_f: manual_error_center
 
 <SetAutoScreen>:
     BoxLayout:
@@ -444,14 +450,23 @@ MainFrameWidget:
                     background_color: (.4, .4, .4, 1)
 
             BoxLayout:
+                
                 Button:
                     id: auto_mode
                     text: 'Auto off'
                     on_press: root.active_auto_mode()
-                    
+                    BlinkSpot:
+                        auto_text: self.parent.text
+                        size: 50, 50  
+                        pos: self.parent.x + 200, self.parent.center_y - self.height / 2
+                        canvas:
+                            Color:
+                                rgba: 1, 0, 0, self.opacity  # Red color with variable opacity
+                            Ellipse:
+                                pos: self.pos
+                                size: self.size
                 
-
-
+                    
 <ListHelioStatsIp>:
     viewclass: 'Label'
     RecycleBoxLayout:
@@ -507,8 +522,6 @@ MainFrameWidget:
                 ListCameraIp:
                     id: camera_list
 
-        
-
 <UploadConnectionPage>:
     BoxLayout:
         orientation: 'vertical'
@@ -517,7 +530,7 @@ MainFrameWidget:
         Image:
             source: './images/connection_array.png'
 
-        ## select connection file ##
+    ## select connection file ##
     BoxLayout:
         orientation: 'vertical'
         padding: 10
@@ -575,4 +588,5 @@ MainFrameWidget:
             name: 'description'
         UploadConnectionPage:
             name: 'upload_connection'
+
 
