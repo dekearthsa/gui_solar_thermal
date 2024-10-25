@@ -527,16 +527,44 @@ class ManualScreen(Screen):
                 json.dump(setting_data, file, indent=4)
         except Exception as e:
             self.show_popup("Error", f"Failed to save crop values: {e}")
-
+    
     def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
         ###Find contours in the frame based on the specified parameters.###
+        # blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
+        # _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # kernel = np.ones(morph_kernel_size, np.uint8)
+        # thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # return contours, thresh
+
         blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
-        _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(blurred, thresh_val[0], thresh_val[1], cv2.THRESH_BINARY)
         kernel = np.ones(morph_kernel_size, np.uint8)
         thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         return contours, thresh
 
+
+    def __find_bounding_boxes_hsv_mode(self, frame_color, low_H, low_S, low_V, high_H, high_S, high_V, blur_kernel):
+        # low_H = 0
+        # low_S = 0
+        # low_V = 180
+        # high_H = 255
+        # high_S = 255
+        # high_V = 255
+
+        blurred = cv2.GaussianBlur(frame_color, blur_kernel, 0)
+        frame_HSV = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+        frame_threshold = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
+
+        contours_light, _ = cv2.findContours(
+            frame_threshold, 
+            cv2.RETR_EXTERNAL, 
+            cv2.CHAIN_APPROX_SIMPLE
+        )
+        
+        return contours_light, frame_threshold
+    
     def calculate_centers(self, contours):
         ###Calculate the centers of the given contours.###
         centers = []
@@ -561,7 +589,7 @@ class ManualScreen(Screen):
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
         if not self.capture:
-            video_path = "./vid_2.avi"  # For video file
+            video_path = "./vid.avi"  # For video file
             # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
             self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
@@ -601,19 +629,28 @@ class ManualScreen(Screen):
                             return
 
                     frame = cv2.flip(frame, 0)  # Flip frame vertically
-                    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                    # Find contours for frame and light targets
-                    # contours_frame, _ = self.find_bounding_boxes(
-                    #     frame_gray, blur_kernel=(3, 3), thresh_val=0, morph_kernel_size=(5, 5)
-                    # )
+                    # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     
-                    contours_light, _ = self.find_bounding_boxes(
-                        frame_gray, blur_kernel=(23, 23), thresh_val=80, morph_kernel_size=(3, 3)
-                    )
+                    ### ccc no crop ###
+                    # contours_light, demo_light = self.find_bounding_boxes(
+                    #         frame_gray, blur_kernel=(55, 55), thresh_val=(80,135), morph_kernel_size=(3, 3)
+                    #     )
+
+                    contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
+                            frame_color=frame, 
+                            low_H=0, 
+                            low_S=0, 
+                            low_V=135,
+                            high_H=255,
+                            high_S=255,
+                            high_V=255,
+                            blur_kernel=(55,55)
+                        )
+                        
 
                     # Calculate centers
                     centers_light = self.calculate_centers(contours_light)
+
                     ### using contours frame 
                     # centers_frame = self.calculate_centers(contours_frame)
                     ### calulate center of frame
@@ -632,17 +669,9 @@ class ManualScreen(Screen):
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                    ### draw center of frame from contours center frame
-                    # for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
-                    #     c_area = cv2.contourArea(contours_frame[idx])
-                    #     if min_area < c_area:
-                    #         cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-                    #         cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
                     ### draw center of frame
                     cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                     cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
@@ -650,23 +679,20 @@ class ManualScreen(Screen):
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                    # for cnt in contours_frame:
-                    #     area = cv2.contourArea(cnt)
-                    #     if min_area < area:
-                    #         x, y, w, h = cv2.boundingRect(cnt)
-                    #         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    #         bounding_box_frame_x = x
-                    #         bounding_box_frame_y = y
-                    #         bounding_box_frame_w = w
-                    #         bounding_box_frame_h = h
-
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                     # Convert frame to Kivy texture
-                    texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
-                    texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                    self.ids.manual_cam_image.texture = texture
+                    texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                    texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+
+                    texture_bin = Texture.create(size=(demo_light.shape[1], demo_light.shape[0]), colorfmt='luminance')
+                    texture_bin.blit_buffer(demo_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
+
+                    self.ids.manual_cam_image.texture = texture_rgb
+                    self.ids.manual_cam_image_demo.texture = texture_bin
+
+                    
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
@@ -685,22 +711,26 @@ class ManualScreen(Screen):
                             return
                         
                         frame = cv2.flip(frame, 0)  # Flip frame vertically
-                        frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                        # Find contours for frame and light targets
-                        # contours_frame, _ = self.find_bounding_boxes(
-                        #     frame_gray, blur_kernel=(7, 7), thresh_val=255, morph_kernel_size=(30, 30)
+                        ### ccc crop ###
+                        # contours_light, demo_light = self.find_bounding_boxes(
+                        #     frame_gray, blur_kernel=(55, 55), thresh_val=(120,135), morph_kernel_size=(3, 3)
                         # )
-                        contours_light, _ = self.find_bounding_boxes(
-                            frame_gray, blur_kernel=(55, 55), thresh_val=80, morph_kernel_size=(3, 3)
+
+                        contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
+                            frame_color=frame, 
+                            low_H=0, 
+                            low_S=0, 
+                            low_V=135,
+                            high_H=255,
+                            high_S=255,
+                            high_V=255,
+                            blur_kernel=(55,55)
                         )
                         
-
                         # Calculate centers
                         centers_light = self.calculate_centers(contours_light)
-                        ### using contours frame 
-                        # centers_frame = self.calculate_centers(contours_frame)
-                        ### calulate center of frame
                         centers_frame = self.__calulate_centers_frame(frame)
 
                         bounding_box_frame_x = centers_frame[0]
@@ -708,20 +738,14 @@ class ManualScreen(Screen):
                         bounding_box_frame_w = setting_system['max_width']
                         bounding_box_frame_h = setting_system['max_height']
 
-                        min_area = 100
+                        min_area = 0
                         # Draw centers and bounding boxes
                         for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                             c_area = cv2.contourArea(contours_light[idx])
                             if min_area < c_area:
                                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                                 cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                        ### draw center of frame from contours center frame
-                        # for idx, (cx, cy) in enumerate(zip(centers_frame[0], centers_frame[1])):
-                        #     c_area = cv2.contourArea(contours_frame[idx])
-                        #     if min_area < c_area:
-                        #         cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
-                        #         cv2.putText(frame, "C-F", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
+                        
                         ### draw center of frame
                         cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                         cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
@@ -732,23 +756,18 @@ class ManualScreen(Screen):
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                        # for cnt in contours_frame:
-                        #     area = cv2.contourArea(cnt)
-                        #     if min_area < area:
-                        #         x, y, w, h = cv2.boundingRect(cnt)
-                        #         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                        #         bounding_box_frame_x = x
-                        #         bounding_box_frame_y = y
-                        #         bounding_box_frame_w = w
-                        #         bounding_box_frame_h = h
-
                         # Convert frame to RGB
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                         # Convert frame to Kivy texture
-                        texture = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
-                        texture.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                        self.ids.manual_cam_image.texture = texture
+                        texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                        texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+
+                        texture_bin = Texture.create(size=(demo_light.shape[1], demo_light.shape[0]), colorfmt='luminance')
+                        texture_bin.blit_buffer(demo_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
+
+                        self.ids.manual_cam_image.texture = texture_rgb
+                        self.ids.manual_cam_image_demo.texture = texture_bin
 
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
@@ -758,9 +777,6 @@ class ManualScreen(Screen):
                             error_y = centers_frame[1] - centers_light[1][0]
                             self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                            # controller = self.ids.controller_manual
-                            # controller.x_error = error_x
-                            # controller.y_error = error_y
                     except Exception as e:
                         self.show_popup("Error", f"Save crop value first!")
                         return
@@ -780,6 +796,7 @@ class ManualScreen(Screen):
             image_standby_path = "./images/sample_image_2.png"
             core_image = CoreImage(image_standby_path).texture
             self.ids.manual_cam_image.texture = core_image
+            self.ids.manual_cam_image_demo.texture = core_image
             self.ids.camera_status.text = "Manual menu || camera status off"
 
     def fetch_helio_stats_data(self):

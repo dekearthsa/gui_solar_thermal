@@ -1,0 +1,87 @@
+/// setting crop video 2 ///
+
+{
+    "helio_stat_id_selection": "",
+    "crop_status": false,
+    "is_light_target_threshold": 0,
+    "limit_center": 2,
+    "is_use_contour": true,
+    "perspective_transform": [
+        [
+            1.1723745278525246,
+            0.07839230874862174,
+            -1545.629560666187
+        ],
+        [
+            -0.0033241526495186614,
+            1.2022352082426222,
+            -649.7543895873036
+        ],
+        [
+            -2.1184767929623336e-05,
+            0.00014682931051620114,
+            1.0
+        ]
+    ],
+    "max_width": 1236,
+    "max_height": 1004
+}
+
+
+/// setting crop video 1 //// 
+
+{
+    "helio_stat_id_selection": "",
+    "crop_status": false,
+    "is_light_target_threshold": 0,
+    "limit_center": 2,
+    "is_use_contour": false,
+    "perspective_transform": [
+        [
+            1.2381794140096307,
+            0.06678976092168142,
+            -1695.8588195624106
+        ],
+        [
+            -0.016287418536746694,
+            1.2587847754828774,
+            -1300.338633718273
+        ],
+        [
+            -1.689566238251737e-05,
+            0.00013950783524881952,
+            1.0
+        ]
+    ],
+    "max_width": 1211,
+    "max_height": 965
+}
+
+/// setting crop video 0 ///
+
+{
+    "helio_stat_id_selection": "",
+    "crop_status": false,
+    "is_light_target_threshold": 0,
+    "limit_center": 2,
+    "is_use_contour": false,
+    "perspective_transform": [
+        [
+            1.1523179198588827,
+            0.062158228042180526,
+            -1515.412818266201
+        ],
+        [
+            -0.007518795359464225,
+            1.1621909398486312,
+            -638.8408923986246
+        ],
+        [
+            -7.799580248406899e-06,
+            0.00011314940898018015,
+            1.0
+        ]
+    ],
+    "max_width": 1194,
+    "max_height": 965
+}
