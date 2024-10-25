@@ -33,6 +33,18 @@ class ManualScreen(Screen):
         self.status_text = 'Ready'     # Initialize status text
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
+
+        #### IN DEBUG MODE CHANGE THRES HERE ####
+        self.static_low_h = 0
+        self.static_low_s = 0
+        self.static_low_v = 120
+        self.static_high_h = 255
+        self.static_high_s = 255
+        self.static_high_v = 255
+        self.static_blur_kernel = (55,55)
+
+
+
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
         img_widget = self.ids.manual_cam_image
@@ -589,7 +601,7 @@ class ManualScreen(Screen):
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
         if not self.capture:
-            video_path = "./vid.avi"  # For video file
+            video_path = "./vid_1.avi"  # For video file vid_1.avi, vid_2.avi
             # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
             self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
@@ -638,13 +650,13 @@ class ManualScreen(Screen):
 
                     contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
-                            low_H=0, 
-                            low_S=0, 
-                            low_V=135,
-                            high_H=255,
-                            high_S=255,
-                            high_V=255,
-                            blur_kernel=(55,55)
+                            low_H=self.static_low_h, 
+                            low_S=self.static_low_s, 
+                            low_V=self.static_low_v,
+                            high_H=self.static_high_h,
+                            high_S=self.static_high_s,
+                            high_V=self.static_high_v,
+                            blur_kernel=self.static_blur_kernel
                         )
                         
 
@@ -720,13 +732,13 @@ class ManualScreen(Screen):
 
                         contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
-                            low_H=0, 
-                            low_S=0, 
-                            low_V=135,
-                            high_H=255,
-                            high_S=255,
-                            high_V=255,
-                            blur_kernel=(55,55)
+                            low_H=self.static_low_h, 
+                            low_S=self.static_low_s, 
+                            low_V=self.static_low_v,
+                            high_H=self.static_high_h,
+                            high_S=self.static_high_s,
+                            high_V=self.static_high_v,
+                            blur_kernel=self.static_blur_kernel
                         )
                         
                         # Calculate centers
