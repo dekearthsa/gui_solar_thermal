@@ -42,8 +42,7 @@ class ManualScreen(Screen):
         self.static_high_s = 255
         self.static_high_v = 255
         self.static_blur_kernel = (55,55)
-
-
+        self.static_mp4 = "vid_1.avi"
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -601,7 +600,7 @@ class ManualScreen(Screen):
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
         if not self.capture:
-            video_path = "./vid_1.avi"  # For video file vid_1.avi, vid_2.avi
+            video_path = self.static_mp4  # For video file vid_1.avi, vid_2.avi
             # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
             self.capture = cv2.VideoCapture(video_path)
             if not self.capture.isOpened():
