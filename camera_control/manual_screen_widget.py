@@ -35,14 +35,16 @@ class ManualScreen(Screen):
 
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
-        self.static_low_h = 0
+        self.static_low_h = 10
         self.static_low_s = 0
-        self.static_low_v = 120
-        self.static_high_h = 255
+        self.static_low_v = 170
+        self.static_high_h = 179
         self.static_high_s = 255
         self.static_high_v = 255
-        self.static_blur_kernel = (55,55)
-        self.static_mp4 = "vid_1.avi"
+        self.static_blur_kernel = (55,55) 
+        self.min_area = 50000
+        self.max_area = 130000
+        self.static_mp4 = "vid_2.avi" ## path mp4 or camera url 
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -563,18 +565,20 @@ class ManualScreen(Screen):
         # high_H = 255
         # high_S = 255
         # high_V = 255
-
-        blurred = cv2.GaussianBlur(frame_color, blur_kernel, 0)
-        frame_HSV = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-        frame_threshold = cv2.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
-
+        # frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
+        
+        frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
+        blurred = cv2.GaussianBlur(frame_HSV, blur_kernel, 0)
+        frame_threshold = cv2.inRange(blurred, (low_H, low_S, low_V), (high_H, high_S, high_V))
+        kernel_morph = np.ones((7,7), np.uint8)
+        frame_morph = cv2.morphologyEx(frame_threshold, cv2.MORPH_OPEN, kernel_morph)
         contours_light, _ = cv2.findContours(
-            frame_threshold, 
-            cv2.RETR_EXTERNAL, 
-            cv2.CHAIN_APPROX_SIMPLE
+            frame_morph, 
+            cv2.RETR_TREE, 
+            cv2.CHAIN_APPROX_NONE
         )
         
-        return contours_light, frame_threshold
+        return contours_light, frame_threshold, frame_HSV
     
     def calculate_centers(self, contours):
         ###Calculate the centers of the given contours.###
@@ -647,7 +651,7 @@ class ManualScreen(Screen):
                     #         frame_gray, blur_kernel=(55, 55), thresh_val=(80,135), morph_kernel_size=(3, 3)
                     #     )
 
-                    contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
+                    contours_light, demo_light, hsv_frame = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
                             low_H=self.static_low_h, 
                             low_S=self.static_low_s, 
@@ -672,11 +676,11 @@ class ManualScreen(Screen):
                     bounding_box_frame_w = setting_system['max_width']
                     bounding_box_frame_h = setting_system['max_height']
 
-                    min_area = 100
+                    # min_area = 100
                     # Draw centers and bounding boxes
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
-                        if min_area < c_area:
+                        if self.min_area < c_area and self.max_area > c_area:
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
@@ -686,7 +690,7 @@ class ManualScreen(Screen):
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
-                        if min_area < area:
+                        if self.min_area < area:
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
@@ -702,8 +706,6 @@ class ManualScreen(Screen):
 
                     self.ids.manual_cam_image.texture = texture_rgb
                     self.ids.manual_cam_image_demo.texture = texture_bin
-
-                    
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
@@ -749,11 +751,11 @@ class ManualScreen(Screen):
                         bounding_box_frame_w = setting_system['max_width']
                         bounding_box_frame_h = setting_system['max_height']
 
-                        min_area = 0
+                        # min_area = 0
                         # Draw centers and bounding boxes
                         for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                             c_area = cv2.contourArea(contours_light[idx])
-                            if min_area < c_area:
+                            if self.min_area < c_area and self.max_area > c_area:
                                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                                 cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
@@ -763,7 +765,7 @@ class ManualScreen(Screen):
 
                         for cnt in contours_light:
                             area = cv2.contourArea(cnt)
-                            if min_area < area:
+                            if self.min_area < area:
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
