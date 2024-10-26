@@ -611,8 +611,10 @@ class ManualScreen(Screen):
                 self.show_popup("Error", "Could not open camera.")
                 self.ids.camera_status.text = "Error: Could not open camera"
                 return
+            controller_manual =self.ids.controller_manual
+            controller_manual.camera_status_controll = "On"
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-            self.ids.camera_status.text = "Manual menu || Camera status: On"
+            self.ids.camera_status.text = "Manual menu || Camera status:On"
 
     def __recheck_perspective_transform(self,perspective):
         for el_array in  perspective:
@@ -823,6 +825,3 @@ class ManualScreen(Screen):
 
     def select_drop_down_menu_helio_stats(self, spinner, text):
         self.ids.selected_label_helio_stats.text = f"ID: {text}"
-        
-
-    
