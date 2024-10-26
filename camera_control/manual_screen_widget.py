@@ -812,6 +812,8 @@ class ManualScreen(Screen):
             core_image = CoreImage(image_standby_path).texture
             self.ids.manual_cam_image.texture = core_image
             self.ids.manual_cam_image_demo.texture = core_image
+            controller_manual =self.ids.controller_manual
+            controller_manual.camera_status_controll = "Off"
             self.ids.camera_status.text = "Manual menu || camera status off"
 
     def fetch_helio_stats_data(self):

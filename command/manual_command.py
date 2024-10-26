@@ -10,7 +10,7 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty
 
 class ControllerManual(BoxLayout):
-    camera_status_controll = StringProperty("No")
+    camera_status_controll = StringProperty("No") 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.mqtt_host = "mqtt-dashboard.com"
