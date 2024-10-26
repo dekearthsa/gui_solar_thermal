@@ -10,6 +10,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
 # from ..command import manual_command
 
+
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

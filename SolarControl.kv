@@ -314,24 +314,45 @@ MainFrameWidget:
                 background_color: (.4, .4, .4, 1)
                 on_press: root.reset_selection()
 
-        # Area for camera image and cropping interaction
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint_y: .6
-            canvas:
-                Color:
-                    rgba: 1, 1, 1, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            Image:
-                id: auto_cam_image
-                source: 'images/sample_image_2.png'  # Initial image
-                allow_stretch: True
-                keep_ratio: True
-                on_touch_down: None
-                on_touch_move: None
-                on_touch_up: None
+        GridLayout:
+            cols:2
+            # Area for camera image and cropping interaction
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: .6
+                canvas:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Image:
+                    id: auto_cam_image
+                    source: 'images/sample_image_2.png'  # Initial image
+                    allow_stretch: True
+                    keep_ratio: True
+                    on_touch_down: None
+                    on_touch_move: None
+                    on_touch_up: None
+            
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: .6
+                canvas:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                Image:
+                    id: auto_cam_image_demo
+                    source: 'images/sample_image_2.png'  # Initial image
+                    allow_stretch: True
+                    keep_ratio: True
+                    on_touch_down: None
+                    on_touch_move: None
+                    on_touch_up: None
+
 
         # Information and controls
         GridLayout:

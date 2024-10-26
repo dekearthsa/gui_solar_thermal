@@ -80,7 +80,7 @@ class ControllerManual(BoxLayout):
 
     def push_upper(self):
         # self.haddle_save_first_pos()
-        print(self.camera_status_controll)
+        # print(self.camera_status_controll)
         if self.camera_status_controll == "On":
             payload = {
                 "pos":"up",
