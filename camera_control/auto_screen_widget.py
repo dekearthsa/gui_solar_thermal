@@ -8,10 +8,21 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+import paho.mqtt.client as mqtt
+import re
 
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        ### mqtt setup ###
+        # self.mqtt_host = "mqtt-dashboard.com"
+        # self.mqtt_port = "8884"
+        # self.mqtt_client = mqtt.Client() 
+        # self.mqtt_topic = "testtopic/1"
+        # self.mqtt_client.on_connect = self.on_connect
+        # self.mqtt_client.on_disconnect = self.on_disconnect
+        # self.is_auto_mode = "Auto off"
+
         self.capture = None
         self.selected_points = []      # List to store selected points as (x, y) in image coordinates
         self.polygon_lines = None      # Line instruction for the polygon
@@ -30,8 +41,7 @@ class SetAutoScreen(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
-        Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
-
+        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 10
@@ -44,6 +54,8 @@ class SetAutoScreen(Screen):
         self.min_area = 50000
         self.max_area = 130000
         self.static_mp4 = "vid_2.avi" ## path mp4 or camera url 
+        self.speed_screw = 1
+        self.distance_mm = 1
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -53,17 +65,13 @@ class SetAutoScreen(Screen):
 
         # Original image size
         img_width, img_height = img_widget.texture.size
-
         # Widget size
         widget_width, widget_height = img_widget.size
-
         # Calculate scaling factor to fit the image within the widget while maintaining aspect ratio
         scale = min(widget_width / img_width, widget_height / img_height)
-
         # Calculate the size of the image as displayed
         display_width = img_width * scale
         display_height = img_height * scale
-
         # Calculate the position (bottom-left corner) of the image within the widget
         pos_x = img_widget.x + (widget_width - display_width) / 2
         pos_y = img_widget.y + (widget_height - display_height) / 2
@@ -558,13 +566,6 @@ class SetAutoScreen(Screen):
 
 
     def __find_bounding_boxes_hsv_mode(self, frame_color, low_H, low_S, low_V, high_H, high_S, high_V, blur_kernel):
-        # low_H = 0
-        # low_S = 0
-        # low_V = 180
-        # high_H = 255
-        # high_S = 255
-        # high_V = 255
-        # frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
         
         frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
         blurred = cv2.GaussianBlur(frame_HSV, blur_kernel, 0)
@@ -612,7 +613,7 @@ class SetAutoScreen(Screen):
                 return
             # controller_manual =self.ids.controller_manual
             Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-            self.ids.auto_camera_status.text = "Manual menu || Camera status:On"
+            self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
 
     def __recheck_perspective_transform(self,perspective):
         for el_array in  perspective:
@@ -810,18 +811,81 @@ class SetAutoScreen(Screen):
             core_image = CoreImage(image_standby_path).texture
             self.ids.auto_cam_image.texture = core_image
             self.ids.auto_cam_image_demo.texture = core_image
-            # controller_manual =self.ids.controller_manual
-            # controller_manual.camera_status_controll = "Off"
             self.ids.auto_camera_status.text = "Manual menu || camera status off"
 
-    def fetch_helio_stats_data(self):
-        with open('./data/setting/connection.json', 'r') as file:
-            data = json.load(file)
-        self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
-        self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
+    # def fetch_helio_stats_data(self):
+    #     with open('./data/setting/connection.json', 'r') as file:
+    #         data = json.load(file)
+    #     self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
+    #     self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
     
-    def select_drop_down_menu_camera(self,spinner, text):
-        self.ids.selected_label_camera.text = f"ID: {text}"
+    # def select_drop_down_menu_camera(self,spinner, text):
+    #     self.ids.selected_label_camera.text = f"ID: {text}"
 
-    def select_drop_down_menu_helio_stats(self, spinner, text):
-        self.ids.selected_label_helio_stats.text = f"ID: {text}"
+    # def select_drop_down_menu_helio_stats(self, spinner, text):
+    #     self.ids.selected_label_helio_stats.text = f"ID: {text}"
+
+    # def mqtt_connection(self):
+    #     try:
+    #         # Connect to the MQTT broker
+    #         self.mqtt_client.connect(self.mqtt_host)
+    #         # Start the network loop in a separate thread
+    #         self.mqtt_client.loop_start()
+    #         print("MQTT connection established and loop started.")
+    #     except Exception as e:
+    #         print(f"MQTT connection failed: {e}")
+
+    # def on_connect(self, client, userdata, flags, rc):
+    #     if rc == 0:
+    #         print("MQTT Connection Successful")
+    #     else:
+    #         print(f"MQTT Connection Failed with code {rc}")
+
+    # def on_disconnect(self,client, userdata, rc):
+    #     print("MQTT Disconnected")
+
+    # def active_auto_mode(self):
+    #     is_auto = self.ids.auto_mode.text
+    #     if is_auto == "Auto off":
+    #         self.ids.auto_mode.text = "Auto on"
+    #         self.is_auto_mode = "Auto on"
+    #         diff_x, diff_y = self.__extract_coordinates(self.center_frame_auto.text, self.center_target_auto.text)
+    #         self.calculate_error_pixel_pub(diff_x=diff_x, diff_y=diff_y)
+    #     else: 
+    #         self.ids.auto_mode.text = "Auto off"
+    #         self.is_auto_mode = "Auto off"
+
+    # def __extract_coordinates(self, s1, s2):
+    #     pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
+    #     match = re.search(pattern, s1)
+    #     match_2 = re.search(pattern, s2)
+    #     if match:   
+    #         if match_2:
+    #             diff_x = int(match.group(1)) - int(match_2.group(1))
+    #             diff_y = int(match.group(2)) - int(match_2.group(2))
+    #             return diff_x, diff_y
+    #     else:
+    #         print("The string format is incorrect.")
+
+    # def calculate_error_pixel_pub(self, diff_x, diff_y):
+    #     static_array_topic = ["testtopic/1", "testtopic/2", "testtopic/3"]
+    #     for helio_stats_list in static_array_topic:
+    #         payload = {
+    #             "opt": "auto",
+    #             "direction":{
+    #                 "x":{
+    #                     "distance": diff_x,
+    #                     "speed": self.speed_screw
+    #                 },
+    #                 "y":{
+    #                     "distance":diff_y,
+    #                     "speed": self.speed_screw
+    #                 }
+    #             },
+    #         }
+    #         self.mqtt_client.publish(self.mqtt_connection,str(payload))
+    #         # Clock.schedule_interval(self.calculate_error_pixel_pub, 5)
+    #         # print(helio_stats_list)
+            
+        
+        

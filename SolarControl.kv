@@ -12,9 +12,11 @@
 
 ### command 
 #:import ControllerManual command.manual_command.ControllerManual
+#:import ControllerAuto command.auto_command.ControllerAuto
 
 ### animation 
 #:import BlinkSpot animation.blinking.BlinkSpot
+
 
 MainFrameWidget: 
 
@@ -24,6 +26,11 @@ MainFrameWidget:
 <ControllerManual>:
     orientation: 'vertical'
     # size_hint_y: .5
+    Label:
+        id: mqtt_connection_status_manual
+        text: "Disconnect"
+        bold: True
+        size_hint_y: .2
     GridLayout:
         cols: 2
         spacing: 5
@@ -61,6 +68,8 @@ MainFrameWidget:
             text: 'Capture'
             size_hint_x: .35
             on_press: root.update_and_submit()
+
+
 
 <ManualScreen>:
     BoxLayout:
@@ -141,7 +150,7 @@ MainFrameWidget:
         # Information and controls
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: .17
+            size_hint_y: .25
             spacing: 5
 
             # Left side: Information labels
@@ -212,17 +221,14 @@ MainFrameWidget:
                         text: 'Null'
                         bold: True
                         font_size: 20
-
                 GridLayout:
                     cols: 2
                     size_hint_y: None
                     height: '30dp'
-
                     Label:
                         text: 'Using Crop'
                         bold: True
                         font_size: 20
-
                     Label:
                         id: using_crop_value_status
                         text: "Using Crop: Off"
@@ -277,6 +283,8 @@ MainFrameWidget:
                 error_center_t: manual_center_target_position
                 # camera_status_label: camera_status
 
+
+
 <SetAutoScreen>:
     BoxLayout:
         orientation: 'vertical'
@@ -286,11 +294,15 @@ MainFrameWidget:
         # Camera status label
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: .05
+            size_hint_y: .09
             Label:
                 id: auto_camera_status
                 text: 'Auto menu || Camera status: Off'
                 bold: True
+            # Label:
+            #     id: helio_stats_operate
+            #     text: "Unidentified"
+            #     bold: True
 
         # Camera control buttons
         GridLayout:
@@ -446,32 +458,32 @@ MainFrameWidget:
                         font_size: 20
             
             ### helio stats and camera selectiom ###
-            GridLayout:
-                rows: 2
-                size_hint_x: .23
-                Label:
-                    id: selected_label_camera
-                    text: "None"
-                Spinner:
-                    id: spinner_camera
-                    text: 'Select Camera'
-                    size_hint: None, None
-                    size: 200, 44
-                    pos_hint: {'center_x': 0.5}
-                    on_text: root.select_drop_down_menu_camera(self, self.text)
-            GridLayout:
-                rows: 2
-                size_hint_x: .23
-                Label:
-                    id: selected_label_helio_stats
-                    text: "None"
-                Spinner:
-                    id: spinner_helio_stats
-                    text: 'Select helio'
-                    size_hint: None, None
-                    size: 200, 44
-                    pos_hint: {'center_x': 0.5}
-                    on_text: root.select_drop_down_menu_helio_stats(self, self.text)
+            # GridLayout:
+            #     rows: 2
+            #     size_hint_x: .23
+            #     Label:
+            #         id: selected_label_camera
+            #         text: "None"
+            #     Spinner:
+            #         id: spinner_camera
+            #         text: 'Select Camera'
+            #         size_hint: None, None
+            #         size: 200, 44
+            #         pos_hint: {'center_x': 0.5}
+            #         on_text: root.select_drop_down_menu_camera(self, self.text)
+            # GridLayout:
+            #     rows: 2
+            #     size_hint_x: .23
+            #     Label:
+            #         id: selected_label_helio_stats
+            #         text: "None"
+            #     Spinner:
+            #         id: spinner_helio_stats
+            #         text: 'Select helio'
+            #         size_hint: None, None
+            #         size: 200, 44
+            #         pos_hint: {'center_x': 0.5}
+            #         on_text: root.select_drop_down_menu_helio_stats(self, self.text)
 
             # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
@@ -492,24 +504,42 @@ MainFrameWidget:
                     on_press: root.active_crop_value()
                     background_color: (.4, .4, .4, 1)
 
-            BoxLayout:
-                
-                Button:
-                    id: auto_mode
-                    text: 'Auto off'
-                    on_press: root.active_auto_mode()
-                    BlinkSpot:
-                        auto_text: self.parent.text
-                        size: 50, 50  
-                        pos: self.parent.x + 200, self.parent.center_y - self.height / 2
-                        canvas:
-                            Color:
-                                rgba: 1, 0, 0, self.opacity  # Red color with variable opacity
-                            Ellipse:
-                                pos: self.pos
-                                size: self.size
-                
-                    
+            ControllerAuto:
+                id: controller_auto
+                status_auto: auto_camera_status
+                center_frame_auto: auto_center_frame_position
+                center_target_auto: auto_center_target_position
+
+<ControllerAuto>:
+    orientation: 'vertical'
+    GridLayout:
+        cols: 2
+        size_hint_y: .4
+        Label:
+            id: helio_stats_operate
+            text: "unidentified helio stats"
+            bold: True
+            
+        Label:
+            id: mqtt_connection_status_auto
+            text: "Disconnect"
+            bold: True
+    Button:
+        id: label_auto_mode
+        text: 'Auto off'
+        on_press: root.active_auto_mode()
+        BlinkSpot:
+            auto_text: self.parent.text
+            size: 50, 50  
+            pos: self.parent.x + 200, self.parent.center_y - self.height / 2
+            canvas:
+                Color:
+                    rgba: 1, 0, 0, self.opacity  # Red color with variable opacity
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+
 <ListHelioStatsIp>:
     viewclass: 'Label'
     RecycleBoxLayout:

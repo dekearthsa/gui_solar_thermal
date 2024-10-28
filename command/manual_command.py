@@ -32,6 +32,8 @@ class ControllerManual(BoxLayout):
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_disconnect = self.on_disconnect
         Clock.schedule_once(lambda dt: self.mqtt_connection())
+        self.speed_screw = 1
+        self.distance_mm = 1 
         # Clock.schedule_once(lambda dt: self.camera_status_loop_update())
 
     # def camera_status_loop_update(self):
@@ -39,16 +41,19 @@ class ControllerManual(BoxLayout):
         
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
+            self.ids.mqtt_connection_status_manual.text = "Mqtt connected"
             print("MQTT Connection Successful")
             # Optionally subscribe to topics here
             # client.subscribe("your/topic")
         else:
+            self.ids.mqtt_connection_status_manual.text = "Mqtt connecting..."
             print(f"MQTT Connection Failed with code {rc}")
 
     def on_disconnect(self, client, userdata, rc):
         print("MQTT Disconnected")
 
     def mqtt_connection(self):
+        self.ids.mqtt_connection_status_manual.text = "Mqtt connecting..."
         try:
             # Connect to the MQTT broker
             self.mqtt_client.connect(self.mqtt_host)
@@ -56,14 +61,15 @@ class ControllerManual(BoxLayout):
             self.mqtt_client.loop_start()
             print("MQTT connection established and loop started.")
         except Exception as e:
+            self.ids.mqtt_connection_status_manual.text = "Fail to connect mqtt broker"
             print(f"MQTT connection failed: {e}")
 
-    def publish_message(self, message):
-        if self.mqtt_client.is_connected():
-            self.mqtt_client.publish(self.mqtt_topic, message)
-            print(f"Published message: {message}")
-        else:
-            print("Cannot publish, MQTT client is not connected.")
+    # def publish_message(self, message):
+    #     if self.mqtt_client.is_connected():
+    #         self.mqtt_client.publish(self.mqtt_topic, message)
+    #         print(f"Published message: {message}")
+    #     else:
+    #         print("Cannot publish, MQTT client is not connected.")
 
     # def haddle_save_first_pos(self):
     #     if self.is_first_pos == False:
@@ -72,6 +78,7 @@ class ControllerManual(BoxLayout):
     #         self.is_first_pos = True
     #     else:
     #         pass
+
     def show_popup_camera(self, message):
         popup = Popup(title='Camera status',
                 content=Label(text=message),
@@ -83,8 +90,17 @@ class ControllerManual(BoxLayout):
         # print(self.camera_status_controll)
         if self.camera_status_controll == "On":
             payload = {
-                "pos":"up",
-                "control": 1
+                "opt": "manual",
+                "direction":{
+                    "x":{
+                        "distance": 0,
+                        "speed": self.speed_screw
+                    },
+                    "y":{
+                        "distance": self.distance_mm,
+                        "speed": self.speed_screw
+                    }
+                },
             }
             self.mqtt_client.publish(self.mqtt_topic, str(payload))
         else:
@@ -94,8 +110,17 @@ class ControllerManual(BoxLayout):
         # self.haddle_save_first_pos()
         if self.camera_status_controll == "On":
             payload = {
-                "pos":"left",
-                "control": 1
+                "opt": "manual",
+                "direction":{
+                    "x":{
+                        "distance": self.distance_mm,
+                        "speed": self.speed_screw
+                    },
+                    "y":{
+                        "distance": 0,
+                        "speed": self.speed_screw
+                    }
+                },
             }
             self.mqtt_client.publish(self.mqtt_topic, str(payload))   
         else:
@@ -104,8 +129,17 @@ class ControllerManual(BoxLayout):
         # self.haddle_save_first_pos()
         if self.camera_status_controll == "On":
             payload = {
-                "pos":"right",
-                "control": 1
+                "opt": "manual",
+                "direction":{
+                    "x":{
+                        "distance": self.distance_mm,
+                        "speed": self.speed_screw
+                    },
+                    "y":{
+                        "distance": 0,
+                        "speed": self.speed_screw
+                    }
+                },
             }
             self.mqtt_client.publish(self.mqtt_topic, str(payload))
         else:
@@ -115,8 +149,17 @@ class ControllerManual(BoxLayout):
         # self.haddle_save_first_pos()
         if self.camera_status_controll == "On":
             payload = {
-                "pos":"down",
-                "control": 1
+                "opt": "manual",
+                "direction":{
+                    "x":{
+                        "distance":0,
+                        "speed": self.speed_screw
+                    },
+                    "y":{
+                        "distance": self.distance_mm,
+                        "speed": self.speed_screw
+                    }
+                },
             }
             self.mqtt_client.publish(self.mqtt_topic, str(payload))
         else:
@@ -129,7 +172,8 @@ class ControllerManual(BoxLayout):
         adding_time = {
             "timestamp": timestamp,
             "x_error":  self.x_error,
-            "y_error":  self.y_error
+            "y_error":  self.y_error,
+            "speed": self.speed_screw
         }
 
         filename = "./data/result/error_data.csv"
