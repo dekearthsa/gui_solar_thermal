@@ -578,7 +578,7 @@ class SetAutoScreen(Screen):
             cv2.CHAIN_APPROX_NONE
         )
         
-        return contours_light, frame_threshold, frame_HSV
+        return contours_light, frame_threshold
     
     def calculate_centers(self, contours):
         ###Calculate the centers of the given contours.###
@@ -652,7 +652,7 @@ class SetAutoScreen(Screen):
                     #         frame_gray, blur_kernel=(55, 55), thresh_val=(80,135), morph_kernel_size=(3, 3)
                     #     )
 
-                    contours_light, demo_light, hsv_frame = self.__find_bounding_boxes_hsv_mode(
+                    contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
                             low_H=self.static_low_h, 
                             low_S=self.static_low_s, 
@@ -792,7 +792,7 @@ class SetAutoScreen(Screen):
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                     except Exception as e:
-                        self.show_popup("Error", f"Save crop value first!")
+                        self.show_popup("Error", str(e))
                         return
 
     def show_popup(self, title, message):
