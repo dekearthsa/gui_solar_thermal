@@ -10,7 +10,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
 # from ..command import manual_command
 
-
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -311,7 +310,6 @@ class ManualScreen(Screen):
 
             # Reset selections after cropping
             self.reset_selection()
-
             self.show_popup("Success", "Image cropped successfully!")
 
     def order_points(self, pts):

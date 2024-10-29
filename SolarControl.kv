@@ -458,34 +458,34 @@ MainFrameWidget:
                         font_size: 20
             
             ### helio stats and camera selectiom ###
-            # GridLayout:
-            #     rows: 2
-            #     size_hint_x: .23
-            #     Label:
-            #         id: selected_label_camera
-            #         text: "None"
-            #     Spinner:
-            #         id: spinner_camera
-            #         text: 'Select Camera'
-            #         size_hint: None, None
-            #         size: 200, 44
-            #         pos_hint: {'center_x': 0.5}
-            #         on_text: root.select_drop_down_menu_camera(self, self.text)
-            # GridLayout:
-            #     rows: 2
-            #     size_hint_x: .23
-            #     Label:
-            #         id: selected_label_helio_stats
-            #         text: "None"
-            #     Spinner:
-            #         id: spinner_helio_stats
-            #         text: 'Select helio'
-            #         size_hint: None, None
-            #         size: 200, 44
-            #         pos_hint: {'center_x': 0.5}
-            #         on_text: root.select_drop_down_menu_helio_stats(self, self.text)
+            GridLayout:
+                rows: 2
+                size_hint_x: .23
+                Label:
+                    id: selected_label_camera
+                    text: "None"
+                Spinner:
+                    id: spinner_camera
+                    text: 'Select Camera'
+                    size_hint: None, None
+                    size: 200, 44
+                    pos_hint: {'center_x': 0.5}
+                    on_text: root.select_drop_down_menu_camera(self, self.text)
+            GridLayout:
+                rows: 2
+                size_hint_x: .23
+                Label:
+                    id: selected_label_helio_stats
+                    text: "None"
+                Spinner:
+                    id: spinner_helio_stats
+                    text: 'Select helio'
+                    size_hint: None, None
+                    size: 200, 44
+                    pos_hint: {'center_x': 0.5}
+                    on_text: root.select_drop_down_menu_helio_stats(self, self.text)
 
-            # Right side: Control buttons __recheck_perspective_transform
+            ### Right side: Control buttons __recheck_perspective_transform
             GridLayout:
                 cols: 3
                 spacing: 10
@@ -509,6 +509,8 @@ MainFrameWidget:
                 status_auto: auto_camera_status
                 center_frame_auto: auto_center_frame_position
                 center_target_auto: auto_center_target_position
+                helio_stats_id: selected_label_helio_stats
+                camera_url_id: selected_label_camera
 
 <ControllerAuto>:
     orientation: 'vertical'
@@ -521,8 +523,8 @@ MainFrameWidget:
             bold: True
             
         Label:
-            id: mqtt_connection_status_auto
-            text: "Disconnect"
+            id: camera_selection
+            text: "unidentified camera"
             bold: True
     Button:
         id: label_auto_mode

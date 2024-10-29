@@ -8,8 +8,8 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
-import paho.mqtt.client as mqtt
-import re
+# import paho.mqtt.client as mqtt
+# import re
 
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
@@ -41,7 +41,7 @@ class SetAutoScreen(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
-        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
+        Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 10
@@ -796,7 +796,7 @@ class SetAutoScreen(Screen):
                         return
 
     def show_popup(self, title, message):
-        ###Display a popup with a given title and message.###
+        ### Display a popup with a given title and message. ###
         popup = Popup(title=title,
                     content=Label(text=message),
                     size_hint=(None, None), size=(400, 200))
@@ -813,79 +813,14 @@ class SetAutoScreen(Screen):
             self.ids.auto_cam_image_demo.texture = core_image
             self.ids.auto_camera_status.text = "Manual menu || camera status off"
 
-    # def fetch_helio_stats_data(self):
-    #     with open('./data/setting/connection.json', 'r') as file:
-    #         data = json.load(file)
-    #     self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
-    #     self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
+    def fetch_helio_stats_data(self):
+        with open('./data/setting/connection.json', 'r') as file:
+            data = json.load(file)
+        self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
+        self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
     
-    # def select_drop_down_menu_camera(self,spinner, text):
-    #     self.ids.selected_label_camera.text = f"ID: {text}"
+    def select_drop_down_menu_camera(self,spinner, text):
+        self.ids.selected_label_camera.text = f"ID: {text}"
 
-    # def select_drop_down_menu_helio_stats(self, spinner, text):
-    #     self.ids.selected_label_helio_stats.text = f"ID: {text}"
-
-    # def mqtt_connection(self):
-    #     try:
-    #         # Connect to the MQTT broker
-    #         self.mqtt_client.connect(self.mqtt_host)
-    #         # Start the network loop in a separate thread
-    #         self.mqtt_client.loop_start()
-    #         print("MQTT connection established and loop started.")
-    #     except Exception as e:
-    #         print(f"MQTT connection failed: {e}")
-
-    # def on_connect(self, client, userdata, flags, rc):
-    #     if rc == 0:
-    #         print("MQTT Connection Successful")
-    #     else:
-    #         print(f"MQTT Connection Failed with code {rc}")
-
-    # def on_disconnect(self,client, userdata, rc):
-    #     print("MQTT Disconnected")
-
-    # def active_auto_mode(self):
-    #     is_auto = self.ids.auto_mode.text
-    #     if is_auto == "Auto off":
-    #         self.ids.auto_mode.text = "Auto on"
-    #         self.is_auto_mode = "Auto on"
-    #         diff_x, diff_y = self.__extract_coordinates(self.center_frame_auto.text, self.center_target_auto.text)
-    #         self.calculate_error_pixel_pub(diff_x=diff_x, diff_y=diff_y)
-    #     else: 
-    #         self.ids.auto_mode.text = "Auto off"
-    #         self.is_auto_mode = "Auto off"
-
-    # def __extract_coordinates(self, s1, s2):
-    #     pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
-    #     match = re.search(pattern, s1)
-    #     match_2 = re.search(pattern, s2)
-    #     if match:   
-    #         if match_2:
-    #             diff_x = int(match.group(1)) - int(match_2.group(1))
-    #             diff_y = int(match.group(2)) - int(match_2.group(2))
-    #             return diff_x, diff_y
-    #     else:
-    #         print("The string format is incorrect.")
-
-    # def calculate_error_pixel_pub(self, diff_x, diff_y):
-    #     static_array_topic = ["testtopic/1", "testtopic/2", "testtopic/3"]
-    #     for helio_stats_list in static_array_topic:
-    #         payload = {
-    #             "opt": "auto",
-    #             "direction":{
-    #                 "x":{
-    #                     "distance": diff_x,
-    #                     "speed": self.speed_screw
-    #                 },
-    #                 "y":{
-    #                     "distance":diff_y,
-    #                     "speed": self.speed_screw
-    #                 }
-    #             },
-    #         }
-    #         self.mqtt_client.publish(self.mqtt_connection,str(payload))
-    #         # Clock.schedule_interval(self.calculate_error_pixel_pub, 5)
-    #         # print(helio_stats_list)
-            
-        
-        
+    def select_drop_down_menu_helio_stats(self, spinner, text):
+        self.ids.selected_label_helio_stats.text = f"ID: {text}"

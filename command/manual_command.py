@@ -28,23 +28,17 @@ class ControllerManual(BoxLayout):
         self.first_pos_x = 0
         self.first_pos_y = 0
         self.is_first_pos = False
-        # self.camera_status_now = ""
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_disconnect = self.on_disconnect
         Clock.schedule_once(lambda dt: self.mqtt_connection())
         self.speed_screw = 1
         self.distance_mm = 1 
-        # Clock.schedule_once(lambda dt: self.camera_status_loop_update())
 
-    # def camera_status_loop_update(self):
-    #     self.camera_status_now = self.camera_status_label.text
         
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             self.ids.mqtt_connection_status_manual.text = "Mqtt connected"
             print("MQTT Connection Successful")
-            # Optionally subscribe to topics here
-            # client.subscribe("your/topic")
         else:
             self.ids.mqtt_connection_status_manual.text = "Mqtt connecting..."
             print(f"MQTT Connection Failed with code {rc}")
@@ -63,21 +57,6 @@ class ControllerManual(BoxLayout):
         except Exception as e:
             self.ids.mqtt_connection_status_manual.text = "Fail to connect mqtt broker"
             print(f"MQTT connection failed: {e}")
-
-    # def publish_message(self, message):
-    #     if self.mqtt_client.is_connected():
-    #         self.mqtt_client.publish(self.mqtt_topic, message)
-    #         print(f"Published message: {message}")
-    #     else:
-    #         print("Cannot publish, MQTT client is not connected.")
-
-    # def haddle_save_first_pos(self):
-    #     if self.is_first_pos == False:
-    #         self.first_pos_x = self.postion_x
-    #         self.first_pos_y = self.postion_y
-    #         self.is_first_pos = True
-    #     else:
-    #         pass
 
     def show_popup_camera(self, message):
         popup = Popup(title='Camera status',
@@ -194,9 +173,6 @@ class ControllerManual(BoxLayout):
         popup.open()
 
     def update_and_submit(self):
-        # self.camera_status_now = self.camera_status_label
-        # print(self.camera_status_label)
-        # print(self.camera_status_label.text)
         self.__extract_coordinates(self.error_center_f.text, self.error_center_t.text)
         self.__haddle_submit_cap_error()
 
