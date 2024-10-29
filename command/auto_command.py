@@ -46,21 +46,25 @@ class ControllerAuto(BoxLayout):
 
 
     def selection_url_by_id(self):
-        with open('./data/setting/connection.json', 'r') as file:
-            storage = json.load(file)
-        
-        h_id = self.__extract_coordinates_helio_stats_loop_checking(self.helio_stats_id.text)
-        c_id = self.__extract_coordinates_helio_stats_loop_checking(self.camera_url_id.text)
 
-        for helio_data in storage['helio_stats_ip']:
-            if h_id == helio_data['id']:
-                self.helio_stats_id_endpoint = helio_data['ip']
-                break
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                storage = json.load(file)
+            
+            h_id = self.__extract_coordinates_helio_stats_loop_checking(self.helio_stats_id.text)
+            c_id = self.__extract_coordinates_helio_stats_loop_checking(self.camera_url_id.text)
 
-        for camera_data in storage['camera_url']:
-            if c_id == camera_data['id']:
-                self.camera_endpoint = camera_data['url']
-                break
+            for helio_data in storage['helio_stats_ip']:
+                if h_id == helio_data['id']:
+                    self.helio_stats_id_endpoint = helio_data['ip']
+                    break
+
+            for camera_data in storage['camera_url']:
+                if c_id == camera_data['id']:
+                    self.camera_endpoint = camera_data['url']
+                    break
+        except Exception as e:
+            self.show_popup("Error", f"{e}")
 
     def active_auto_mode(self):
         self.selection_url_by_id()
