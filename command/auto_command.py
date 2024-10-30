@@ -1,5 +1,4 @@
 from kivy.uix.boxlayout import BoxLayout
-# import paho.mqtt.client as mqtt
 import csv
 import os
 from kivy.uix.popup import Popup
@@ -13,28 +12,26 @@ import requests
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
         self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
 
-        
-        Clock.schedule_once(lambda dt: self.fetch_helio_stats_list())
+        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_list())
         self.speed_screw = 1
         self.distance_mm = 1 
         self.is_auto_on = False
         self.static_title_mode = "Auto menu || Camera status:On"
         self.array_helio_stats = []
         self.time_loop_update = 2 ## 2 sec test update frame
-        self.stop_move_helio_x_stats = 2000 ### Stop move axis x when diff in theshold
-        self.stop_move_helio_y_stats = 2000 ### Stop move axis y when diff in theshold
+        self.stop_move_helio_x_stats = 2 ### Stop move axis x when diff in theshold
+        self.stop_move_helio_y_stats = 2 ### Stop move axis y when diff in theshold
         self.static_get_api_helio_stats_endpoint = "http://localhost:8888/demo/get"
-        # self.static_post_api_helio_stats_endpoint=  "http://localhost:8888/demo/post"
-    def fetch_helio_stats_list(self):
-        self.ids.helio_stats_operate.text = self.helio_stats_id.text
-        self.ids.camera_selection.text = self.camera_url_id.text
+
+    # def fetch_helio_stats_list(self):
+    #     self.ids.helio_stats_operate.text = self.helio_stats_id.text
+    #     self.ids.camera_selection.text = self.camera_url_id.text
 
 
     def show_popup(self, title, message):
@@ -94,7 +91,7 @@ class ControllerAuto(BoxLayout):
                 try:
                     payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
                     setJson = payload.json()
-                    print(setJson)
+                    # print(setJson)
                     # setJson = json.dumps(payload)
                     self.__haddle_save_positon(
                         timestamp=timestamp,
@@ -270,7 +267,8 @@ class ControllerAuto(BoxLayout):
             "st_path": st_path,
             "move_comp": move_comp,
             "elevation": elevation,
-            "azimuth": azimuth
+            "azimuth": azimuth,
+            "control_by": "machine"
         }
 
         filename = "./data/result/error_data.csv"
