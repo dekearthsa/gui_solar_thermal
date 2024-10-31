@@ -18,9 +18,9 @@ class ControllerManual(BoxLayout):
         self.y_error = 0
         self.postion_x = 0
         self.postion_y = 0
-        self.speed_manual = 400
-        self.speed_manual_x = 400
-        self.speed_manual_y = 400
+        self.speed_manual = 600
+        # self.speed_manual_x = 400
+        # self.speed_manual_y = 400
         self.step_input = 0.1
         self.helio_stats_selection = ""
         self.helio_stats_endpoint = ""
@@ -44,7 +44,7 @@ class ControllerManual(BoxLayout):
                     "topic":"up",
                     "step": self.step_input,
                     "speed": self.speed_manual,
-                    "speed_y": self.speed_manual_y,
+                    # "speed_y": self.speed_manual_y,
                 }
                 try:
                     response = requests.post(self.helio_stats_endpoint, json=payload_set)
@@ -67,7 +67,7 @@ class ControllerManual(BoxLayout):
                     "topic":"left",
                     "step": self.step_input,
                     "speed": self.speed_manual,
-                    "speed_y": self.speed_manual_y,
+                    # "speed_y": self.speed_manual_y,
                 }
 
                 try:
@@ -91,7 +91,7 @@ class ControllerManual(BoxLayout):
                     "topic":"right",
                     "step": self.step_input,
                     "speed": self.speed_manual,
-                    "speed_y": self.speed_manual_y,
+                    # "speed_y": self.speed_manual_y,
                 }
 
                 try:
@@ -115,7 +115,7 @@ class ControllerManual(BoxLayout):
                     "topic":"down",
                     "step": self.step_input,
                     "speed": self.speed_manual,
-                    "speed_y": self.speed_manual_y,
+                    # "speed_y": self.speed_manual_y,
                 }
 
                 try:

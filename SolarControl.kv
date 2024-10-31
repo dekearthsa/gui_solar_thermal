@@ -595,7 +595,30 @@ MainFrameWidget:
                     on_press: camera_list.reload()
                 ListCameraIp:
                     id: camera_list
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'Reset storage result CSV file.'
+            Button:
+                text: 'REST'
+        # GridLayout:
+        #     cols: 2
+        #     BoxLayout:
+        #         size_hint_x: .5
+        #         orientation: 'vertical'
+        #         Label:
+        #             text: 'Reset storage result CSV file.'
+        #         Button:
+        #             text: 'Reset'
+        #     BoxLayout:
+        #         size_hint_x: .5
+        #         orientation: 'vertical'
+        #         Label:
+        #             text: 'Reset storage result CSV file.'
+        #         Button:
+        #             text: 'Reset'
 
+                
 <UploadConnectionPage>:
     BoxLayout:
         orientation: 'vertical'

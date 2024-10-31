@@ -41,9 +41,8 @@ class ControllerAuto(BoxLayout):
                     size_hint=(None, None), size=(400, 200))
         popup.open()
 
-
+    ### camera endpoint debug ###
     def selection_url_by_id(self):
-
         try:
             with open('./data/setting/connection.json', 'r') as file:
                 storage = json.load(file)
@@ -84,98 +83,105 @@ class ControllerAuto(BoxLayout):
     def update_loop_calulate_diff(self, dt):
         current_helio_stats = self.__extract_coordinates_helio_stats_loop_checking(self.helio_stats_id.text)
         center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(self.center_frame_auto.text, self.center_target_auto.text)
-        if current_helio_stats == self.helio_stats_selection_id:
-            now = datetime.now()
-            timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-            if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
-                try:
-                    payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
-                    setJson = payload.json()
-                    # print(setJson)
-                    # setJson = json.dumps(payload)
-                    self.__haddle_save_positon(
-                        timestamp=timestamp,
-                        helio_stats_id=self.helio_stats_selection_id,
-                        camera_use = self.camera_selection,
-                        id=setJson['id'],
-                        currentX=setJson['currentX'],
-                        currentY=setJson['currentY'],
-                        err_posx=setJson['err_posx'],
-                        err_posy=setJson['err_posy'],
-                        x=setJson['safety']['x'],
-                        y=setJson['safety']['y'],
-                        x1=setJson['safety']['x1'],
-                        y1=setJson['safety']['y1'],
-                        ls1=setJson['safety']['ls1'],
-                        st_path=setJson['safety']['st_path'],
-                        move_comp=setJson['safety']['move_comp'],
-                        elevation=setJson['elevation'],
-                        azimuth=setJson['azimuth'],
-                    )
-                except Exception as e:
-                    self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
+        if self.status_auto.text == self.static_title_mode:
+            if current_helio_stats == self.helio_stats_selection_id:
+                now = datetime.now()
+                timestamp = now.strftime("%d/%m/%y %H:%M:%S")
+                if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
+                    try:
+                        payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
+                        setJson = payload.json()
+                        # print(setJson)
+                        # setJson = json.dumps(payload)
+                        self.__haddle_save_positon(
+                            timestamp=timestamp,
+                            helio_stats_id=self.helio_stats_selection_id,
+                            camera_use = self.camera_endpoint,
+                            id=setJson['id'],
+                            currentX=setJson['currentX'],
+                            currentY=setJson['currentY'],
+                            err_posx=setJson['err_posx'],
+                            err_posy=setJson['err_posy'],
+                            x=setJson['safety']['x'],
+                            y=setJson['safety']['y'],
+                            x1=setJson['safety']['x1'],
+                            y1=setJson['safety']['y1'],
+                            ls1=setJson['safety']['ls1'],
+                            st_path=setJson['safety']['st_path'],
+                            move_comp=setJson['safety']['move_comp'],
+                            elevation=setJson['elevation'],
+                            azimuth=setJson['azimuth'],
+                        )
+                    except Exception as e:
+                        self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
+                        self.turn_on_auto_mode = False
+                        self.ids.label_auto_mode.text = "Auto off"
+                        self.__off_loop_auto_calculate_diff()
+                else:
+                    self.__send_payload(
+                        axis="x,y",
+                        center_x=center_x,
+                        center_y=center_y,
+                        target_y=target_y,
+                        target_x=target_x,
+                        kp=1,
+                        ki=1,
+                        kd=2,
+                        max_speed=200,
+                        off_set=1,
+                        status="1"
+                        )
             else:
-                self.__send_payload(
-                    axis="x,y",
-                    center_x=center_x,
-                    center_y=center_y,
-                    target_y=target_y,
-                    target_x=target_x,
-                    kp=1,
-                    ki=1,
-                    kd=2,
-                    max_speed=200,
-                    off_set=1,
-                    status="1"
-                    )
+                self.show_popup("Alert", f"Helio stats endpoint have change!")
+                self.helio_stats_selection_id = current_helio_stats
+                if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
+                    try:
+                        payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
+                        setJson = json.dumps(payload)
+                        self.__haddle_save_positon(
+                            timestamp=timestamp,
+                            helio_stats_id=self.helio_stats_selection_id,
+                            camera_use = self.camera_endpoint,
+                            id=setJson['id'],
+                            currentX=setJson['currentX'],
+                            currentY=setJson['currentY'],
+                            err_posx=setJson['err_posx'],
+                            err_posy=setJson['err_posy'],
+                            x=setJson['safety']['x'],
+                            y=setJson['safety']['y'],
+                            x1=setJson['safety']['x1'],
+                            y1=setJson['safety']['y1'],
+                            ls1=setJson['safety']['ls1'],
+                            st_path=setJson['safety']['st_path'],
+                            move_comp=setJson['safety']['move_comp'],
+                            elevation=setJson['elevation'],
+                            azimuth=setJson['azimuth'],
+                        )
+                    except Exception as e:
+                        self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
+                        self.turn_on_auto_mode = False
+                        self.ids.label_auto_mode.text = "Auto off"
+                        self.__off_loop_auto_calculate_diff()
+                else:
+                    self.__send_payload(
+                        axis="x,y",
+                        center_x=center_x,
+                        center_y=center_y,
+                        target_y=target_y,
+                        target_x=target_x,
+                        kp=1,
+                        ki=1,
+                        kd=2,
+                        max_speed=200,
+                        off_set=1,
+                        status="1"
+                        )
         else:
-            self.show_popup("Alert", f"Helio stats endpoint have change!")
-            self.helio_stats_selection_id = current_helio_stats
-            if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
-                try:
-                    payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
-                    setJson = json.dumps(payload)
-                    self.__haddle_save_positon(
-                        timestamp=timestamp,
-                        helio_stats_id=self.helio_stats_selection_id,
-                        camera_use = self.camera_selection,
-                        id=setJson['id'],
-                        currentX=setJson['currentX'],
-                        currentY=setJson['currentY'],
-                        err_posx=setJson['err_posx'],
-                        err_posy=setJson['err_posy'],
-                        x=setJson['safety']['x'],
-                        y=setJson['safety']['y'],
-                        x1=setJson['safety']['x1'],
-                        y1=setJson['safety']['y1'],
-                        ls1=setJson['safety']['ls1'],
-                        st_path=setJson['safety']['st_path'],
-                        move_comp=setJson['safety']['move_comp'],
-                        elevation=setJson['elevation'],
-                        azimuth=setJson['azimuth'],
-                    )
-                except Exception as e:
-                    self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
-            else:
-                self.__send_payload(
-                    axis="x,y",
-                    center_x=center_x,
-                    center_y=center_y,
-                    target_y=target_y,
-                    target_x=target_x,
-                    kp=1,
-                    ki=1,
-                    kd=2,
-                    max_speed=200,
-                    off_set=1,
-                    status="1"
-                    )
+            self.show_popup("Alert", "Camera is offline.")
+            self.turn_on_auto_mode = False
+            self.ids.label_auto_mode.text = "Auto off"
+            self.__off_loop_auto_calculate_diff()
+
 
     def __on_loop_auto_calculate_diff(self):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
