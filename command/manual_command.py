@@ -4,7 +4,7 @@ import os
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from datetime import datetime
-import re
+# import re
 import json
 import requests
 from kivy.clock import Clock

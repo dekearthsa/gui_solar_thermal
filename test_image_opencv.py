@@ -1,3 +1,23 @@
+import json
+import cv2
+import numpy
+import csv
+import os
+import datetime
+import re
+import kivy
+import requests
+
+
+print("json => " + json.__version__)
+print("cv2 => " + cv2.__version__)
+print("numpy => " + numpy.__version__)
+print("csv => " + csv.__version__)
+# print("os => " + os.__version__)
+# print("datetime => " + datetime.__version__)
+print("re => " + re.__version__)
+print("kivy => " + kivy.__version__)
+print("requests => " + requests.__version__)
 # import cv2
 # import numpy as np
 
