@@ -44,8 +44,8 @@ class ManualScreen(Screen):
         self.static_blur_kernel = (55,55) 
         self.min_area = 50000
         self.max_area = 130000
-        self.static_mp4 = "vid_2.avi" ## path mp4 or camera url 
-        self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+        self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
+        #self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
