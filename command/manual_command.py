@@ -18,9 +18,9 @@ class ControllerManual(BoxLayout):
         self.y_error = 0
         self.postion_x = 0
         self.postion_y = 0
-        self.speed_manual = 100
-        # self.speed_manual_x = 400
-        # self.speed_manual_y = 400
+        self.static_speed_manual = 100
+        # self.static_speed_manual_x = 400
+        # self.static_speed_manual_y = 400
         self.step_input = 10
         self.helio_stats_selection = ""
         self.helio_stats_endpoint = ""
@@ -46,10 +46,10 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"up",
+                    "topic":self.static_manaul_dict['up'],
                     "step": self.step_input,
-                    "speed": self.speed_manual,
-                    # "speed_y": self.speed_manual_y,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
                 }
                 try:
                     response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
@@ -69,10 +69,10 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"reverse",
+                    "topic":self.static_manaul_dict['left'],
                     "step": self.step_input,
-                    "speed": self.speed_manual,
-                    # "speed_y": self.speed_manual_y,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
                 }
 
                 try:
@@ -89,14 +89,15 @@ class ControllerManual(BoxLayout):
             self.show_popup("Alert", "Please start camera")
 
     def push_right(self):
+        # print(self.static_manaul_dict['right'])
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"forward", 
+                    "topic":self.static_manaul_dict['right'], 
                     "step": self.step_input,
-                    "speed": self.speed_manual,
-                    # "speed_y": self.speed_manual_y,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
                 }
 
                 try:
@@ -121,10 +122,10 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"down",
+                    "topic":self.static_manaul_dict['down'],
                     "step": self.step_input,
-                    "speed": self.speed_manual,
-                    # "speed_y": self.speed_manual_y,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
                 }
 
                 try:
@@ -177,7 +178,7 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_endpoint != "":
                 try:
-                    payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
+                    payload = requests.get(url="http://"+self.static_get_api_helio_stats_endpoint)
                     setJson = payload.json()
 
                     now = datetime.now()

@@ -146,8 +146,57 @@ MainFrameWidget:
                     on_touch_down: None
                     on_touch_move: None
                     on_touch_up: None
-
+        
         # Information and controls
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.1
+            GridLayout:
+                cols: 3
+                GridLayout:
+                    cols: 3
+                    Label:
+                        text: 'Threshold V'
+                    Slider:
+                        id: slider_hsv_low_v
+                        min: 0
+                        max: 255
+                        step: 1
+                        orientation: 'horizontal'
+                        value:0
+                        on_value: root.haddle_change_hsv_threshold(self.value)
+                    Label:
+                        id: slider_hsv_low_v_label
+                        text: str(slider_hsv_low_v.value)
+                GridLayout:
+                    rows: 2
+                    GridLayout:
+                        cols: 3
+                        Label:
+                            text:"Step machine"
+                        TextInput:
+                            id: set_step_machine
+                            text: "Step machine"
+                        Button:
+                            id: btn_change_step_machine
+                            text: "update"
+                            on_press: root.haddle_change_step_machine()
+                    GridLayout:
+                        cols: 3
+                        Label:
+                            text:"Speed machine"
+                        TextInput:
+                            id: set_speed_machine
+                            text: "Speed machine"
+                        Button:
+                            id: btn_change_step_machine
+                            text: "update"
+                            on_press: root.haddle_change_speed_machine()
+                Button:
+                    size_hint_x: .15
+                    text: 'Reset threshold'
+                    on_press: root.haddle_reset_default_threshold()
+                    
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: .25
@@ -305,10 +354,6 @@ MainFrameWidget:
                 id: auto_camera_status
                 text: 'Auto menu || Camera status: Off'
                 bold: True
-            # Label:
-            #     id: helio_stats_operate
-            #     text: "Unidentified"
-            #     bold: True
 
         # Camera control buttons
         GridLayout:
@@ -373,6 +418,56 @@ MainFrameWidget:
 
 
         # Information and controls
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.1
+            GridLayout:
+                cols: 3
+                GridLayout:
+                    cols: 3
+                    Label:
+                        text: 'Threshold V'
+                    Slider:
+                        id: slider_hsv_low_v
+                        min: 0
+                        max: 255
+                        step: 1
+                        orientation: 'horizontal'
+                        value:0
+                        on_value: root.haddle_change_hsv_threshold(self.value)
+                    Label:
+                        id: slider_hsv_low_v_label
+                        text: str(slider_hsv_low_v.value)
+                
+                GridLayout:
+                    rows: 2
+                    GridLayout:
+                        cols: 3
+                        Label:
+                            text:"Step machine"
+                        TextInput:
+                            id: set_step_machine
+                            text: "Step machine"
+                        Button:
+                            id: btn_change_step_machine
+                            text: "update"
+                            on_press: root.haddle_change_step_machine()
+                    GridLayout:
+                        cols: 3
+                        Label:
+                            text:"Speed machine"
+                        TextInput:
+                            id: set_speed_machine
+                            text: "Speed machine"
+                        Button:
+                            id: btn_change_step_machine
+                            text: "update"
+                            on_press: root.haddle_change_speed_machine()
+                Button:
+                    size_hint_x: .15
+                    text: 'Reset threshold'
+                    on_press: root.haddle_reset_default_threshold()
+
         GridLayout:
             cols: 5
             size_hint_y: .25
@@ -477,6 +572,7 @@ MainFrameWidget:
                     size: 200, 44
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_camera(self, self.text)
+            
             GridLayout:
                 rows: 2
                 size_hint_x: .23
@@ -601,23 +697,6 @@ MainFrameWidget:
                 text: 'Reset storage result CSV file.'
             Button:
                 text: 'REST'
-        # GridLayout:
-        #     cols: 2
-        #     BoxLayout:
-        #         size_hint_x: .5
-        #         orientation: 'vertical'
-        #         Label:
-        #             text: 'Reset storage result CSV file.'
-        #         Button:
-        #             text: 'Reset'
-        #     BoxLayout:
-        #         size_hint_x: .5
-        #         orientation: 'vertical'
-        #         Label:
-        #             text: 'Reset storage result CSV file.'
-        #         Button:
-        #             text: 'Reset'
-
                 
 <UploadConnectionPage>:
     BoxLayout:

@@ -8,6 +8,10 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+
+# from datetime import timedelta
+# import logging
+# import time
 # from ..command import manual_command
 
 class ManualScreen(Screen):
@@ -32,7 +36,7 @@ class ManualScreen(Screen):
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
-
+        Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -42,14 +46,15 @@ class ManualScreen(Screen):
         self.static_high_s = 255
         self.static_high_v = 255
         self.static_blur_kernel = (55,55) 
-        self.min_area = 10 #50000
-        self.max_area = 130000
+        self.static_min_area = 50000
+        self.static_max_area = 130000
         # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
         # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         # "rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/""
         self.camera_connection = ""
         self.helio_stats_connection = ""
+        # self.start_time = time.time()
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -534,8 +539,6 @@ class ManualScreen(Screen):
                     array_2d.append(el)
                 array_1d.append(array_2d)
 
-            # print(array_1d)
-
             setting_data['perspective_transform'] = array_1d
             setting_data['max_width'] = self.max_width
             setting_data['max_height'] = self.max_height
@@ -634,10 +637,20 @@ class ManualScreen(Screen):
         return True
 
     def update_frame(self, dt):
-        ###Read frames from the capture and process them.###
+        ### Read frames from the capture and process them.###
         if self.capture:
             ret, frame = self.capture.read()
+            # debug_start = time.time()
             if ret:
+                ### log time start here ###
+                ### create image file ### 
+                # with open('./data/setting/frame.png', 'w') as file:
+                    # write frame
+
+                # self.capture.release()
+                # with open('./data/setting/frame.png', 'r') as file:
+                #     file 
+
                 try:
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_system = json.load(file)
@@ -654,12 +667,6 @@ class ManualScreen(Screen):
                             return
 
                     frame = cv2.flip(frame, 0)  # Flip frame vertically
-                    # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    
-                    ### ccc no crop ###
-                    # contours_light, demo_light = self.find_bounding_boxes(
-                    #         frame_gray, blur_kernel=(55, 55), thresh_val=(80,135), morph_kernel_size=(3, 3)
-                    #     )
 
                     contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
@@ -671,7 +678,6 @@ class ManualScreen(Screen):
                             high_V=self.static_high_v,
                             blur_kernel=self.static_blur_kernel
                         )
-                        
 
                     # Calculate centers
                     centers_light = self.calculate_centers(contours_light)
@@ -686,11 +692,11 @@ class ManualScreen(Screen):
                     bounding_box_frame_w = setting_system['max_width']
                     bounding_box_frame_h = setting_system['max_height']
 
-                    # min_area = 100
+                    # static_min_area = 100
                     # Draw centers and bounding boxes
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
-                        if self.min_area < c_area and self.max_area > c_area:
+                        if self.static_min_area < c_area and self.static_max_area > c_area:
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
@@ -700,12 +706,14 @@ class ManualScreen(Screen):
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
-                        if self.min_area < area:
+                        if self.static_min_area < area:
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    # debug_stop = time.time()
+                    # print(f"Time taken: {(debug_stop-debug_start)*10**3:.03f}ms")
 
                     # Convert frame to Kivy texture
                     texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
@@ -761,11 +769,11 @@ class ManualScreen(Screen):
                         bounding_box_frame_w = setting_system['max_width']
                         bounding_box_frame_h = setting_system['max_height']
 
-                        # min_area = 0
+                        # static_min_area = 0
                         # Draw centers and bounding boxes
                         for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                             c_area = cv2.contourArea(contours_light[idx])
-                            if self.min_area < c_area and self.max_area > c_area:
+                            if self.static_min_area < c_area and self.static_max_area > c_area:
                                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                                 cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
@@ -775,12 +783,14 @@ class ManualScreen(Screen):
 
                         for cnt in contours_light:
                             area = cv2.contourArea(cnt)
-                            if self.min_area < area:
+                            if self.static_min_area < area:
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
                         # Convert frame to RGB
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                        ### log stop time and delta time stop - start ### 
 
                         # Convert frame to Kivy texture
                         texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
@@ -800,6 +810,8 @@ class ManualScreen(Screen):
                             error_y = centers_frame[1] - centers_light[1][0]
                             self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
+                            # debug_stop = time.time()
+                            # print(f"Time taken: {(debug_stop-debug_start)*10**3:.03f}ms")
                     except Exception as e:
                         self.show_popup("Error", str(e))
                         return
@@ -857,3 +869,69 @@ class ManualScreen(Screen):
                     self.helio_stats_connection =  helio_stats['ip']
         except Exception as e:
             self.show_popup("Error", f"{e}")
+    
+    def haddle_fetch_threshold_data(self):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
+            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+        except Exception as e:
+            print(e)
+            self.show_popup("Error file not found", f"Failed to load setting file {e}")
+
+    def haddle_change_step_machine(self):
+        step_input = self.ids.set_step_machine.text
+        print(step_input)
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['distance_mm'] = int(step_input)
+
+            with open("./data/setting/setting.json", "w") as file:
+                json.dump(setting_data, file, indent=4)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+
+    def haddle_change_speed_machine(self):
+        speed_input = self.ids.set_speed_machine.text
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['speed_screw'] = int(speed_input)
+
+            with open("./data/setting/setting.json", "w") as file:
+                json.dump(setting_data, file, indent=4)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+    def haddle_change_hsv_threshold(self, value): 
+        try:
+            self.static_low_v = value
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['hsv_threshold']['low_v'] = int(value)
+            with open("./data/setting/setting.json", "w") as file:
+                json.dump(setting_data, file, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+    def haddle_reset_default_threshold(self):
+        
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file)
+
+        setting_data['hsv_threshold']['low_v'] = 180 ## default low_v
+        setting_data['control_speed_distance']['speed_screw'] = 100 ## default speed_screw
+        setting_data['control_speed_distance']['distance_mm'] = 10  ## default distance_mm 
+
+        with open("./data/setting/setting.json", "w") as file:
+            json.dump(setting_data, file, indent=4)
+
+        self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
+        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])

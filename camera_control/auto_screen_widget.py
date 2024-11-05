@@ -42,6 +42,7 @@ class SetAutoScreen(Screen):
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
+        Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -51,10 +52,10 @@ class SetAutoScreen(Screen):
         self.static_high_s = 255
         self.static_high_v = 255
         self.static_blur_kernel = (55,55) 
-        self.min_area = 3 #50000
-        self.max_area = 130000 #130000
-        self.speed_screw = 1
-        self.distance_mm = 1
+        self.static_min_area = 50000
+        self.static_max_area = 130000 #130000
+        # self.speed_screw = 1
+        # self.distance_mm = 1
 
         # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
@@ -686,11 +687,11 @@ class SetAutoScreen(Screen):
                     bounding_box_frame_w = setting_system['max_width']
                     bounding_box_frame_h = setting_system['max_height']
 
-                    # min_area = 100
+                    # static_min_area = 100
                     # Draw centers and bounding boxes
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
-                        if self.min_area < c_area and self.max_area > c_area:
+                        if self.static_min_area < c_area and self.static_max_area > c_area:
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
@@ -700,7 +701,7 @@ class SetAutoScreen(Screen):
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
-                        if self.min_area < area:
+                        if self.static_min_area < area:
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
@@ -761,11 +762,11 @@ class SetAutoScreen(Screen):
                         bounding_box_frame_w = setting_system['max_width']
                         bounding_box_frame_h = setting_system['max_height']
 
-                        # min_area = 0
+                        # static_min_area = 0
                         # Draw centers and bounding boxes
                         for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                             c_area = cv2.contourArea(contours_light[idx])
-                            if self.min_area < c_area and self.max_area > c_area:
+                            if self.static_min_area < c_area and self.static_max_area > c_area:
                                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                                 cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
@@ -775,7 +776,7 @@ class SetAutoScreen(Screen):
 
                         for cnt in contours_light:
                             area = cv2.contourArea(cnt)
-                            if self.min_area < area:
+                            if self.static_min_area < area:
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
@@ -856,3 +857,61 @@ class SetAutoScreen(Screen):
                     self.helio_stats_connection =  helio_stats['ip']
         except Exception as e:
             self.show_popup("Error", f"{e}")
+
+    def haddle_fetch_threshold_data(self):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
+            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+        except Exception as e:
+            self.show_popup("Error file not found", f"Failed to load setting file {e}")
+
+    def haddle_change_step_machine(self):
+        step_input = self.ids.set_step_machine.text
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['distance_mm'] = int(step_input)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+
+    def haddle_change_speed_machine(self):
+        speed_input = self.ids.set_speed_machine.text
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['speed_screw'] = int(speed_input)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+
+    def haddle_change_hsv_threshold(self, value):
+        try:
+            self.static_low_v = value
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['hsv_threshold']['low_v'] = int(value)
+            with open("./data/setting/setting.json", "w") as file:
+                json.dump(setting_data, file, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to upload value in setting file: {e}")
+
+    def haddle_reset_default_threshold(self):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file)
+
+        setting_data['hsv_threshold']['low_v'] = 180 ## default low_v
+        setting_data['control_speed_distance']['speed_screw'] = 100 ## default speed_screw
+        setting_data['control_speed_distance']['distance_mm'] = 10  ## default distance_mm 
+
+        with open("./data/setting/setting.json", "w") as file:
+            json.dump(setting_data, file, indent=4) 
+
+        self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
