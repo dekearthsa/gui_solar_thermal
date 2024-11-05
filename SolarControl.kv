@@ -38,13 +38,13 @@ MainFrameWidget:
             rows: 3
             GridLayout:
                 cols: 3
-                Label:
-                    text:""
+                Button:
+                    text:"Upper-L"
                 Button:
                     text: 'Upper'
                     on_press: root.push_upper()
-                Label:
-                    text:""
+                Button:
+                    text:"Upper_R"
             GridLayout:
                 cols: 3
                 Button:
@@ -57,13 +57,13 @@ MainFrameWidget:
                     on_press: root.push_right()
             GridLayout:
                 cols: 3
-                Label:
-                    text:""
+                Button:
+                    text:"Down-L"
                 Button:
                     text: 'Down'
                     on_press: root.push_down()
-                Label:
-                    text:""
+                Button:
+                    text:"Down_R"
         Button:
             text: 'Capture'
             size_hint_x: .35

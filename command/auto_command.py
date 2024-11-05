@@ -128,10 +128,10 @@ class ControllerAuto(BoxLayout):
                 else:
                     self.__send_payload(
                         axis=self.set_axis,
-                        center_x=center_x,
-                        center_y=center_y,
-                        target_y=target_y,
-                        target_x=target_x,
+                        center_x=center_x, # frame x 
+                        center_y=center_y, # frame y
+                        center_y_light=target_y, # center_y_light
+                        center_x_light=target_x, # center_x_light
                         kp=self.set_kp,
                         ki=self.set_ki,
                         kd=self.set_kd,
@@ -173,10 +173,10 @@ class ControllerAuto(BoxLayout):
                 else:
                     self.__send_payload(
                         axis=self.set_axis,
-                        center_x=center_x,
-                        center_y=center_y,
-                        target_y=target_y,
-                        target_x=target_x,
+                        center_x=center_x, # frame x
+                        center_y=center_y, # frame y
+                        center_y_light=target_y, # center y light
+                        center_x_light=target_x, # center x light
                         kp=self.set_kp,
                         ki=self.set_ki,
                         kd=self.set_kd,
@@ -209,28 +209,33 @@ class ControllerAuto(BoxLayout):
         if match:   
             if match_2:
                 center_x = int(match.group(1))
-                target_x = int(match_2.group(1))
+                center_x_light = int(match_2.group(1))
                 
                 center_y = int(match.group(2))
-                target_y = int(match_2.group(2))
+                center_y_light = int(match_2.group(2))
 
-                print("center_x match.group(1) => ", center_x)
-                print("target_x match_2.group(1) => ", target_x)
-                print("center_y match.group(2) => ", center_y)
-                print("target_y match_2.group(2) => ", target_y)
+                # print("center_x match.group(1) => ", center_x)
+                # print("target_x match_2.group(1) => ", center_x_light)
+                # print("center_y match.group(2) => ", center_y)
+                # print("target_y match_2.group(2) => ", center_y_light)
 
-                return center_x, center_y, target_x, target_y
+                return center_x, center_y, center_x_light, center_y_light
         else:
             print("The string format is incorrect.")
 
-    def __send_payload(self, axis,center_x, center_y,target_x,target_y,kp,ki,kd,max_speed,off_set,status):
+    def __send_payload(self, axis, 
+                    center_x, 
+                    center_y,
+                    center_x_light,
+                    center_y_light,
+                    kp,ki,kd,max_speed,off_set,status):
         payload = {
                 "topic":"auto",
                 "axis": axis,
-                "cx":target_x, # center_x
-                "cy":target_y, # center_y
-                "target_x":center_x, # target_x
-                "target_y":center_y, # target_y
+                "cx":center_x_light, # center x light
+                "cy":center_y_light, # center y light
+                "target_x":center_x, #  center x frame
+                "target_y":center_y, #  center y frame
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
@@ -245,7 +250,7 @@ class ControllerAuto(BoxLayout):
         try:
             response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers)
             print(payload)
-            print("http://"+self.helio_stats_id_endpoint+"/auto-data")
+            # print("http://"+self.helio_stats_id_endpoint+"/auto-data")
             print(response.status_code)
             if response.status_code != 200:
                 try:

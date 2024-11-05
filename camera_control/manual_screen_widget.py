@@ -691,9 +691,9 @@ class ManualScreen(Screen):
                     bounding_box_frame_y = centers_frame[1]
                     bounding_box_frame_w = setting_system['max_width']
                     bounding_box_frame_h = setting_system['max_height']
-
                     # static_min_area = 100
                     # Draw centers and bounding boxes
+                    
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
                         if self.static_min_area < c_area and self.static_max_area > c_area:
