@@ -44,20 +44,25 @@ class SetAutoScreen(Screen):
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
-        self.static_low_h = 10
+        self.static_low_h = 0 #10
         self.static_low_s = 0
-        self.static_low_v = 170
+        self.static_low_v = 180
         self.static_high_h = 179
         self.static_high_s = 255
         self.static_high_v = 255
         self.static_blur_kernel = (55,55) 
-        self.min_area = 50000
-        self.max_area = 130000
-        self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
+        self.min_area = 3 #50000
+        self.max_area = 130000 #130000
         self.speed_screw = 1
         self.distance_mm = 1
-        #self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
 
+        # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+        # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+        # rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/
+        # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
+        self.camera_connection = ""
+        self.helio_stats_connection = ""
+        
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
         img_widget = self.ids.auto_cam_image
@@ -604,17 +609,20 @@ class SetAutoScreen(Screen):
 
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
-        if not self.capture:
-            # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
-            # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-            self.capture = cv2.VideoCapture(self.camera_connection)
-            if not self.capture.isOpened():
-                self.show_popup("Error", "Could not open camera.")
-                self.ids.auto_camera_status.text = "Error: Could not open camera"
-                return
-            # controller_manual =self.ids.controller_manual
-            Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-            self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
+        if self.camera_connection != "" and self.helio_stats_connection != "":
+            if not self.capture:
+                # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
+                # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
+                self.capture = cv2.VideoCapture(self.camera_connection)
+                if not self.capture.isOpened():
+                    self.show_popup("Error", "Could not open camera.")
+                    self.ids.auto_camera_status.text = "Error: Could not open camera"
+                    return
+                # controller_manual =self.ids.controller_manual
+                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
+        else: 
+            self.show_popup("Alert", "Camera or helio stats must not empty.")
 
     def __recheck_perspective_transform(self,perspective):
         for el_array in  perspective:
@@ -819,9 +827,32 @@ class SetAutoScreen(Screen):
             data = json.load(file)
         self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
         self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
-    
+
     def select_drop_down_menu_camera(self,spinner, text):
+        # self.ids.selected_label_camera.text = f"ID: {text}"
+        self.call_close_camera()
+        self.show_popup("Alert", "Camera change")
         self.ids.selected_label_camera.text = f"ID: {text}"
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                storage = json.load(file)
+            
+            for camera_name in storage['camera_url']:
+                if text == camera_name['id']:
+                    self.camera_connection =  camera_name['url']
+        except Exception as e:
+            self.show_popup("Error", f"{e}")
 
     def select_drop_down_menu_helio_stats(self, spinner, text):
+        self.call_close_camera()
+        self.show_popup("Alert", "Helio stats change")
         self.ids.selected_label_helio_stats.text = f"ID: {text}"
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                storage = json.load(file)
+            
+            for helio_stats in storage['helio_stats_ip']:
+                if text == helio_stats['id']:
+                    self.helio_stats_connection =  helio_stats['ip']
+        except Exception as e:
+            self.show_popup("Error", f"{e}")

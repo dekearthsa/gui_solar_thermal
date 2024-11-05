@@ -18,16 +18,21 @@ class ControllerManual(BoxLayout):
         self.y_error = 0
         self.postion_x = 0
         self.postion_y = 0
-        self.speed_manual = 600
+        self.speed_manual = 100
         # self.speed_manual_x = 400
         # self.speed_manual_y = 400
-        self.step_input = 0.1
+        self.step_input = 10
         self.helio_stats_selection = ""
         self.helio_stats_endpoint = ""
         self.camera_selection = ""
         self.camera_endpoint = ""
         self.url_request_update = ""
-        self.static_get_api_helio_stats_endpoint = "http://localhost:8888/demo/get"
+        self.static_manaul_dict = {
+            "up": "up", 
+            "down": "down", 
+            "left":"reverse" ,
+            "right": "forward"}
+        self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
         Clock.schedule_once(lambda dt: self.loop_checking_status())
 
     def show_popup_camera(self, message):
@@ -47,7 +52,7 @@ class ControllerManual(BoxLayout):
                     # "speed_y": self.speed_manual_y,
                 }
                 try:
-                    response = requests.post(self.helio_stats_endpoint, json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
                     if response.status_code == 200:
                         pass
                     else:
@@ -64,14 +69,14 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"left",
+                    "topic":"reverse",
                     "step": self.step_input,
                     "speed": self.speed_manual,
                     # "speed_y": self.speed_manual_y,
                 }
 
                 try:
-                    response = requests.post(self.helio_stats_endpoint, json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
                     if response.status_code == 200:
                         pass
                     else:
@@ -88,14 +93,18 @@ class ControllerManual(BoxLayout):
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
-                    "topic":"right",
+                    "topic":"forward", 
                     "step": self.step_input,
                     "speed": self.speed_manual,
                     # "speed_y": self.speed_manual_y,
                 }
 
                 try:
-                    response = requests.post(self.helio_stats_endpoint, json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    print(payload_set)
+                    print(self.helio_stats_endpoint)
+                    print(response)
+                    
                     if response.status_code == 200:
                         pass
                     else:
@@ -119,7 +128,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post(self.helio_stats_endpoint, json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
                     if response.status_code == 200:
                         pass
                     else:
@@ -152,7 +161,7 @@ class ControllerManual(BoxLayout):
                     self.camera_selection =  self.__extract_coordinates_selection(self.camera_url_id_manual.text)
                     self.__find_address_by_id()
                     # print("Chnage init")
-                    self.show_popup("Alert", "Parameter have change")
+                    # self.show_popup("Alert", "Parameter have change")
                     # print(self.helio_stats_endpoint)
                     # print(self.camera_endpoint)
 

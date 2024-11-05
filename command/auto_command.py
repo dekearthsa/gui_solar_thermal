@@ -24,10 +24,18 @@ class ControllerAuto(BoxLayout):
         self.is_auto_on = False
         self.static_title_mode = "Auto menu || Camera status:On"
         self.array_helio_stats = []
-        self.time_loop_update = 2 ## 2 sec test update frame
+        self.time_loop_update = 5 ## 2 sec test update frame
         self.stop_move_helio_x_stats = 2 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 2 ### Stop move axis y when diff in theshold
-        self.static_get_api_helio_stats_endpoint = "http://localhost:8888/demo/get"
+        self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
+        
+        self.set_axis = "x"
+        self.set_kp = 1
+        self.set_ki = 1
+        self.set_kd = 2
+        self.set_max_speed = 200
+        self.set_off_set = 1
+        self.set_status ="1"
 
     # def fetch_helio_stats_list(self):
     #     self.ids.helio_stats_operate.text = self.helio_stats_id.text
@@ -119,17 +127,17 @@ class ControllerAuto(BoxLayout):
                         self.__off_loop_auto_calculate_diff()
                 else:
                     self.__send_payload(
-                        axis="x,y",
+                        axis=self.set_axis,
                         center_x=center_x,
                         center_y=center_y,
                         target_y=target_y,
                         target_x=target_x,
-                        kp=1,
-                        ki=1,
-                        kd=2,
-                        max_speed=200,
-                        off_set=1,
-                        status="1"
+                        kp=self.set_kp,
+                        ki=self.set_ki,
+                        kd=self.set_kd,
+                        max_speed=self.set_max_speed,
+                        off_set=self.set_off_set,
+                        status=self.set_status
                         )
             else:
                 self.show_popup("Alert", f"Helio stats endpoint have change!")
@@ -164,24 +172,23 @@ class ControllerAuto(BoxLayout):
                         self.__off_loop_auto_calculate_diff()
                 else:
                     self.__send_payload(
-                        axis="x,y",
+                        axis=self.set_axis,
                         center_x=center_x,
                         center_y=center_y,
                         target_y=target_y,
                         target_x=target_x,
-                        kp=1,
-                        ki=1,
-                        kd=2,
-                        max_speed=200,
-                        off_set=1,
-                        status="1"
+                        kp=self.set_kp,
+                        ki=self.set_ki,
+                        kd=self.set_kd,
+                        max_speed=self.set_max_speed,
+                        off_set=self.set_off_set,
+                        status=self.set_status
                         )
         else:
             self.show_popup("Alert", "Camera is offline.")
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
             self.__off_loop_auto_calculate_diff()
-
 
     def __on_loop_auto_calculate_diff(self):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
@@ -193,7 +200,6 @@ class ControllerAuto(BoxLayout):
         return helio_id.split(": ")[1]
     
     # def __extract_coordinates_camera_loop_checking(self, camera_id):
-
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
         pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
@@ -207,8 +213,12 @@ class ControllerAuto(BoxLayout):
                 
                 center_y = int(match.group(2))
                 target_y = int(match_2.group(2))
-                # diff_x = int(match.group(1)) - int(match_2.group(1))
-                # diff_y = int(match.group(2)) - int(match_2.group(2))
+
+                print("center_x match.group(1) => ", center_x)
+                print("target_x match_2.group(1) => ", target_x)
+                print("center_y match.group(2) => ", center_y)
+                print("target_y match_2.group(2) => ", target_y)
+
                 return center_x, center_y, target_x, target_y
         else:
             print("The string format is incorrect.")
@@ -217,10 +227,10 @@ class ControllerAuto(BoxLayout):
         payload = {
                 "topic":"auto",
                 "axis": axis,
-                "cx":center_x,
-                "cy":center_y,
-                "target_x":target_x,
-                "target_y":target_y,
+                "cx":target_x, # center_x
+                "cy":target_y, # center_y
+                "target_x":center_x, # target_x
+                "target_y":center_y, # target_y
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
@@ -233,7 +243,10 @@ class ControllerAuto(BoxLayout):
         }
         
         try:
-            response = requests.post(self.helio_stats_id_endpoint, data=json.dumps(payload), headers=headers)
+            response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers)
+            print(payload)
+            print("http://"+self.helio_stats_id_endpoint+"/auto-data")
+            print(response.status_code)
             if response.status_code != 200:
                 try:
                     error_info = response.json()

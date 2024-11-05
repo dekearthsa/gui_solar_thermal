@@ -2,25 +2,25 @@
     "helio_stats_ip": [
         {
             "id": "h1",
-            "ip": "http://localhost:8888/demo/post/h1"
+            "ip": "192.168.0.106"
         },
         {
             "id": "h2",
-            "ip": "http://localhost:8888/demo/post/h2"
+            "ip": "192.168.0.106"
         },
         {
             "id": "h3",
-            "ip": "http://localhost:8888/demo/post/h3"
+            "ip": "192.168.0.106"
         }
     ],
     "camera_url": [
         {
-            "id": "camera-1",
-            "url": "rtsp://username:password@camera_ip:port/stream"
+            "id": "camera-bottom",
+            "url": "vid_2.avi"
         },
         {
-            "id": "camera-2",
-            "url": "rtsp://username:password@camera_ip:port/stream2"
+            "id": "camera-top",
+            "url": "vid_1.avi"
         }
     ]
 }
