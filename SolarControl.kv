@@ -107,6 +107,27 @@ MainFrameWidget:
                 text: "Cancel Crop"
                 background_color: (.4, .4, .4, 1)
                 on_press: root.reset_selection()
+        
+        GridLayout:
+            cols: 3
+            size_hint_y: .1
+            canvas:
+                Color:
+                    rgba: .2, .2, .2, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            Label:
+                text: 'Light center detected'
+                bold: True
+            Label:
+                id: number_of_center_light_detected
+                text: 'None'
+                bold: True
+            Label:
+                id: description_of_center_light_count
+                text: 'Description:'
+                bold: True
 
         # Area for camera image and cropping interaction
         GridLayout:
@@ -339,6 +360,7 @@ MainFrameWidget:
                 error_center_t: manual_center_target_position
                 helio_stats_id_manual: selected_label_helio_stats
                 camera_url_id_manual: selected_label_camera
+                number_center_light: number_of_center_light_detected
 
 <SetAutoScreen>:
     BoxLayout:
@@ -376,6 +398,26 @@ MainFrameWidget:
                 text: "Cancel Crop"
                 background_color: (.4, .4, .4, 1)
                 on_press: root.reset_selection()
+        GridLayout:
+            cols: 3
+            size_hint_y: .1
+            canvas:
+                Color:
+                    rgba: .2, .2, .2, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            Label:
+                text: 'Light center detected'
+                bold: True
+            Label:
+                id: number_of_center_light_detected
+                text: 'None'
+                bold: True
+            Label:
+                id: description_of_center_light_count
+                text: 'Description:'
+                bold: True
 
         GridLayout:
             cols:2
@@ -613,6 +655,8 @@ MainFrameWidget:
                 center_target_auto: auto_center_target_position
                 helio_stats_id: selected_label_helio_stats
                 camera_url_id: selected_label_camera
+                number_center_light: number_of_center_light_detected
+                
 
 <ControllerAuto>:
     orientation: 'vertical'

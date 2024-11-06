@@ -170,7 +170,10 @@ class ControllerManual(BoxLayout):
         Clock.schedule_interval(self.update_status_now, 1)
 
     def update_and_submit(self):
-        self.__haddle_submit_cap_error()
+        if int(self.number_center_light.text) == 1:
+            self.__haddle_submit_cap_error()
+        else:
+            self.show_popup("Alert", f"Light center must detected equal 1.")
 
     def __haddle_submit_cap_error(self):
         status_camera = self.__checking_status_camera_open()

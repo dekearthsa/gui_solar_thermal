@@ -74,15 +74,18 @@ class ControllerAuto(BoxLayout):
         self.selection_url_by_id()
         if self.camera_endpoint != "" and self.helio_stats_id_endpoint != "":
             if self.status_auto.text == self.static_title_mode:
-                if self.turn_on_auto_mode == False:
-                    self.turn_on_auto_mode = True
-                    self.helio_stats_selection_id = self.helio_stats_id.text.split(": ")[1]
-                    self.ids.label_auto_mode.text = "Auto on"
-                    self.__on_loop_auto_calculate_diff()
+                if int(self.number_center_light.text) == 1:
+                    if self.turn_on_auto_mode == False:
+                        self.turn_on_auto_mode = True
+                        self.helio_stats_selection_id = self.helio_stats_id.text.split(": ")[1]
+                        self.ids.label_auto_mode.text = "Auto on"
+                        self.__on_loop_auto_calculate_diff()
+                    else:
+                        self.turn_on_auto_mode = False
+                        self.ids.label_auto_mode.text = "Auto off"
+                        self.__off_loop_auto_calculate_diff()
                 else:
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
+                    self.show_popup("Alert", f"Light center must detected equal 1.")
             else: 
                 self.show_popup("Alert", f"Please turn on camera.")
         else:
@@ -249,9 +252,11 @@ class ControllerAuto(BoxLayout):
         
         try:
             response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers)
-            print(payload)
-            # print("http://"+self.helio_stats_id_endpoint+"/auto-data")
-            print(response.status_code)
+            print("=== DEBUG AUTO ===")
+            print("End point => ","http://"+self.helio_stats_id_endpoint+"/auto-data")
+            print("payload => ",payload)
+            print("reply status => ",response.status_code)
+            print("\n")
             if response.status_code != 200:
                 try:
                     error_info = response.json()

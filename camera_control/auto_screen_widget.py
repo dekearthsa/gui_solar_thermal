@@ -689,6 +689,7 @@ class SetAutoScreen(Screen):
 
                     # static_min_area = 100
                     # Draw centers and bounding boxes
+                    counting_light_center = 0
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
                         if self.static_min_area < c_area and self.static_max_area > c_area:
@@ -701,7 +702,8 @@ class SetAutoScreen(Screen):
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
-                        if self.static_min_area < area:
+                        if self.static_min_area < c_area and self.static_min_area < area:
+                            counting_light_center += 1
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
@@ -720,6 +722,8 @@ class SetAutoScreen(Screen):
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
+                        self.ids.number_of_center_light_detected.text = str(counting_light_center)
+                        self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
                         self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
                         self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
                         error_x = centers_frame[0] - centers_light[0][0]
@@ -764,6 +768,7 @@ class SetAutoScreen(Screen):
 
                         # static_min_area = 0
                         # Draw centers and bounding boxes
+                        counting_light_center = 0
                         for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                             c_area = cv2.contourArea(contours_light[idx])
                             if self.static_min_area < c_area and self.static_max_area > c_area:
@@ -776,7 +781,8 @@ class SetAutoScreen(Screen):
 
                         for cnt in contours_light:
                             area = cv2.contourArea(cnt)
-                            if self.static_min_area < area:
+                            if self.static_min_area < c_area and self.static_min_area < area:
+                                counting_light_center += 1
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
@@ -795,6 +801,8 @@ class SetAutoScreen(Screen):
 
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
+                            self.ids.number_of_center_light_detected.text = str(counting_light_center)
+                            self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
                             self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
                             self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
                             error_x = centers_frame[0] - centers_light[0][0]
@@ -804,6 +812,14 @@ class SetAutoScreen(Screen):
                     except Exception as e:
                         self.show_popup("Error", str(e))
                         return
+
+    def __description_light_detected(self, number_center_light):
+        if number_center_light == 1:
+            return "Description: light detected status healthy!"
+        elif number_center_light < 1:
+            return "Description: not found light detected status unhealthy!"
+        elif number_center_light > 1:
+            return "Description: more than 1 found light detected status unhealthy!"
 
     def show_popup(self, title, message):
         ### Display a popup with a given title and message. ###
