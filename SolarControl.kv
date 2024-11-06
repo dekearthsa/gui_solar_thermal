@@ -175,7 +175,7 @@ MainFrameWidget:
             GridLayout:
                 cols: 3
                 GridLayout:
-                    cols: 3
+                    cols: 4
                     Label:
                         text: 'Threshold V'
                     Slider:
@@ -189,6 +189,10 @@ MainFrameWidget:
                     Label:
                         id: slider_hsv_low_v_label
                         text: str(slider_hsv_low_v.value)
+                    Button:
+                        text: "Reset low_v"
+                        on_press: root.haddle_reset_default_threshold_low_v()
+
                 GridLayout:
                     rows: 2
                     GridLayout:
@@ -466,7 +470,7 @@ MainFrameWidget:
             GridLayout:
                 cols: 3
                 GridLayout:
-                    cols: 3
+                    cols: 4
                     Label:
                         text: 'Threshold V'
                     Slider:
@@ -480,7 +484,10 @@ MainFrameWidget:
                     Label:
                         id: slider_hsv_low_v_label
                         text: str(slider_hsv_low_v.value)
-                
+                    Button:
+                        text: "Reset low_v"
+                        on_press: root.haddle_reset_default_threshold_low_v()
+
                 GridLayout:
                     rows: 2
                     GridLayout:

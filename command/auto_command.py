@@ -315,4 +315,15 @@ class ControllerAuto(BoxLayout):
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
             self.__off_loop_auto_calculate_diff()
-            self.show_popup(f"Error saving file:\n{str(e)}")
+            self.show_popup(f"Error saving file:\n{str(e)}")    
+
+    def haddle_reset_default_threshold_low_v(self):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file)
+        
+        setting_data['hsv_threshold']['low_v'] = 180 ## default low_v
+
+        with open("./data/setting/setting.json", "w") as file:
+            json.dump(setting_data, file, indent=4)
+        
+        self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
