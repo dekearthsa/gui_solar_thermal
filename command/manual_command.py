@@ -31,7 +31,12 @@ class ControllerManual(BoxLayout):
             "up": "up", 
             "down": "down", 
             "left":"reverse" ,
-            "right": "forward"}
+            "left_down": "bottom_left",
+            "left_up":"top_left",
+            "right": "forward",
+            "right_down": "bottom_right",
+            "right_up": "top_right"
+            }
         self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
         Clock.schedule_once(lambda dt: self.loop_checking_status())
 
@@ -123,6 +128,126 @@ class ControllerManual(BoxLayout):
             if self.helio_stats_selection != "" and self.camera_selection != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['down'],
+                    "step": self.step_input,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
+                }
+
+                try:
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                except Exception as e:
+                    self.show_popup("Error", f"Connecton error {str(e)}")
+            else:
+                self.show_popup("Alert", "Please helio stats and camera")
+        else:
+            self.show_popup("Alert", "Please start camera")
+
+    def haddle_stop(self):
+        status_camera = self.__checking_status_camera_open()
+        if status_camera == True:
+            if self.helio_stats_selection != "" and self.camera_selection != "":
+                payload_set = {
+                    "topic":"stop"
+                }
+                try:
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                except Exception as e:
+                    self.show_popup("Error", f"Connecton error {str(e)}")
+            else:
+                self.show_popup("Alert", "Please helio stats and camera")
+        else:
+            self.show_popup("Alert", "Please start camera")
+
+    ### on imp ###
+    def push_right_down(self):
+        status_camera = self.__checking_status_camera_open()
+        if status_camera == True:
+            if self.helio_stats_selection != "" and self.camera_selection != "":
+                payload_set = {
+                    "topic":self.static_manaul_dict['right_down'],
+                    "step": self.step_input,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
+                }
+
+                try:
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                except Exception as e:
+                    self.show_popup("Error", f"Connecton error {str(e)}")
+            else:
+                self.show_popup("Alert", "Please helio stats and camera")
+        else:
+            self.show_popup("Alert", "Please start camera")
+
+    ### on imp ###
+    def push_left_down(self):
+        status_camera = self.__checking_status_camera_open()
+        if status_camera == True:
+            if self.helio_stats_selection != "" and self.camera_selection != "":
+                payload_set = {
+                    "topic":self.static_manaul_dict['left_up'],
+                    "step": self.step_input,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
+                }
+
+                try:
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                except Exception as e:
+                    self.show_popup("Error", f"Connecton error {str(e)}")
+            else:
+                self.show_popup("Alert", "Please helio stats and camera")
+        else:
+            self.show_popup("Alert", "Please start camera")
+
+    ### on imp ###
+    def push_left_up(self):
+        status_camera = self.__checking_status_camera_open()
+        if status_camera == True:
+            if self.helio_stats_selection != "" and self.camera_selection != "":
+                payload_set = {
+                    "topic":self.static_manaul_dict['left_up'],
+                    "step": self.step_input,
+                    "speed": self.static_speed_manual,
+                    # "speed_y": self.static_speed_manual_y,
+                }
+
+                try:
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                except Exception as e:
+                    self.show_popup("Error", f"Connecton error {str(e)}")
+            else:
+                self.show_popup("Alert", "Please helio stats and camera")
+        else:
+            self.show_popup("Alert", "Please start camera")
+
+    ### on imp ###
+    def push_right_up(self):
+        status_camera = self.__checking_status_camera_open()
+        if status_camera == True:
+            if self.helio_stats_selection != "" and self.camera_selection != "":
+                payload_set = {
+                    "topic":self.static_manaul_dict['right_up'],
                     "step": self.step_input,
                     "speed": self.static_speed_manual,
                     # "speed_y": self.static_speed_manual_y,
@@ -269,3 +394,6 @@ class ControllerManual(BoxLayout):
     #             print("The string format is incorrect.")
     #     else:
     #         print("The string format is incorrect.")
+
+
+

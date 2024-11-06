@@ -39,19 +39,23 @@ MainFrameWidget:
             GridLayout:
                 cols: 3
                 Button:
+                    # background_normal: "./images/t-l.png"
                     text:"Upper-L"
+                    on_press: root.push_left_up()
                 Button:
                     text: 'Upper'
                     on_press: root.push_upper()
                 Button:
                     text:"Upper_R"
+                    on_press: root.push_right_up()
             GridLayout:
                 cols: 3
                 Button:
                     text: 'left'
                     on_press: root.push_left()
-                Label:
-                    text:"..."
+                Button:
+                    text:"stop"
+                    on_press: root.haddle_stop()
                 Button:
                     text:'right'
                     on_press: root.push_right()
@@ -59,11 +63,13 @@ MainFrameWidget:
                 cols: 3
                 Button:
                     text:"Down-L"
+                    on_press: root.push_left_down()
                 Button:
                     text: 'Down'
                     on_press: root.push_down()
                 Button:
                     text:"Down_R"
+                    on_press: root.push_right_down()
         Button:
             text: 'Capture'
             size_hint_x: .35
