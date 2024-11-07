@@ -377,7 +377,6 @@ class SetAutoScreen(Screen):
             return frame  # Not enough points to perform transform
 
         # Order points: top-left, top-right, bottom-right, bottom-left
-        # print(self.selected_points)
         pts = self.order_points(np.array(self.selected_points, dtype='float32'))
 
         if not self.is_valid_quadrilateral(pts):
@@ -556,14 +555,6 @@ class SetAutoScreen(Screen):
             self.show_popup("Error", f"Failed to save crop values: {e}")
     
     def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
-        ###Find contours in the frame based on the specified parameters.###
-        # blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
-        # _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        # kernel = np.ones(morph_kernel_size, np.uint8)
-        # thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        # return contours, thresh
-
         blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
         _, thresh = cv2.threshold(blurred, thresh_val[0], thresh_val[1], cv2.THRESH_BINARY)
         kernel = np.ones(morph_kernel_size, np.uint8)
@@ -655,12 +646,6 @@ class SetAutoScreen(Screen):
                             return
 
                     frame = cv2.flip(frame, 0)  # Flip frame vertically
-                    # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    
-                    ### ccc no crop ###
-                    # contours_light, demo_light = self.find_bounding_boxes(
-                    #         frame_gray, blur_kernel=(55, 55), thresh_val=(80,135), morph_kernel_size=(3, 3)
-                    #     )
 
                     contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
@@ -677,8 +662,6 @@ class SetAutoScreen(Screen):
                     # Calculate centers
                     centers_light = self.calculate_centers(contours_light)
 
-                    ### using contours frame 
-                    # centers_frame = self.calculate_centers(contours_frame)
                     ### calulate center of frame
                     centers_frame = self.__calulate_centers_frame(frame)
 
@@ -687,7 +670,6 @@ class SetAutoScreen(Screen):
                     bounding_box_frame_w = setting_system['max_width']
                     bounding_box_frame_h = setting_system['max_height']
 
-                    # static_min_area = 100
                     # Draw centers and bounding boxes
                     counting_light_center = 0
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
@@ -739,12 +721,6 @@ class SetAutoScreen(Screen):
                             return
                         
                         frame = cv2.flip(frame, 0)  # Flip frame vertically
-                        # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                        ### ccc crop ###
-                        # contours_light, demo_light = self.find_bounding_boxes(
-                        #     frame_gray, blur_kernel=(55, 55), thresh_val=(120,135), morph_kernel_size=(3, 3)
-                        # )
 
                         contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
@@ -921,14 +897,12 @@ class SetAutoScreen(Screen):
         with open('./data/setting/setting.json', 'r') as file:
             setting_data = json.load(file)
 
-        # setting_data['hsv_threshold']['low_v'] = 180 ## default low_v
         setting_data['control_speed_distance']['speed_screw'] = 100 ## default speed_screw
         setting_data['control_speed_distance']['distance_mm'] = 10  ## default distance_mm 
 
         with open("./data/setting/setting.json", "w") as file:
             json.dump(setting_data, file, indent=4) 
 
-        # self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
         self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
         self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
 

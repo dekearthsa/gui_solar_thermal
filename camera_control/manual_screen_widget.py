@@ -8,11 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
-
-# from datetime import timedelta
-# import logging
 # import time
-# from ..command import manual_command
 
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
@@ -164,7 +160,6 @@ class ManualScreen(Screen):
 
     def on_touch_move(self, touch):
         ### Handle touch move events for rectangle cropping.### 
-        # img_widget = self.ids.manual_cam_image
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -372,7 +367,6 @@ class ManualScreen(Screen):
             return frame  # Not enough points to perform transform
 
         # Order points: top-left, top-right, bottom-right, bottom-left
-        # print(self.selected_points)
         pts = self.order_points(np.array(self.selected_points, dtype='float32'))
 
         if not self.is_valid_quadrilateral(pts):
@@ -549,13 +543,6 @@ class ManualScreen(Screen):
             self.show_popup("Error", f"Failed to save crop values: {e}")
     
     def find_bounding_boxes(self, gray_frame, blur_kernel, thresh_val, morph_kernel_size):
-        ###Find contours in the frame based on the specified parameters.###
-        # blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
-        # _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        # kernel = np.ones(morph_kernel_size, np.uint8)
-        # thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-        # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        # return contours, thresh
 
         blurred = cv2.GaussianBlur(gray_frame, blur_kernel, 0)
         _, thresh = cv2.threshold(blurred, thresh_val[0], thresh_val[1], cv2.THRESH_BINARY)
@@ -566,14 +553,6 @@ class ManualScreen(Screen):
 
 
     def __find_bounding_boxes_hsv_mode(self, frame_color, low_H, low_S, low_V, high_H, high_S, high_V, blur_kernel):
-        # low_H = 0
-        # low_S = 0
-        # low_V = 180
-        # high_H = 255
-        # high_S = 255
-        # high_V = 255
-        # frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
-        
         frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
         blurred = cv2.GaussianBlur(frame_HSV, blur_kernel, 0)
         frame_threshold = cv2.inRange(blurred, (low_H, low_S, low_V), (high_H, high_S, high_V))
@@ -644,13 +623,6 @@ class ManualScreen(Screen):
             if ret:
                 ### log time start here ###
                 ### create image file ### 
-                # with open('./data/setting/frame.png', 'w') as file:
-                    # write frame
-
-                # self.capture.release()
-                # with open('./data/setting/frame.png', 'r') as file:
-                #     file 
-
                 try:
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_system = json.load(file)
