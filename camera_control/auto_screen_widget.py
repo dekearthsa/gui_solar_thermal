@@ -65,6 +65,9 @@ class SetAutoScreen(Screen):
         # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
         self.camera_connection = ""
         self.helio_stats_connection = ""
+        self.frame_counter = 0
+        self.loop_start_time = time.time()
+        self.is_fps_frame_rate = 0
         
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -577,7 +580,6 @@ class SetAutoScreen(Screen):
             cv2.RETR_TREE, 
             cv2.CHAIN_APPROX_NONE
         )
-        
         return contours_light, frame_threshold
     
     def calculate_centers(self, contours):
@@ -607,7 +609,7 @@ class SetAutoScreen(Screen):
             if not self.capture:
                 # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
                 # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                self.capture = cv2.VideoCapture(self.camera_connection)
+                self.capture = cv2.VideoCapture(0) # self.camera_connection
                 if not self.capture.isOpened():
                     self.show_popup("Error", "Could not open camera.")
                     self.ids.auto_camera_status.text = "Error: Could not open camera"
@@ -628,14 +630,18 @@ class SetAutoScreen(Screen):
         return True
 
     def update_frame(self, dt):
-        ###Read frames from the capture and process them.###
+        ### Read frames from the capture and process them.###
         if self.capture:
-            loop_start_time = time.time()
+            FRAME_DURATION = 1.0 / self.fix_fps
+            self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
             ret, frame = self.capture.read()
             if ret:
                 ### start fix capture frame rate ###
-                FRAME_DURATION = 1.0 / self.fix_fps
-                self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
+                current_time = time.time()
+                # frame_counter = 0
+                # start_time = time.time()
+                # fps_display_interval = 1  # seconds
+                
                 try:
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_system = json.load(file)
@@ -697,16 +703,7 @@ class SetAutoScreen(Screen):
 
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
                     # Calculate elapsed time and determine sleep duration
-                    loop_end_time = time.time()
-                    elapsed_time = loop_end_time - loop_start_time
-                    sleep_time = FRAME_DURATION - elapsed_time
-                    self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
-                    if sleep_time > 0:
-                        time.sleep(sleep_time)
-                    else:
-                        pass
 
                     # Convert frame to Kivy texture
                     texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
@@ -718,7 +715,15 @@ class SetAutoScreen(Screen):
                     self.ids.auto_cam_image.texture = texture_rgb
                     self.ids.auto_cam_image_demo.texture = texture_bin
                     
+                    frame_flow = current_time - self.loop_start_time
+                    self.frame_counter += 1
+                    if frame_flow >= 1.0:
+                        self.is_fps_frame_rate = self.frame_counter / frame_flow
+                        self.ids.fps_frame.text = f"FPS: {int(self.is_fps_frame_rate)}"
+                        self.frame_counter = 0
+                        self.loop_start_time = current_time
                     
+
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
                         self.ids.number_of_center_light_detected.text = str(counting_light_center)
@@ -729,7 +734,15 @@ class SetAutoScreen(Screen):
                         error_y = centers_frame[1] - centers_light[1][0]
                         self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                
+
+                    loop_end_time = time.time()
+                    elapsed_time = loop_end_time - current_time
+                    sleep_time = FRAME_DURATION - elapsed_time
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    else:
+                        pass
+
                 ### using crop data ###
                 else:
                     try:
@@ -793,14 +806,14 @@ class SetAutoScreen(Screen):
                         self.ids.auto_cam_image_demo.texture = texture_bin
 
                         # Calculate elapsed time and determine sleep duration
-                        loop_end_time = time.time()
-                        elapsed_time = loop_end_time - loop_start_time
-                        sleep_time = FRAME_DURATION - elapsed_time
-                        self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
-                        if sleep_time > 0:
-                            time.sleep(sleep_time)
-                        else:
-                            pass
+                        frame_flow = current_time - self.loop_start_time
+                        self.frame_counter += 1
+                        if frame_flow >= 1.0:
+                            self.is_fps_frame_rate = self.frame_counter / frame_flow
+                            self.ids.fps_frame.text = f"FPS: {int(self.is_fps_frame_rate)}"
+                            self.frame_counter = 0
+                            self.loop_start_time = current_time
+
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
                             self.ids.number_of_center_light_detected.text = str(counting_light_center)
@@ -811,6 +824,15 @@ class SetAutoScreen(Screen):
                             error_y = centers_frame[1] - centers_light[1][0]
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
+                        
+                        loop_end_time = time.time()
+                        elapsed_time = loop_end_time - current_time
+                        sleep_time = FRAME_DURATION - elapsed_time
+                        if sleep_time > 0:
+                            time.sleep(sleep_time)
+                        else:
+                            pass
+
                     except Exception as e:
                         self.show_popup("Error", str(e))
                         return

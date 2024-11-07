@@ -2,10 +2,6 @@ import cv2
 import time
 
 def main():
-    # Desired Frames Per Second
-    DESIRED_FPS = 10
-    FRAME_DURATION = 1.0 / DESIRED_FPS  # Duration of each frame in seconds
-
     # Initialize video capture (0 for the default webcam)
     cap = cv2.VideoCapture(0)
 
@@ -14,7 +10,16 @@ def main():
         return
 
     # Optionally, set the camera's frame rate if supported
+    # Note: Not all cameras support setting FPS via OpenCV
+    DESIRED_FPS = 10
     cap.set(cv2.CAP_PROP_FPS, DESIRED_FPS)
+
+    # Variables for FPS calculation
+    fps = 0
+    frame_counter = 0
+    start_time = time.time()
+    fps_display_interval = 1  # seconds
+    frame_duration = 1.0 / DESIRED_FPS  # Duration of each frame in seconds
 
     while True:
         loop_start_time = time.time()
@@ -24,8 +29,19 @@ def main():
             print("Error: Failed to read frame.")
             break
 
-        # Prepare FPS text (fixed at DESIRED_FPS)
-        fps_text = f"FPS: {DESIRED_FPS}"
+        # Increment frame counter
+        frame_counter += 1
+
+        # Calculate FPS every fps_display_interval seconds
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+        if elapsed_time > fps_display_interval:
+            fps = frame_counter / elapsed_time
+            frame_counter = 0
+            start_time = current_time
+
+        # Prepare FPS text (real-time FPS)
+        fps_text = f"FPS: {int(fps)}"
 
         # Choose font, scale, color, and thickness
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -40,12 +56,12 @@ def main():
         cv2.putText(frame, fps_text, position, font, font_scale, color, thickness, cv2.LINE_AA)
 
         # Display the resulting frame
-        cv2.imshow('Video with Fixed FPS', frame)
+        cv2.imshow('Video with Real-Time FPS', frame)
 
         # Calculate elapsed time and determine sleep duration
         loop_end_time = time.time()
-        elapsed_time = loop_end_time - loop_start_time
-        sleep_time = FRAME_DURATION - elapsed_time
+        frame_elapsed_time = loop_end_time - loop_start_time
+        sleep_time = frame_duration - frame_elapsed_time
 
         if sleep_time > 0:
             time.sleep(sleep_time)

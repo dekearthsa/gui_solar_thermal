@@ -52,6 +52,9 @@ class ManualScreen(Screen):
         self.camera_connection = ""
         self.helio_stats_connection = ""
         # self.start_time = time.time()
+        self.frame_counter = 0
+        self.loop_start_time = time.time()
+        self.is_fps_frame_rate = 0
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -623,12 +626,12 @@ class ManualScreen(Screen):
     def update_frame(self, dt):
         ### Read frames from the capture and process them.###
         if self.capture:
-            loop_start_time = time.time()
+            FRAME_DURATION = 1.0 / self.fix_fps
+            self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
             ret, frame = self.capture.read()
             if ret:
                 ### start fix capture frame rate ###
-                FRAME_DURATION = 1.0 / self.fix_fps
-                self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
+                current_time = time.time()
                 ### log time start here ###
                 ### create image file ### 
                 try:
@@ -707,14 +710,16 @@ class ManualScreen(Screen):
                     self.ids.manual_cam_image_demo.texture = texture_bin
 
                     # Calculate elapsed time and determine sleep duration
-                    loop_end_time = time.time()
-                    elapsed_time = loop_end_time - loop_start_time
-                    sleep_time = FRAME_DURATION - elapsed_time
-                    self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
-                    if sleep_time > 0:
-                        time.sleep(sleep_time)
-                    else:
-                        pass
+                    # loop_end_time = time.time()
+                    
+                    frame_flow = current_time - self.loop_start_time
+                    self.frame_counter += 1
+                    if frame_flow >= 1.0:
+                        self.is_fps_frame_rate = self.frame_counter / frame_flow
+                        self.ids.fps_frame.text = f"FPS: {int(self.is_fps_frame_rate)}"
+                        self.frame_counter = 0
+                        self.loop_start_time = current_time
+
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
@@ -726,7 +731,15 @@ class ManualScreen(Screen):
                         error_y = centers_frame[1] - centers_light[1][0]
                         self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                
+                    
+                    loop_end_time = time.time()
+                    elapsed_time = loop_end_time - current_time
+                    sleep_time = FRAME_DURATION - elapsed_time
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    else:
+                        pass
+
                 ### using crop data ###
                 else:
                     try:
@@ -791,14 +804,14 @@ class ManualScreen(Screen):
                         self.ids.manual_cam_image_demo.texture = texture_bin
                         
                         # Calculate elapsed time and determine sleep duration
-                        loop_end_time = time.time()
-                        elapsed_time = loop_end_time - loop_start_time
-                        sleep_time = FRAME_DURATION - elapsed_time
-                        self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
-                        if sleep_time > 0:
-                            time.sleep(sleep_time)
-                        else:
-                            pass
+
+                        frame_flow = current_time - self.loop_start_time
+                        self.frame_counter += 1
+                        if frame_flow >= 1.0:
+                            self.is_fps_frame_rate = self.frame_counter / frame_flow
+                            self.ids.fps_frame.text = f"FPS: {int(self.is_fps_frame_rate)}"
+                            self.frame_counter = 0
+                            self.loop_start_time = current_time
 
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
@@ -812,6 +825,15 @@ class ManualScreen(Screen):
                             self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                             # debug_stop = time.time()
                             # print(f"Time taken: {(debug_stop-debug_start)*10**3:.03f}ms")
+                        
+                        loop_end_time = time.time()
+                        elapsed_time = loop_end_time - current_time
+                        sleep_time = FRAME_DURATION - elapsed_time
+                        if sleep_time > 0:
+                            time.sleep(sleep_time)
+                        else:
+                            pass
+
                     except Exception as e:
                         self.show_popup("Error", str(e))
                         return
