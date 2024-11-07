@@ -8,6 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+import time
 # import paho.mqtt.client as mqtt
 # import re
 
@@ -54,6 +55,7 @@ class SetAutoScreen(Screen):
         self.static_blur_kernel = (55,55) 
         self.static_min_area = 50000
         self.static_max_area = 130000 #130000
+        self.fix_fps = 10
         # self.speed_screw = 1
         # self.distance_mm = 1
 
@@ -628,8 +630,12 @@ class SetAutoScreen(Screen):
     def update_frame(self, dt):
         ###Read frames from the capture and process them.###
         if self.capture:
+            loop_start_time = time.time()
             ret, frame = self.capture.read()
             if ret:
+                ### start fix capture frame rate ###
+                FRAME_DURATION = 1.0 / self.fix_fps
+                self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
                 try:
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_system = json.load(file)
@@ -692,6 +698,16 @@ class SetAutoScreen(Screen):
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+                    # Calculate elapsed time and determine sleep duration
+                    loop_end_time = time.time()
+                    elapsed_time = loop_end_time - loop_start_time
+                    sleep_time = FRAME_DURATION - elapsed_time
+                    self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    else:
+                        pass
+
                     # Convert frame to Kivy texture
                     texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
                     texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
@@ -701,7 +717,8 @@ class SetAutoScreen(Screen):
 
                     self.ids.auto_cam_image.texture = texture_rgb
                     self.ids.auto_cam_image_demo.texture = texture_bin
-
+                    
+                    
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
                         self.ids.number_of_center_light_detected.text = str(counting_light_center)
@@ -775,6 +792,15 @@ class SetAutoScreen(Screen):
                         self.ids.auto_cam_image.texture = texture_rgb
                         self.ids.auto_cam_image_demo.texture = texture_bin
 
+                        # Calculate elapsed time and determine sleep duration
+                        loop_end_time = time.time()
+                        elapsed_time = loop_end_time - loop_start_time
+                        sleep_time = FRAME_DURATION - elapsed_time
+                        self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
+                        if sleep_time > 0:
+                            time.sleep(sleep_time)
+                        else:
+                            pass
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
                             self.ids.number_of_center_light_detected.text = str(counting_light_center)

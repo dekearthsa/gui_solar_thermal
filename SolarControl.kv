@@ -115,7 +115,7 @@ MainFrameWidget:
                 on_press: root.reset_selection()
         
         GridLayout:
-            cols: 3
+            cols: 4
             size_hint_y: .1
             canvas:
                 Color:
@@ -130,9 +130,14 @@ MainFrameWidget:
                 id: number_of_center_light_detected
                 text: 'None'
                 bold: True
+                size_hint_x: .1
             Label:
                 id: description_of_center_light_count
                 text: 'Description:'
+                bold: True
+            Label:
+                id: fps_frame
+                text: 'FPS: '
                 bold: True
 
         # Area for camera image and cropping interaction
@@ -409,7 +414,7 @@ MainFrameWidget:
                 background_color: (.4, .4, .4, 1)
                 on_press: root.reset_selection()
         GridLayout:
-            cols: 3
+            cols: 4
             size_hint_y: .1
             canvas:
                 Color:
@@ -424,9 +429,14 @@ MainFrameWidget:
                 id: number_of_center_light_detected
                 text: 'None'
                 bold: True
+                size_hint_x: .1
             Label:
                 id: description_of_center_light_count
                 text: 'Description:'
+                bold: True
+            Label:
+                id: fps_frame
+                text: 'FPS: '
                 bold: True
 
         GridLayout:

@@ -8,7 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
-# import time
+import time
 
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
@@ -44,6 +44,7 @@ class ManualScreen(Screen):
         self.static_blur_kernel = (55,55) 
         self.static_min_area = 50000
         self.static_max_area = 130000
+        self.fix_fps = 10
         # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
         # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
@@ -594,7 +595,7 @@ class ManualScreen(Screen):
                 if not self.capture:
                     # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
                     # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                    self.capture = cv2.VideoCapture(self.camera_connection)
+                    self.capture = cv2.VideoCapture(0) ## self.camera_connection
                     if not self.capture.isOpened():
                         self.show_popup("Error", "Could not open camera.")
                         self.ids.camera_status.text = "Error: Could not open camera"
@@ -615,12 +616,19 @@ class ManualScreen(Screen):
                     pass
         return True
 
+    # def haddle_delay_frame(self):
+    #     pass
+
+
     def update_frame(self, dt):
         ### Read frames from the capture and process them.###
         if self.capture:
+            loop_start_time = time.time()
             ret, frame = self.capture.read()
-            # debug_start = time.time()
             if ret:
+                ### start fix capture frame rate ###
+                FRAME_DURATION = 1.0 / self.fix_fps
+                self.capture.set(cv2.CAP_PROP_FPS,FRAME_DURATION)
                 ### log time start here ###
                 ### create image file ### 
                 try:
@@ -698,6 +706,16 @@ class ManualScreen(Screen):
                     self.ids.manual_cam_image.texture = texture_rgb
                     self.ids.manual_cam_image_demo.texture = texture_bin
 
+                    # Calculate elapsed time and determine sleep duration
+                    loop_end_time = time.time()
+                    elapsed_time = loop_end_time - loop_start_time
+                    sleep_time = FRAME_DURATION - elapsed_time
+                    self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    else:
+                        pass
+
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
                         self.ids.number_of_center_light_detected.text = str(counting_light_center)
@@ -717,13 +735,6 @@ class ManualScreen(Screen):
                             return
                         
                         frame = cv2.flip(frame, 0)  # Flip frame vertically
-                        # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                        ### ccc crop ###
-                        # contours_light, demo_light = self.find_bounding_boxes(
-                        #     frame_gray, blur_kernel=(55, 55), thresh_val=(120,135), morph_kernel_size=(3, 3)
-                        # )
-
                         contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
                             low_H=self.static_low_h, 
@@ -778,6 +789,16 @@ class ManualScreen(Screen):
 
                         self.ids.manual_cam_image.texture = texture_rgb
                         self.ids.manual_cam_image_demo.texture = texture_bin
+                        
+                        # Calculate elapsed time and determine sleep duration
+                        loop_end_time = time.time()
+                        elapsed_time = loop_end_time - loop_start_time
+                        sleep_time = FRAME_DURATION - elapsed_time
+                        self.ids.fps_frame.text = f"FPS: {self.fix_fps}"
+                        if sleep_time > 0:
+                            time.sleep(sleep_time)
+                        else:
+                            pass
 
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
