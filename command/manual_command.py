@@ -4,11 +4,9 @@ import os
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from datetime import datetime
-# import re
 import json
 import requests
 from kivy.clock import Clock
-# from kivy.properties import StringProperty
 
 class ControllerManual(BoxLayout):
     # camera_status_controll = StringProperty("No") 
@@ -29,13 +27,13 @@ class ControllerManual(BoxLayout):
         self.url_request_update = ""
         self.static_manaul_dict = {
             "up": "up", 
-            "down": "down", 
-            "left":"reverse" ,
-            "left_down": "bottom_left",
-            "left_up":"top_left",
-            "right": "forward",
-            "right_down": "bottom_right",
-            "right_up": "top_right"
+            "down": "down",  
+            "left":"reverse", 
+            "left_down": "bottom_left", 
+            "left_up":"top_left", 
+            "right": "forward", 
+            "right_down": "bottom_right",   
+            "right_up": "top_right" 
             }
         self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
         Clock.schedule_once(lambda dt: self.loop_checking_status())
@@ -50,10 +48,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['up'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
                 try:
@@ -73,10 +73,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['left'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -98,10 +100,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['right'], 
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -126,10 +130,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['down'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -171,10 +177,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['right_down'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -196,10 +204,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
-                    "topic":self.static_manaul_dict['left_up'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "topic":self.static_manaul_dict['left_down'],
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -221,10 +231,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['left_up'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -246,10 +258,12 @@ class ControllerManual(BoxLayout):
         status_camera = self.__checking_status_camera_open()
         if status_camera == True:
             if self.helio_stats_selection != "" and self.camera_selection != "":
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
                 payload_set = {
                     "topic":self.static_manaul_dict['right_up'],
-                    "step": self.step_input,
-                    "speed": self.static_speed_manual,
+                    "step": setting_data['control_speed_distance']['distance_mm'],
+                    "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 

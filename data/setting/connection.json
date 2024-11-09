@@ -6,21 +6,21 @@
         },
         {
             "id": "h2",
-            "ip": "192.168.0.106"
+            "ip": "192.168.0.107"
         },
         {
             "id": "h3",
-            "ip": "192.168.0.106"
+            "ip": "192.168.0.108"
         }
     ],
     "camera_url": [
         {
             "id": "camera-bottom",
-            "url": "vid_2.avi"
+            "url": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         },
         {
             "id": "camera-top",
-            "url": "vid_1.avi"
+            "url": "rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/"
         }
     ]
 }

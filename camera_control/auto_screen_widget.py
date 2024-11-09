@@ -611,8 +611,8 @@ class SetAutoScreen(Screen):
                     self.ids.auto_camera_status.text = "Error: Could not open camera"
                     return
                 # controller_manual =self.ids.controller_manual
-                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
                 self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
+                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
         else: 
             self.show_popup("Alert", "Camera or helio stats must not empty.")
 
@@ -674,7 +674,7 @@ class SetAutoScreen(Screen):
                     counting_light_center = 0
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
-                        if self.static_min_area < c_area and self.static_max_area > c_area:
+                        if self.static_min_area < c_area and self.static_max_area < c_area:
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 

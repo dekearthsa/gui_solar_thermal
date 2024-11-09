@@ -594,7 +594,7 @@ class ManualScreen(Screen):
                 if not self.capture:
                     # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
                     # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                    self.capture = cv2.VideoCapture(self.camera_connection)
+                    self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
                     if not self.capture.isOpened():
                         self.show_popup("Error", "Could not open camera.")
                         self.ids.camera_status.text = "Error: Could not open camera"
@@ -668,7 +668,7 @@ class ManualScreen(Screen):
                     counting_light_center = 0
                     for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
                         c_area = cv2.contourArea(contours_light[idx])
-                        if self.static_min_area < c_area and self.static_max_area > c_area:
+                        if self.static_min_area < c_area and self.static_max_area < c_area:
                             cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
                             cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 

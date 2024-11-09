@@ -25,15 +25,15 @@ class ControllerAuto(BoxLayout):
         self.static_title_mode = "Auto menu || Camera status:On"
         self.array_helio_stats = []
         self.time_loop_update = 5 ## 2 sec test update frame
-        self.stop_move_helio_x_stats = 2 ### Stop move axis x when diff in theshold
-        self.stop_move_helio_y_stats = 2 ### Stop move axis y when diff in theshold
+        self.stop_move_helio_x_stats = 12 ### Stop move axis x when diff in theshold
+        self.stop_move_helio_y_stats = 12 ### Stop move axis y when diff in theshold
         self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
         
         self.set_axis = "x"
         self.set_kp = 1
         self.set_ki = 1
         self.set_kd = 2
-        self.set_max_speed = 200
+        self.set_max_speed = 100
         self.set_off_set = 1
         self.set_status ="1"
 
@@ -98,9 +98,18 @@ class ControllerAuto(BoxLayout):
             if current_helio_stats == self.helio_stats_selection_id:
                 now = datetime.now()
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-                if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
+                print("center_x => ",center_x)
+                print("target_x => ",target_x)
+                print("error => ", center_x - target_x)
+                print("center_y => ",center_y)
+                print("target_y => ",target_y)
+                print("error => ", center_y - target_y)
+                if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
+                        # with open('./data/setting/setting.json', 'r') as file:
+                        #     setting_data = json.load(file)
                         payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
+                        print("payload => ", payload)
                         setJson = payload.json()
                         # print(setJson)
                         # setJson = json.dumps(payload)
@@ -154,10 +163,10 @@ class ControllerAuto(BoxLayout):
                             helio_stats_id=self.helio_stats_selection_id,
                             camera_use = self.camera_endpoint,
                             id=setJson['id'],
-                            currentX=setJson['currentX'],
-                            currentY=setJson['currentY'],
-                            err_posx=setJson['err_posx'],
-                            err_posy=setJson['err_posy'],
+                            currentX=int(setJson['currentX']/2.5),
+                            currentY=int(setJson['currentY']/2.8),
+                            err_posx=int(setJson['err_posx']/2.5),
+                            err_posy=int(setJson['err_posy']/2.8),
                             x=setJson['safety']['x'],
                             y=setJson['safety']['y'],
                             x1=setJson['safety']['x1'],
@@ -235,10 +244,10 @@ class ControllerAuto(BoxLayout):
         payload = {
                 "topic":"auto",
                 "axis": axis,
-                "cx":center_x_light, # center x light
-                "cy":center_y_light, # center y light
-                "target_x":center_x, #  center x frame
-                "target_y":center_y, #  center y frame
+                "cx":int(center_x_light/2.5), # center x light
+                "cy":int((1358-center_y_light)/2.8), # center y light
+                "target_x":int(center_x/2.5), #  center x frame
+                "target_y":int(center_y/2.8), #  center y frame
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
