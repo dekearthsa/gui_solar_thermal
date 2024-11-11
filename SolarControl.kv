@@ -669,6 +669,7 @@ MainFrameWidget:
                 helio_stats_id: selected_label_helio_stats
                 camera_url_id: selected_label_camera
                 number_center_light: number_of_center_light_detected
+                bounding_box_frame_data: auto_bounding_frame_position
                 
 
 <ControllerAuto>:
@@ -678,6 +679,9 @@ MainFrameWidget:
     #     text: "Return: "
     #     bold: True
     #     size_hint_y: .2
+    Button:
+        text: "debug"
+        on_press:  root.haddle_extact_boarding_frame()
     Button:
         id: label_auto_mode
         text: 'Auto off'

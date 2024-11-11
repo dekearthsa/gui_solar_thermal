@@ -98,12 +98,12 @@ class ControllerAuto(BoxLayout):
             if current_helio_stats == self.helio_stats_selection_id:
                 now = datetime.now()
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-                print("center_x => ",center_x)
-                print("target_x => ",target_x)
-                print("error => ", center_x - target_x)
-                print("center_y => ",center_y)
-                print("target_y => ",target_y)
-                print("error => ", center_y - target_y)
+                # print("center_x => ",center_x)
+                # print("target_x => ",target_x)
+                # print("error => ", center_x - target_x)
+                # print("center_y => ",center_y)
+                # print("target_y => ",target_y)
+                # print("error => ", center_y - target_y)
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         # with open('./data/setting/setting.json', 'r') as file:
@@ -241,26 +241,45 @@ class ControllerAuto(BoxLayout):
                     center_x_light,
                     center_y_light,
                     kp,ki,kd,max_speed,off_set,status):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
+
+        _, _, frame_w, frame_h = self.haddle_extact_boarding_frame()
+        scaling_x, scaling_y, scaling_height = self.haddle_convert_to_old_resolution(
+            current_width=frame_w,
+            current_height=frame_h
+        )
+
         payload = {
                 "topic":"auto",
                 "axis": axis,
-                "cx":int(center_x_light/2.5), # center x light
-                "cy":int((1358-center_y_light)/2.8), # center y light
-                "target_x":int(center_x/2.5), #  center x frame
-                "target_y":int(center_y/2.8), #  center y frame
+                # "cx": int(center_x_light/scaling_x),
+                # "cy": int(center_y_light/scaling_y),
+                # "target_x": int(center_x/scaling_x),
+                # "target_y": int(center_y/scaling_y),
+                "cx":int(center_x_light/scaling_x), # center x light
+                "cy":int((scaling_height-center_y_light)/scaling_y), # center y light
+                "target_x":int(center_x/scaling_x), #  center x frame
+                "target_y":int(center_y/scaling_y), #  center y frame
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
-                "max_speed":max_speed,
+                "max_speed":setting_data['control_speed_distance']['speed_screw'],
                 "off_set":off_set,
                 "status": status
             }
+        
+        # print(payload)
         headers = {
             'Content-Type': 'application/json'  
         }
-        
+
         try:
-            response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers)
+            response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
             print("=== DEBUG AUTO ===")
             print("End point => ","http://"+self.helio_stats_id_endpoint+"/auto-data")
             print("payload => ",payload)
@@ -326,3 +345,26 @@ class ControllerAuto(BoxLayout):
             self.__off_loop_auto_calculate_diff()
             self.show_popup(f"Error saving file:\n{str(e)}")    
 
+    def haddle_extact_boarding_frame(self):
+        data = self.bounding_box_frame_data.text
+        numbers = re.findall(r'\d+', data)
+        int_numbers = [int(num) for num in numbers]
+        return int_numbers[0], int_numbers[1], int_numbers[2], int_numbers[3]
+
+    def haddle_convert_to_old_resolution(self,current_width, current_height):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
+        
+        # is_scale = current_width / current_height  
+        # scaling_x = round((setting_data['old_frame_resolution']['width'] / is_scale),2) 
+        # scaling_y = round((setting_data['old_frame_resolution']['height'] / is_scale),2)
+        # return scaling_x, scaling_y 
+
+        scaling_x = round((current_width/setting_data['old_frame_resolution']['width']),2) 
+        scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
+
+        return scaling_x, scaling_y, current_height

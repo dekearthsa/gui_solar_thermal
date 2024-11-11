@@ -594,15 +594,18 @@ class ManualScreen(Screen):
                 if not self.capture:
                     # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
                     # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                    self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
-                    if not self.capture.isOpened():
-                        self.show_popup("Error", "Could not open camera.")
-                        self.ids.camera_status.text = "Error: Could not open camera"
-                        return
-                    controller_manual =self.ids.controller_manual
-                    controller_manual.camera_status_controll = "On"
-                    Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-                    self.ids.camera_status.text = "Manual menu || Camera status:On"
+                    try:
+                        self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                        if not self.capture.isOpened():
+                            self.show_popup("Error", "Could not open camera.")
+                            self.ids.camera_status.text = "Error: Could not open camera"
+                            return
+                        controller_manual =self.ids.controller_manual
+                        controller_manual.camera_status_controll = "On"
+                        Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                        self.ids.camera_status.text = "Manual menu || Camera status:On"
+                    except Exception as e:
+                        self.show_popup("Camera error", f"{e}")
         else:
             self.show_popup("Alert", "Camera or helio stats must not empty.")
 

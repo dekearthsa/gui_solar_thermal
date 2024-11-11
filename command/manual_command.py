@@ -57,7 +57,7 @@ class ControllerManual(BoxLayout):
                     # "speed_y": self.static_speed_manual_y,
                 }
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -83,7 +83,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -110,7 +110,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     print(payload_set)
                     print(self.helio_stats_endpoint)
                     print(response)
@@ -140,7 +140,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -160,7 +160,7 @@ class ControllerManual(BoxLayout):
                     "topic":"stop"
                 }
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -187,7 +187,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -214,7 +214,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -241,7 +241,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:
@@ -268,7 +268,7 @@ class ControllerManual(BoxLayout):
                 }
 
                 try:
-                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set)
+                    response = requests.post("http://"+self.helio_stats_endpoint +"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
                         pass
                     else:

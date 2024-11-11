@@ -605,14 +605,17 @@ class SetAutoScreen(Screen):
             if not self.capture:
                 # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
                 # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                self.capture = cv2.VideoCapture(self.camera_connection)
-                if not self.capture.isOpened():
-                    self.show_popup("Error", "Could not open camera.")
-                    self.ids.auto_camera_status.text = "Error: Could not open camera"
-                    return
-                # controller_manual =self.ids.controller_manual
-                self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
-                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                try:
+                    self.capture = cv2.VideoCapture(self.camera_connection)
+                    if not self.capture.isOpened():
+                        self.show_popup("Error", "Could not open camera.")
+                        self.ids.auto_camera_status.text = "Error: Could not open camera"
+                        return
+                    # controller_manual =self.ids.controller_manual
+                    self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
+                    Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                except Exception as e:
+                    self.show_popup("Error camera", f"{e}")
         else: 
             self.show_popup("Alert", "Camera or helio stats must not empty.")
 
@@ -855,7 +858,7 @@ class SetAutoScreen(Screen):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
             self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
-            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
+            # self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
             self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
         except Exception as e:
             self.show_popup("Error file not found", f"Failed to load setting file {e}")
