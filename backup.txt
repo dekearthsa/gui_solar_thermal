@@ -1,0 +1,64 @@
+# SolarControl.spec
+# -*- mode: python ; coding: utf-8 -*-
+
+import os
+from kivy.deps import sdl2, glew
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+
+project_dir = os.path.dirname(__file__)
+block_cipher = None
+
+# Add all submodules from your folders
+hiddenimports = collect_submodules('camera_control')
+hiddenimports += collect_submodules('device_mange')
+hiddenimports += collect_submodules('popup')  # Add more as needed
+
+# Add all data files, such as JSON and .kv files
+datas = [
+    (os.path.join(project_dir, 'SolarControl.kv'), '.'),  # Include the .kv file
+    (os.path.join(project_dir, 'data'), 'data'),  # Include data directory
+    (os.path.join(project_dir, 'result'), 'result'),  # Include result directory
+    (os.path.join(project_dir, 'setting'), 'setting'),  # Include setting directory
+]
+
+# Include Kivy dependencies
+a = Analysis(
+    ['main.py'],
+    pathex=[project_dir],
+    binaries=[],
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+)
+
+a.binaries += sdl2.dep_bins + glew.dep_bins
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='SolarControl',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    name='SolarControl',
+)

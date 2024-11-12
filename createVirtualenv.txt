@@ -1,8 +1,0 @@
-pip install virtualenv
-mkdir my_project
-cd my_project
-virtualenv
-virtualenv env --python=python3.11
-env\Scripts\activate.bat
-.\env\Scripts\Activate.ps1
-pip install -r requirements.txt
