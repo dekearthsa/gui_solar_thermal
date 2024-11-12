@@ -26,7 +26,7 @@
     "hsv_threshold": {
         "low_h": 0,
         "low_s": 0,
-        "low_v": 169,
+        "low_v": 194,
         "high_h": 179,
         "high_s": 255,
         "high_v": 255
@@ -37,10 +37,20 @@
     },
     "control_speed_distance": {
         "speed_screw": 100,
-        "distance_mm": 5
+        "distance_mm": 8
     },
     "old_frame_resolution": {
         "width": 640,
         "height": 480
+    },
+    "storage_endpoint": {
+        "helio_stats_ip": {
+            "id": "h1",
+            "ip": "192.168.0.106"
+        },
+        "camera_ip": {
+            "id": "camera-bottom",
+            "ip": "rtsp://admin:NU12131213@192.168.1.170:554/Streaming/Channels/101/"
+        }
     }
 }

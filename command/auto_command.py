@@ -37,11 +37,6 @@ class ControllerAuto(BoxLayout):
         self.set_off_set = 1
         self.set_status ="1"
 
-    # def fetch_helio_stats_list(self):
-    #     self.ids.helio_stats_operate.text = self.helio_stats_id.text
-    #     self.ids.camera_selection.text = self.camera_url_id.text
-
-
     def show_popup(self, title, message):
         ###Display a popup with a given title and message.###
         popup = Popup(title=title,
@@ -52,32 +47,34 @@ class ControllerAuto(BoxLayout):
     ### camera endpoint debug ###
     def selection_url_by_id(self):
         try:
-            with open('./data/setting/connection.json', 'r') as file:
+            with open('./data/setting/setting.json', 'r') as file:
                 storage = json.load(file)
-            
-            h_id = self.__extract_coordinates_helio_stats_loop_checking(self.helio_stats_id.text)
-            c_id = self.__extract_coordinates_helio_stats_loop_checking(self.camera_url_id.text)
 
-            for helio_data in storage['helio_stats_ip']:
-                if h_id == helio_data['id']:
-                    self.helio_stats_id_endpoint = helio_data['ip']
-                    break
+            self.helio_stats_id_endpoint = storage['storage_endpoint']['helio_stats_ip']['ip']
+            self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
+            h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
+            c_id = storage['storage_endpoint']['camera_ip']['id']
+            # for helio_data in storage['helio_stats_ip']:
+            #     if h_id == helio_data['id']:
+            #         self.helio_stats_id_endpoint = helio_data['ip']
+            #         break
 
-            for camera_data in storage['camera_url']:
-                if c_id == camera_data['id']:
-                    self.camera_endpoint = camera_data['url']
-                    break
+            # for camera_data in storage['camera_url']:
+            #     if c_id == camera_data['id']:
+            #         self.camera_endpoint = camera_data['url']
+            #         break
+            return h_id, c_id
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
     def active_auto_mode(self):
-        self.selection_url_by_id()
+        h_id, _ = self.selection_url_by_id()
         if self.camera_endpoint != "" and self.helio_stats_id_endpoint != "":
             if self.status_auto.text == self.static_title_mode:
                 if self.turn_on_auto_mode == False:
                     if int(self.number_center_light.text) == 1:
                         self.turn_on_auto_mode = True
-                        self.helio_stats_selection_id = self.helio_stats_id.text.split(": ")[1]
+                        self.helio_stats_selection_id = h_id
                         self.ids.label_auto_mode.text = "Auto on"
                         self.__on_loop_auto_calculate_diff()
                     else:
@@ -92,24 +89,16 @@ class ControllerAuto(BoxLayout):
             self.show_popup("Alert", f"Please select helio stats id and camera")
 
     def update_loop_calulate_diff(self, dt):
-        current_helio_stats = self.__extract_coordinates_helio_stats_loop_checking(self.helio_stats_id.text)
         center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(self.center_frame_auto.text, self.center_target_auto.text)
         if self.status_auto.text == self.static_title_mode:
-            if current_helio_stats == self.helio_stats_selection_id:
                 now = datetime.now()
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-                # print("center_x => ",center_x)
-                # print("target_x => ",target_x)
-                # print("error => ", center_x - target_x)
-                # print("center_y => ",center_y)
-                # print("target_y => ",target_y)
-                # print("error => ", center_y - target_y)
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         # with open('./data/setting/setting.json', 'r') as file:
                         #     setting_data = json.load(file)
                         payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
-                        print("payload => ", payload)
+                        # print("payload => ", payload)
                         setJson = payload.json()
                         # print(setJson)
                         # setJson = json.dumps(payload)
@@ -151,51 +140,6 @@ class ControllerAuto(BoxLayout):
                         off_set=self.set_off_set,
                         status=self.set_status
                         )
-            else:
-                self.show_popup("Alert", f"Helio stats endpoint have change!")
-                self.helio_stats_selection_id = current_helio_stats
-                if (center_x - target_x) <= self.stop_move_helio_x_stats and (center_y - target_y) <= self.stop_move_helio_y_stats:
-                    try:
-                        payload = requests.get(url=self.static_get_api_helio_stats_endpoint)
-                        setJson = json.dumps(payload)
-                        self.__haddle_save_positon(
-                            timestamp=timestamp,
-                            helio_stats_id=self.helio_stats_selection_id,
-                            camera_use = self.camera_endpoint,
-                            id=setJson['id'],
-                            currentX=int(setJson['currentX']/2.5),
-                            currentY=int(setJson['currentY']/2.8),
-                            err_posx=int(setJson['err_posx']/2.5),
-                            err_posy=int(setJson['err_posy']/2.8),
-                            x=setJson['safety']['x'],
-                            y=setJson['safety']['y'],
-                            x1=setJson['safety']['x1'],
-                            y1=setJson['safety']['y1'],
-                            ls1=setJson['safety']['ls1'],
-                            st_path=setJson['safety']['st_path'],
-                            move_comp=setJson['safety']['move_comp'],
-                            elevation=setJson['elevation'],
-                            azimuth=setJson['azimuth'],
-                        )
-                    except Exception as e:
-                        self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-                        self.turn_on_auto_mode = False
-                        self.ids.label_auto_mode.text = "Auto off"
-                        self.__off_loop_auto_calculate_diff()
-                else:
-                    self.__send_payload(
-                        axis=self.set_axis,
-                        center_x=center_x, # frame x
-                        center_y=center_y, # frame y
-                        center_y_light=target_y, # center y light
-                        center_x_light=target_x, # center x light
-                        kp=self.set_kp,
-                        ki=self.set_ki,
-                        kd=self.set_kd,
-                        max_speed=self.set_max_speed,
-                        off_set=self.set_off_set,
-                        status=self.set_status
-                        )
         else:
             self.show_popup("Alert", "Camera is offline.")
             self.turn_on_auto_mode = False
@@ -207,11 +151,6 @@ class ControllerAuto(BoxLayout):
 
     def __off_loop_auto_calculate_diff(self):
         Clock.unschedule(self.update_loop_calulate_diff)
-
-    def __extract_coordinates_helio_stats_loop_checking(self, helio_id):
-        return helio_id.split(": ")[1]
-    
-    # def __extract_coordinates_camera_loop_checking(self, camera_id):
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
         pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
@@ -225,11 +164,6 @@ class ControllerAuto(BoxLayout):
                 
                 center_y = int(match.group(2))
                 center_y_light = int(match_2.group(2))
-
-                # print("center_x match.group(1) => ", center_x)
-                # print("target_x match_2.group(1) => ", center_x_light)
-                # print("center_y match.group(2) => ", center_y)
-                # print("target_y match_2.group(2) => ", center_y_light)
 
                 return center_x, center_y, center_x_light, center_y_light
         else:
@@ -273,7 +207,8 @@ class ControllerAuto(BoxLayout):
                 "status": status
             }
         
-        # print(payload)
+        print(payload)
+        print(self.helio_stats_id_endpoint)
         headers = {
             'Content-Type': 'application/json'  
         }
@@ -368,3 +303,4 @@ class ControllerAuto(BoxLayout):
         scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
 
         return scaling_x, scaling_y, current_height
+    

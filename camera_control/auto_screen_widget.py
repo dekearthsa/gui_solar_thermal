@@ -43,6 +43,7 @@ class SetAutoScreen(Screen):
         self.status_text = 'Ready'     # Initialize status text
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
         Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
+        Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(),2)
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -836,6 +837,13 @@ class SetAutoScreen(Screen):
             for camera_name in storage['camera_url']:
                 if text == camera_name['id']:
                     self.camera_connection =  camera_name['url']
+            
+            with open('./data/setting/setting.json', 'r') as file:
+                storage = json.load(file)
+
+            storage['storage_endpoint']['camera_ip']['ip'] = self.camera_connection
+            storage['storage_endpoint']['camera_ip']['id'] = text
+
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
@@ -850,6 +858,13 @@ class SetAutoScreen(Screen):
             for helio_stats in storage['helio_stats_ip']:
                 if text == helio_stats['id']:
                     self.helio_stats_connection =  helio_stats['ip']
+
+            with open('./data/setting/setting.json', 'r') as file:
+                storage = json.load(file)
+
+            storage['storage_endpoint']['helio_stats_ip']['ip'] = self.helio_stats_connection
+            storage['storage_endpoint']['helio_stats_ip']['id'] = text
+            
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
@@ -919,3 +934,12 @@ class SetAutoScreen(Screen):
             json.dump(setting_data, file, indent=4)
         
         self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+
+    def fetch_storage_endpoint(self):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file) 
+        
+        self.ids.selected_label_helio_stats.text = setting_data['storage_endpoint']['helio_stats_ip']['id']
+        self.ids.selected_label_camera.text = setting_data['storage_endpoint']['camera_ip']['id']
+        self.camera_connection =  setting_data['storage_endpoint']['camera_ip']['ip']
+        self.helio_stats_connection = setting_data['storage_endpoint']['helio_stats_ip']['ip']

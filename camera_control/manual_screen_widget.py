@@ -32,8 +32,10 @@ class ManualScreen(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
+
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
         Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
+        Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(), 2)
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -847,6 +849,16 @@ class ManualScreen(Screen):
             for camera_name in storage['camera_url']:
                 if text == camera_name['id']:
                     self.camera_connection =  camera_name['url']
+
+            with open('./data/setting/setting.json', 'r') as file:
+                storage = json.load(file)
+
+            storage['storage_endpoint']['camera_ip']['ip'] = self.camera_connection
+            storage['storage_endpoint']['camera_ip']['id'] = text
+
+            with open('./data/setting/setting.json', 'w') as file:
+                json.dump(storage, file, indent=4)
+            
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
@@ -861,6 +873,16 @@ class ManualScreen(Screen):
             for helio_stats in storage['helio_stats_ip']:
                 if text == helio_stats['id']:
                     self.helio_stats_connection =  helio_stats['ip']
+
+            with open('./data/setting/setting.json', 'r') as file:
+                storage = json.load(file)
+
+            storage['storage_endpoint']['helio_stats_ip']['ip'] = self.helio_stats_connection
+            storage['storage_endpoint']['helio_stats_ip']['id'] = text
+
+            with open('./data/setting/setting.json', 'w') as file:
+                json.dump(storage, file, indent=4)
+
         except Exception as e:
             self.show_popup("Error", f"{e}")
     
@@ -876,6 +898,8 @@ class ManualScreen(Screen):
             self.show_popup("Error file not found", f"Failed to load setting file {e}")
 
     def haddle_change_step_machine(self):
+        
+        
         step_input = self.ids.set_step_machine.text
         print(step_input)
         try:
@@ -971,3 +995,12 @@ class ManualScreen(Screen):
                     self.show_popup("Error set origin y connection timeout: ", f"{result}")
             except Exception as e:
                 self.show_popup("Error set origin y: ", f"{e}")
+
+    def fetch_storage_endpoint(self):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file) 
+        
+        self.ids.selected_label_helio_stats.text = setting_data['storage_endpoint']['helio_stats_ip']['id']
+        self.ids.selected_label_camera.text = setting_data['storage_endpoint']['camera_ip']['id']
+        self.camera_connection =  setting_data['storage_endpoint']['camera_ip']['ip']
+        self.helio_stats_connection = setting_data['storage_endpoint']['helio_stats_ip']['ip']
