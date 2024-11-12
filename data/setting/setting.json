@@ -37,7 +37,7 @@
     },
     "control_speed_distance": {
         "speed_screw": 100,
-        "distance_mm": 5
+        "distance_mm": 10
     },
     "old_frame_resolution": {
         "width": 640,
