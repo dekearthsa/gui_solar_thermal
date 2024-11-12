@@ -18,7 +18,7 @@ class ControllerAuto(BoxLayout):
         self.camera_selection = ""
         self.turn_on_auto_mode = False
 
-        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_list())
+        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_list()) mtd56790
         self.speed_screw = 1
         self.distance_mm = 1 
         self.is_auto_on = False

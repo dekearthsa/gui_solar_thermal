@@ -13,3 +13,4 @@ timestamp,helio_stats_id,camera_use,id,currentX,currentY,err_posx,err_posy,x,y,x
 08/11/24 11:52:25,h1,rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/,0,127.74,27.26,0.88,100.0,0,0,0,0,0,0,0,127.74,27.26,machine
 08/11/24 11:58:39,h2,rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/,0,130.39,58.99,2.65,100.0,0,0,0,0,0,0,0,130.39,23.31,machine
 08/11/24 12:02:28,h2,rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/,0,130.39,58.99,2.65,100.0,0,0,0,0,0,0,0,130.39,23.31,machine
+12/11/24 14:16:59,h1,rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/,0,665.69,18.09,0.27,100.0,0,0,0,0,0,0,0,665.69,18.09,machine

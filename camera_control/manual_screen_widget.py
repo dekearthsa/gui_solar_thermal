@@ -783,6 +783,9 @@ class ManualScreen(Screen):
                         self.ids.manual_cam_image.texture = texture_rgb
                         self.ids.manual_cam_image_demo.texture = texture_bin
 
+                        #print("centers_light => ",centers_light)
+                        #print("centers_frame => ", centers_frame)
+                        #print("manual_bounding_frame_position => X:", bounding_box_frame_x, "Y: ", f"w: {bounding_box_frame_w}", f"h:{bounding_box_frame_h}")
                         # Update UI labels
                         if centers_light[0] and centers_frame[0]:
                             self.ids.number_of_center_light_detected.text = str(counting_light_center)
