@@ -1,26 +1,26 @@
 # SolarControl.spec
 
-# Importing necessary modules from PyInstaller
-# Note: Adjust the paths according to your project structure and OS paths if required.
-from PyInstaller.utils.hooks import collect_all
-
-# Collect dependencies
-dependencies = collect_all('kivy')
-
 block_cipher = None
 
 a = Analysis(
-    ['main.py'],                  # Your main application file
-    pathex=['.'],                 # Search path; '.' means the current directory
+    ['main.py'],                       # Your main application file
+    pathex=['.'],                      # Search path; '.' means the current directory
     binaries=[],
     datas=[
-        ('SolarControl.kv', '.'),                    # Include the .kv file in the root
-        ('images/*.png', 'images'),                  # Include all images in the images folder
-        ('data/result/*', 'data/result'),            # Include files in data/result if needed
-        ('data/setting/*', 'data/setting')           # Include files in data/setting if needed
+        ('SolarControl.kv', '.'),      # Include the .kv file in the root
+        ('images/*.png', 'images'),    # Include all images in the images folder
+        ('data/result/*', 'data/result'),   # Include files in data/result if needed
+        ('data/setting/*', 'data/setting')  # Include files in data/setting if needed
     ],
-    hiddenimports=dependencies[1],                   # Include all hidden imports collected from dependencies
-    hookspath=[],
+    hiddenimports=[
+        'kivy',                        # Add Kivy as a hidden import
+        'kivy.core.window',            # Kivy windowing
+        'kivy.core.text',              # Kivy text handling
+        'kivy.uix.widget',             # Kivy widgets
+        'kivy.uix.button',             # Kivy buttons (add other modules as needed)
+        # Add additional Kivy modules here as needed
+    ],
+    hookspath=[],                      # Leave as default if not using additional hooks
     runtime_hooks=[],
     excludes=[],
     win_no_prefer_redirects=False,
@@ -37,13 +37,13 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='SolarControl',              # Name of the output executable
+    name='SolarControl',               # Name of the output executable
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,                    # Set to False to hide the console window
-    icon='path/to/icon.ico'           # Replace with your app icon if available
+    console=False,                     # Set to False to hide the console window
+    icon='path/to/icon.ico'            # Replace with your app icon if available
 )
 
 # Bundling files in one folder or single file
