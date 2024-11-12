@@ -1,33 +1,25 @@
 # SolarControl.spec
-# -*- mode: python ; coding: utf-8 -*-
 
-import os
-from kivy.deps import sdl2, glew
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+# Importing necessary modules from PyInstaller
+# Note: Adjust the paths according to your project structure and OS paths if required.
+from PyInstaller.utils.hooks import collect_all
 
-project_dir = os.path.dirname(__file__)
+# Collect dependencies
+dependencies = collect_all('kivy')
+
 block_cipher = None
 
-# Add all submodules from your folders
-hiddenimports = collect_submodules('camera_control')
-hiddenimports += collect_submodules('device_mange')
-hiddenimports += collect_submodules('popup')  # Add more as needed
-
-# Add all data files, such as JSON and .kv files
-datas = [
-    (os.path.join(project_dir, 'SolarControl.kv'), '.'),  # Include the .kv file
-    (os.path.join(project_dir, 'data'), 'data'),  # Include data directory
-    (os.path.join(project_dir, 'result'), 'result'),  # Include result directory
-    (os.path.join(project_dir, 'setting'), 'setting'),  # Include setting directory
-]
-
-# Include Kivy dependencies
 a = Analysis(
-    ['main.py'],
-    pathex=[project_dir],
+    ['main.py'],                  # Your main application file
+    pathex=['.'],                 # Search path; '.' means the current directory
     binaries=[],
-    datas=datas,
-    hiddenimports=hiddenimports,
+    datas=[
+        ('SolarControl.kv', '.'),                    # Include the .kv file in the root
+        ('images/*.png', 'images'),                  # Include all images in the images folder
+        ('data/result/*', 'data/result'),            # Include files in data/result if needed
+        ('data/setting/*', 'data/setting')           # Include files in data/setting if needed
+    ],
+    hiddenimports=dependencies[1],                   # Include all hidden imports collected from dependencies
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
@@ -36,23 +28,25 @@ a = Analysis(
     cipher=block_cipher,
 )
 
-a.binaries += sdl2.dep_bins + glew.dep_bins
-
+# PyInstaller builds the executable and includes the provided resources
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# Building the executable, adding window base if using Kivy without a console
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name='SolarControl',
+    name='SolarControl',              # Name of the output executable
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=False,                    # Set to False to hide the console window
+    icon='path/to/icon.ico'           # Replace with your app icon if available
 )
 
+# Bundling files in one folder or single file
 coll = COLLECT(
     exe,
     a.binaries,
@@ -60,5 +54,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name='SolarControl',
+    name='SolarControl'
 )
