@@ -179,9 +179,10 @@ MainFrameWidget:
             orientation: 'vertical'
             size_hint_y: 0.1
             GridLayout:
-                cols: 3
+                cols: 5
                 GridLayout:
                     cols: 4
+                    size_hint_x: .5
                     Label:
                         text: 'Threshold V'
                     Slider:
@@ -201,6 +202,7 @@ MainFrameWidget:
 
                 GridLayout:
                     rows: 2
+                    size_hint_x: .4
                     GridLayout:
                         cols: 3
                         Label:
@@ -227,7 +229,14 @@ MainFrameWidget:
                     size_hint_x: .15
                     text: 'Reset threshold'
                     on_press: root.haddle_reset_default_threshold()
-                    
+                Button: 
+                    size_hint_x: .1
+                    text: 'OriginX'
+                    on_press: root.haddle_origin_x()
+                Button:
+                    size_hint_x: .1
+                    text: 'OriginY'
+                    on_press: root.haddle_origin_y()
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: .25

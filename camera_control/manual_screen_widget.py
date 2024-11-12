@@ -8,6 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+import requests
 # import time
 
 class ManualScreen(Screen):
@@ -936,3 +937,34 @@ class ManualScreen(Screen):
             json.dump(setting_data, file, indent=4)
         
         self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
+
+    def haddle_origin_x(self):
+        if self.helio_stats_connection == "":
+            self.show_popup("Error heliostats", "Not found heliostats connection!")
+        else:
+            payload =  {"topic": "origin", "axis": "x", "speed":400} 
+            try:
+                result = requests.post("http://"+self.helio_stats_connection +"/update-data", json=payload, timeout=5)
+                print(result)
+                # print(result.status_code)
+                if result.status_code == 200:
+                    self.show_popup("Alert", "set origin x success.")
+                else:
+                    self.show_popup("Error set origin x connection timeout: ", f"{result}")
+            except Exception as e:
+                self.show_popup("Error set origin x: ", f"{e}")
+
+    def haddle_origin_y(self):
+        if self.helio_stats_connection == "":
+            self.show_popup("Error heliostats", "Not found heliostats connection!")
+        else:
+            payload =  {"topic": "origin", "axis": "y", "speed":400} 
+            try:
+                result = requests.post("http://"+self.helio_stats_connection +"/update-data", json=payload, timeout=5)
+                print(result)
+                if result.status_code == 200:
+                    self.show_popup("Alert", "set origin y success.")
+                else:
+                    self.show_popup("Error set origin y connection timeout: ", f"{result}")
+            except Exception as e:
+                self.show_popup("Error set origin y: ", f"{e}")
