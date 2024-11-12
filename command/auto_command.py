@@ -74,18 +74,18 @@ class ControllerAuto(BoxLayout):
         self.selection_url_by_id()
         if self.camera_endpoint != "" and self.helio_stats_id_endpoint != "":
             if self.status_auto.text == self.static_title_mode:
-                if int(self.number_center_light.text) == 1:
-                    if self.turn_on_auto_mode == False:
+                if self.turn_on_auto_mode == False:
+                    if int(self.number_center_light.text) == 1:
                         self.turn_on_auto_mode = True
                         self.helio_stats_selection_id = self.helio_stats_id.text.split(": ")[1]
                         self.ids.label_auto_mode.text = "Auto on"
                         self.__on_loop_auto_calculate_diff()
                     else:
-                        self.turn_on_auto_mode = False
-                        self.ids.label_auto_mode.text = "Auto off"
-                        self.__off_loop_auto_calculate_diff()
+                        self.show_popup("Alert", f"Light center must detected equal 1.")
                 else:
-                    self.show_popup("Alert", f"Light center must detected equal 1.")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
             else: 
                 self.show_popup("Alert", f"Please turn on camera.")
         else:
