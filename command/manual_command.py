@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import requests
 from kivy.clock import Clock
+import re
 
 class ControllerManual(BoxLayout):
     # camera_status_controll = StringProperty("No") 
@@ -56,6 +57,8 @@ class ControllerManual(BoxLayout):
                     "speed": setting_data['control_speed_distance']['speed_screw'],
                     # "speed_y": self.static_speed_manual_y,
                 }
+                print(payload_set)
+                print("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/update-data")
                 try:
                     response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/update-data", json=payload_set, timeout=5)
                     if response.status_code == 200:
@@ -288,28 +291,6 @@ class ControllerManual(BoxLayout):
                     size_hint=(None, None), size=(600, 300))
         popup.open()
     
-    # ### this loop will check status every 1 sec ###
-    # def update_status_now(self, dt):
-    #     status_camera = self.__checking_status_camera_open()
-    #     if status_camera == True:
-    #         # self.__extract_coordinates(self.error_center_f.text, self.error_center_t.text)
-    #         print(self.helio_stats_id_manual.text)
-    #         print("ID: "+self.helio_stats_selection)
-    #         print("ID: "+self.camera_selection)
-    #         print(self.camera_url_id_manual.text)
-    #         if self.helio_stats_id_manual.text != "None" and self.camera_url_id_manual.text  != "None":
-    #             if ("ID: "+self.helio_stats_selection) != self.helio_stats_id_manual.text and ("ID: "+self.camera_selection) != self.camera_url_id_manual.text:
-    #                 print("helio_stats_id_manual => ",self.helio_stats_id_manual.text)
-    #                 self.helio_stats_selection =  self.__extract_coordinates_selection(self.helio_stats_id_manual.text)
-    #                 self.camera_selection =  self.__extract_coordinates_selection(self.camera_url_id_manual.text)
-    #                 self.__find_address_by_id()
-    #                 # print("Chnage init")
-    #                 # self.show_popup("Alert", "Parameter have change")
-    #                 # print(self.helio_stats_endpoint)
-    #                 # print(self.camera_endpoint)
-
-    # def loop_checking_status(self):
-    #     Clock.schedule_interval(self.update_status_now, 1)
 
     def update_and_submit(self):
         if int(self.number_center_light.text) == 1:
@@ -376,43 +357,104 @@ class ControllerManual(BoxLayout):
     def __checking_status_camera_open(self):
         if self.camera_is_open.text == "Manual menu || Camera status:On":
             return True
-        
-    # def __find_address_by_id(self):
-    #     try:
-    #         with open('./data/setting/connection.json', 'r') as file:
-    #             storage = json.load(file)
-            
-    #         h_id = self.__extract_coordinates_selection(self.helio_stats_id_manual.text)
-    #         c_id = self.__extract_coordinates_selection(self.camera_url_id_manual.text)
-
-    #         for helio_data in storage['helio_stats_ip']:
-    #             if h_id == helio_data['id']:
-    #                 self.helio_stats_endpoint = helio_data['ip']
-    #                 break
-
-    #         for camera_data in storage['camera_url']:
-    #             if c_id == camera_data['id']:
-    #                 self.camera_endpoint = camera_data['url']
-    #                 break
-    #     except Exception as e:
-    #         self.show_popup("Error", f"{e}")
     
-    # def __extract_coordinates(self, s_1, s_2):
-    #     pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
+    #### for test ####
+    def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
+        pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
+        match = re.search(pattern, s1)
+        match_2 = re.search(pattern, s2)
 
-    #     match = re.search(pattern, s_1)
-    #     match_2 = re.search(pattern, s_2)
+        if match:   
+            if match_2:
+                center_x = int(match.group(1))
+                center_x_light = int(match_2.group(1))
+                
+                center_y = int(match.group(2))
+                center_y_light = int(match_2.group(2))
 
-    #     if match:
-    #         if match_2:
-    #             self.x_error = int(match.group(1)) - int(match_2.group(1))
-    #             self.y_error = int(match.group(2)) - int(match_2.group(2))
-    #             self.postion_x = int(match_2.group(1))
-    #             self.postion_y = int(match_2.group(2))
-    #         else:
-    #             print("The string format is incorrect.")
-    #     else:
-    #         print("The string format is incorrect.")
+                return center_x, center_y, center_x_light, center_y_light
+        else:
+            print("The string format is incorrect.")
+
+    def test_manual_send_payload_auto_2(self):
+        
+        center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(
+            self.error_center_f.text, 
+            self.error_center_t.text
+            )
+        
+        print(center_x, center_y, target_y, target_y)
+        
+        _, _, frame_w, frame_h = self.haddle_extact_boarding_frame()
+
+        scaling_x, scaling_y, scaling_height = self.haddle_convert_to_old_resolution(
+            current_width=frame_w,
+            current_height=frame_h
+        )
+
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
 
 
 
+        payload = {
+                "topic":"auto",
+                "axis": "x",
+                "cx":int(target_x/scaling_x), # center x light
+                "cy":int((scaling_height-target_y)/scaling_y), # center y light
+                "target_x":int(target_x/scaling_x),
+                "target_y":int((scaling_height-target_y)/scaling_y), # center y light
+                "kp":1,
+                "ki":1,
+                "kd":2,
+                "max_speed":setting_data['control_speed_distance']['speed_screw'],
+                "off_set":1,
+                "status": "1"
+            }
+
+        headers = {
+            'Content-Type': 'application/json'  
+        }
+
+        print("payload in manual function => ",payload)
+
+        try:
+            response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+            if response.status_code != 200:
+                try:
+                    error_info = response.json()
+                    self.show_popup("Connection Error", f"{str(error_info)} \n auto mode off")
+                except ValueError:
+                    self.show_popup("Connection Error", f"{str(response.text)} \n auto mode off")
+            else:
+                print("debug send success! ",response)
+
+        except Exception as e:
+            self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
+            #self.turn_on_auto_mode = False
+            #self.ids.label_auto_mode.text = "Auto off"
+            #self.__off_loop_auto_calculate_diff() 
+
+    def haddle_convert_to_old_resolution(self,current_width, current_height):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+        except Exception as e:
+            print(e)
+            self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
+    
+        scaling_x = round((current_width/setting_data['old_frame_resolution']['width']),2) 
+        scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
+
+        return scaling_x, scaling_y, current_height
+    
+
+    def haddle_extact_boarding_frame(self):
+        data = self.test_manual_send_payload_auto.text
+        numbers = re.findall(r'\d+', data)
+        int_numbers = [int(num) for num in numbers]
+        return int_numbers[0], int_numbers[1], int_numbers[2], int_numbers[3]

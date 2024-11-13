@@ -25,8 +25,8 @@ class ManualScreen(Screen):
         self.max_height = 0
         
         self.reset_perspective_transform = [[0,0,0], [0,0,0],[0,0,0]]
-        self.reset_max_width = 0
-        self.reset_max_height = 0
+        self.reset_max_width = 3840
+        self.reset_max_height = 2160
 
         Clock.schedule_once(lambda dt: self.fetch_status()) # Fetch status is_use_contour from json setting file
         self.dragging = False          # Initialize dragging
@@ -45,8 +45,8 @@ class ManualScreen(Screen):
         self.static_high_s = 255
         self.static_high_v = 255
         self.static_blur_kernel = (55,55) 
-        self.static_min_area = 50000
-        self.static_max_area = 130000
+        self.static_min_area = 40000
+        self.static_max_area = 230000
         # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
         # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
@@ -77,6 +77,8 @@ class ManualScreen(Screen):
         # Calculate the position (bottom-left corner) of the image within the widget
         pos_x = img_widget.x + (widget_width - display_width) / 2
         pos_y = img_widget.y + (widget_height - display_height) / 2
+
+        # print(display_width, display_height, img_widget.x, img_widget.y)
 
         return display_width, display_height, pos_x, pos_y
 
@@ -215,110 +217,22 @@ class ManualScreen(Screen):
 
         # Get display size and position
         display_width, display_height, pos_x, pos_y = self.get_image_display_size_and_pos()
-
+        # print(display_width, display_height, pos_x, pos_y)
         # Convert image coordinates back to widget coordinates for drawing
         points = []
+        
         for img_x, img_y in self.selected_points:
             widget_x = pos_x + (img_x / img_widget.texture.width) * display_width
             widget_y = pos_y + ((img_widget.texture.height - img_y) / img_widget.texture.height) * display_height
             points.extend([widget_x, widget_y])
-
+        # print( , display_width, display_height)
         # Draw green lines connecting the points
+        # print(points)
         with img_widget.canvas.after:
             Color(0, 1, 0, 1)  # Green color
             self.polygon_lines = Line(points=points, width=2, close=True)
         self.remove_draw_point_marker()
 
-    def crop_image(self):
-        ###Perform cropping based on selected mode.###
-        try:
-            with open('./data/setting/setting.json', 'r') as file:
-                setting_system = json.load(file)
-        except Exception as e:
-            self.show_popup("Error", f"Failed to load settings: {e}")
-            return
-
-        if not setting_system.get('is_use_contour', False):
-            # Polygon Cropping Mode
-            if len(self.selected_points) < 3:
-                self.show_popup("Error", "Please select at least 3 points before cropping.")
-                return
-
-            # Load image using OpenCV
-            img_path = self.image_source  # Ensure 'self.image_source' is correctly set
-            image = cv2.imread(img_path)
-            if image is None:
-                self.show_popup("Error", f"Failed to load image: {img_path}")
-                return
-
-            # Create a mask with the same dimensions as the image
-            mask = np.zeros(image.shape[:2], dtype=np.uint8)
-
-            # Convert selected_points to a NumPy array of integer coordinates
-            pts = np.array([self.selected_points], dtype=np.int32)
-
-            # Fill the polygon on the mask
-            cv2.fillPoly(mask, pts, 255)
-
-            # Optionally, apply perspective transform if exactly 4 points are selected
-            if len(self.selected_points) == 4:
-                warped = self.apply_perspective_transform(image)
-                if warped is None:
-                    self.show_popup("Error", "Perspective transform failed.")
-                    return
-                # Apply mask to warped image
-                mask_warped = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-                warped_masked = cv2.bitwise_and(warped, warped, mask=mask_warped[:, :, 0])
-                cropped_image = warped_masked
-            else:
-                # Apply mask to the original image
-                cropped_image = cv2.bitwise_and(image, image, mask=mask)
-
-            # Convert to BGRA to add alpha channel for transparency
-            image_bgra = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2BGRA)
-            image_bgra[:, :, 3] = mask  # Set alpha channel based on mask
-
-            # Save the cropped image as PNG to preserve transparency
-            cropped_path = 'images/cropped_image.png'
-            cv2.imwrite(cropped_path, image_bgra)
-
-            # Update the UI to display the cropped image
-            self.image_source = cropped_path
-            self.ids.manual_cam_image.source = cropped_path
-            self.ids.manual_cam_image.reload()
-
-            # Reset selections after cropping
-            self.reset_selection()
-            self.show_popup("Success", "Image cropped successfully!")
-
-        else:
-            # Rectangle Cropping Mode (existing functionality)
-            if not self.crop_area:
-                self.show_popup("Error", "No crop area selected.")
-                return
-
-            # Load image using OpenCV
-            img_path = self.image_source  # Ensure 'self.image_source' is correctly set
-            image = cv2.imread(img_path)
-            if image is None:
-                self.show_popup("Error", f"Failed to load image: {img_path}")
-                return
-
-            x1, y1, x2, y2 = self.crop_area
-            cropped = image[y1:y2, x1:x2]
-
-            # Save the cropped image
-            cropped_path = 'images/cropped_image.jpg'
-            cv2.imwrite(cropped_path, cropped)
-
-            # Update the UI to display the cropped image
-            self.image_source = cropped_path
-            self.ids.manual_cam_image.source = cropped_path
-            self.ids.manual_cam_image.reload()
-
-            # Reset selections after cropping
-            self.reset_selection()
-            self.show_popup("Success", "Image cropped successfully!")
 
     def order_points(self, pts):
         ###Order points in the order: top-left, top-right, bottom-right, bottom-left.###
@@ -399,6 +313,8 @@ class ManualScreen(Screen):
         self.perspective_transform = M
         self.max_width = max_width
         self.max_height = max_height
+
+        # print(max_width, max_height)
         
 
         warped = cv2.warpPerspective(frame, M, (max_width, max_height))
@@ -638,6 +554,7 @@ class ManualScreen(Screen):
 
                 if not setting_system.get('is_use_contour', False):
                     # Polygon Cropping Mode
+
                     if len(self.selected_points) == 4:
                         # Apply perspective transform
                         frame = self.apply_perspective_transform(frame)
@@ -645,6 +562,8 @@ class ManualScreen(Screen):
                             return
 
                     frame = cv2.flip(frame, 0)  # Flip frame vertically
+
+                    
 
                     contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
@@ -671,23 +590,28 @@ class ManualScreen(Screen):
                     bounding_box_frame_h = setting_system['max_height']
                     # static_min_area = 100
                     # Draw centers and bounding boxes
+
                     counting_light_center = 0
-                    for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        c_area = cv2.contourArea(contours_light[idx])
-                        if self.static_min_area < c_area and self.static_max_area < c_area:
-                            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                            cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                        #     c_area = cv2.contourArea(contours_light[idx])
+                        #     if self.static_min_area < c_area and self.static_max_area > c_area:
+                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+                    for cnt in contours_light:
+                        c_area = cv2.contourArea(cnt)
+                        if self.static_min_area < c_area: #and self.static_max_area > c_area:
+                            counting_light_center += 1
+                            x, y, w, h = cv2.boundingRect(cnt)
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                            cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
+                            cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                     ### draw center of frame
                     cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                     cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                    for cnt in contours_light:
-                        area = cv2.contourArea(cnt)
-                        if self.static_min_area < c_area and self.static_min_area < area:
-                            counting_light_center += 1
-                            x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                    
 
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -723,12 +647,7 @@ class ManualScreen(Screen):
                             return
                         
                         frame = cv2.flip(frame, 0)  # Flip frame vertically
-                        # frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-                        ### ccc crop ###
-                        # contours_light, demo_light = self.find_bounding_boxes(
-                        #     frame_gray, blur_kernel=(55, 55), thresh_val=(120,135), morph_kernel_size=(3, 3)
-                        # )
+                        
 
                         contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
                             frame_color=frame, 
@@ -753,22 +672,26 @@ class ManualScreen(Screen):
                         # static_min_area = 0
                         # Draw centers and bounding boxes
                         counting_light_center = 0
-                        for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                            c_area = cv2.contourArea(contours_light[idx])
-                            if self.static_min_area < c_area and self.static_max_area > c_area:
-                                cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                                cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                        #     c_area = cv2.contourArea(contours_light[idx])
+                        #     if self.static_min_area < c_area and self.static_max_area > c_area:
+                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+                        for cnt in contours_light:
+                            c_area = cv2.contourArea(cnt)
+                            if self.static_min_area < c_area: #and self.static_max_area > c_area:
+                                counting_light_center += 1
+                                x, y, w, h = cv2.boundingRect(cnt)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                                cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
+                                cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
                         ### draw center of frame
                         cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                         cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                        for cnt in contours_light:
-                            area = cv2.contourArea(cnt)
-                            if self.static_min_area < c_area and self.static_min_area < area:
-                                counting_light_center += 1
-                                x, y, w, h = cv2.boundingRect(cnt)
-                                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
 
                         # Convert frame to RGB
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

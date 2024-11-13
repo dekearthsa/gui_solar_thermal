@@ -3,30 +3,30 @@
     "crop_status": false,
     "is_light_target_threshold": 0,
     "limit_center": 2,
-    "is_use_contour": true,
+    "is_use_contour": false,
     "perspective_transform": [
         [
-            1.071746345484581,
-            0.02209786279349665,
-            -1319.8169532043732
+            1.2125443283275097,
+            0.05360722293658448,
+            -1567.9015037243255
         ],
         [
-            8.057181978853014e-17,
-            1.112711334349157,
-            -510.73450246626305
+            0.00447447803134351,
+            1.2159394050175787,
+            -695.1112807887107
         ],
         [
-            -2.325126963887684e-05,
-            7.776187626510409e-05,
+            9.377778558921538e-06,
+            0.00012546377906457433,
             1.0
         ]
     ],
-    "max_width": 1628,
-    "max_height": 1358,
+    "max_width": 1207,
+    "max_height": 962,
     "hsv_threshold": {
         "low_h": 0,
         "low_s": 0,
-        "low_v": 194,
+        "low_v": 190,
         "high_h": 179,
         "high_s": 255,
         "high_v": 255
@@ -36,9 +36,19 @@
         "max_area": 130000
     },
     "control_speed_distance": {
+        "manual_mode": {
+            "speed": 0
+        },
+        "auto_mode": {
+            "speed": 0
+        },
+        "path_mode": {
+            "speed": 0
+        },
         "speed_screw": 100,
         "distance_mm": 8
     },
+    "is_run_path": 0,
     "old_frame_resolution": {
         "width": 640,
         "height": 480
@@ -50,7 +60,7 @@
         },
         "camera_ip": {
             "id": "camera-bottom",
-            "ip": "rtsp://admin:NU12131213@192.168.1.170:554/Streaming/Channels/101/"
+            "ip": "test_video.avi"
         }
     }
 }

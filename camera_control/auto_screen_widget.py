@@ -313,6 +313,7 @@ class SetAutoScreen(Screen):
 
             x1, y1, x2, y2 = self.crop_area
             cropped = image[y1:y2, x1:x2]
+            print(x1, y1, x2, y2)
 
             # Save the cropped image
             cropped_path = 'images/cropped_image.jpg'
@@ -383,7 +384,7 @@ class SetAutoScreen(Screen):
         if not self.is_valid_quadrilateral(pts):
             self.show_popup("Error", "Selected points do not form a valid quadrilateral.")
             return frame
-
+        # print(pts)
         # Compute width and height of the new image
         width_a = np.linalg.norm(pts[0] - pts[1])
         width_b = np.linalg.norm(pts[2] - pts[3])
@@ -676,11 +677,11 @@ class SetAutoScreen(Screen):
 
                     # Draw centers and bounding boxes
                     counting_light_center = 0
-                    for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        c_area = cv2.contourArea(contours_light[idx])
-                        if self.static_min_area < c_area and self.static_max_area < c_area:
-                            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                            cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                    # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                    #     c_area = cv2.contourArea(contours_light[idx])
+                    #     if self.static_min_area < c_area and self.static_max_area < c_area:
+                    #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                    #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                     ### draw center of frame
                     cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
@@ -688,10 +689,12 @@ class SetAutoScreen(Screen):
 
                     for cnt in contours_light:
                         area = cv2.contourArea(cnt)
-                        if self.static_min_area < c_area and self.static_min_area < area:
+                        if self.static_min_area < c_area: #and self.static_min_area < area:
                             counting_light_center += 1
                             x, y, w, h = cv2.boundingRect(cnt)
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                            cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
+                            cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                     # Convert frame to RGB
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -720,6 +723,10 @@ class SetAutoScreen(Screen):
                 ### using crop data ###
                 else:
                     try:
+                        # x, y, w, h = 1247, 590,0,160
+                        # frame = frame[y:y+h, x:x+w]
+                        
+
                         frame = self.apply_crop_methods(frame)
                         if frame.size == 0:
                             return
@@ -749,22 +756,24 @@ class SetAutoScreen(Screen):
                         # static_min_area = 0
                         # Draw centers and bounding boxes
                         counting_light_center = 0
-                        for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                            c_area = cv2.contourArea(contours_light[idx])
-                            if self.static_min_area < c_area and self.static_max_area > c_area:
-                                cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                                cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
+                        #     c_area = cv2.contourArea(contours_light[idx])
+                        #     if self.static_min_area < c_area and self.static_max_area < c_area:
+                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
                         ### draw center of frame
                         cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                         cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                         for cnt in contours_light:
-                            area = cv2.contourArea(cnt)
-                            if self.static_min_area < c_area and self.static_min_area < area:
+                            c_area = cv2.contourArea(cnt)
+                            if self.static_min_area < c_area: #and self.static_min_area < area:
                                 counting_light_center += 1
                                 x, y, w, h = cv2.boundingRect(cnt)
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                                cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
+                                cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                         # Convert frame to RGB
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

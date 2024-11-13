@@ -32,7 +32,7 @@ MainFrameWidget:
     #     bold: True
     #     size_hint_y: .2
     GridLayout:
-        cols: 2
+        cols: 3
         spacing: 5
         GridLayout:
             rows: 3
@@ -74,6 +74,10 @@ MainFrameWidget:
             text: 'Capture'
             size_hint_x: .35
             on_press: root.update_and_submit()
+        Button:
+            text: 'Send data '
+            size_hint_x: .35
+            on_press: root.test_manual_send_payload_auto_2()
 
 
 
@@ -95,7 +99,7 @@ MainFrameWidget:
         # Camera control buttons
         GridLayout:
             cols: 3
-            size_hint_y: .05
+            size_hint_y: .1
             spacing: 5
             padding: 5
 
@@ -380,6 +384,8 @@ MainFrameWidget:
                 helio_stats_id_manual: selected_label_helio_stats
                 camera_url_id_manual: selected_label_camera
                 number_center_light: number_of_center_light_detected
+                test_manual_send_payload_auto: manual_bounding_frame_position
+                
 
 <SetAutoScreen>:
     BoxLayout:
@@ -395,11 +401,25 @@ MainFrameWidget:
                 id: auto_camera_status
                 text: 'Auto menu || Camera status: Off'
                 bold: True
+            NavigationLayout:
+                ScreenManager:
+    
+            Screen:
+
+                BoxLayout:
+                    orientation: 'vertical'
+
+                    MDToolbar:
+                        title: "Navigation Drawer"
+                        elevation: 10
+                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+                        
+            MDNavigationDrawer:
 
         # Camera control buttons
         GridLayout:
             cols: 3
-            size_hint_y: .05
+            size_hint_y: .1
             spacing: 5
             padding: 5
 

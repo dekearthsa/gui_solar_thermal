@@ -141,10 +141,11 @@ class ControllerAuto(BoxLayout):
                         status=self.set_status
                         )
         else:
-            self.show_popup("Alert", "Camera is offline.")
+            self.__off_loop_auto_calculate_diff()
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
-            self.__off_loop_auto_calculate_diff()
+            self.show_popup("Alert", "Camera is offline.")
+            
 
     def __on_loop_auto_calculate_diff(self):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
@@ -206,9 +207,7 @@ class ControllerAuto(BoxLayout):
                 "off_set":off_set,
                 "status": status
             }
-        
-        print(payload)
-        print(self.helio_stats_id_endpoint)
+
         headers = {
             'Content-Type': 'application/json'  
         }
@@ -293,12 +292,7 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             print(e)
             self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
-        
-        # is_scale = current_width / current_height  
-        # scaling_x = round((setting_data['old_frame_resolution']['width'] / is_scale),2) 
-        # scaling_y = round((setting_data['old_frame_resolution']['height'] / is_scale),2)
-        # return scaling_x, scaling_y 
-
+    
         scaling_x = round((current_width/setting_data['old_frame_resolution']['width']),2) 
         scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
 
