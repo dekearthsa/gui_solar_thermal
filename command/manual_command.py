@@ -53,8 +53,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['up'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
                 print(payload_set)
@@ -80,8 +80,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['left'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
                 print(payload_set)
@@ -108,8 +108,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['right'], 
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -134,8 +134,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['down'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -183,8 +183,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['right_down'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -210,8 +210,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['left_down'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -237,8 +237,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['left_up'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -264,8 +264,8 @@ class ControllerManual(BoxLayout):
             if setting_data['storage_endpoint']['helio_stats_ip']['ip'] != "" and setting_data['storage_endpoint']['camera_ip']['ip'] != "":
                 payload_set = {
                     "topic":self.static_manaul_dict['right_up'],
-                    "step": setting_data['control_speed_distance']['distance_mm'],
-                    "speed": setting_data['control_speed_distance']['speed_screw'],
+                    "step": setting_data['control_speed_distance']['manual_mode']['step'],
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
                     # "speed_y": self.static_speed_manual_y,
                 }
 
@@ -411,7 +411,7 @@ class ControllerManual(BoxLayout):
                 "kp":1,
                 "ki":1,
                 "kd":2,
-                "max_speed":setting_data['control_speed_distance']['speed_screw'],
+                "max_speed":setting_data['control_speed_distance']['manual_mode']['speed'],
                 "off_set":1,
                 "status": "1"
             }

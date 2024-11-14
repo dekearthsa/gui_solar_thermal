@@ -3,7 +3,7 @@
     "crop_status": false,
     "is_light_target_threshold": 0,
     "limit_center": 2,
-    "is_use_contour": false,
+    "is_use_contour": true,
     "perspective_transform": [
         [
             1.2125443283275097,
@@ -37,16 +37,25 @@
     },
     "control_speed_distance": {
         "manual_mode": {
-            "speed": 0
+            "speed": 100,
+            "step": 10
         },
         "auto_mode": {
-            "speed": 0
+            "speed": 100,
+            "step": 8
         },
         "path_mode": {
-            "speed": 0
-        },
-        "speed_screw": 100,
-        "distance_mm": 8
+            "speed": 100,
+            "step": 8
+        }
+    },
+    "auto_mode_config": {
+        "set_axis": "x",
+        "ki": 1.1,
+        "kp": 1.1,
+        "kd": 2.1,
+        "offset": 4.0,
+        "set_status": "1"
     },
     "is_run_path": 0,
     "old_frame_resolution": {

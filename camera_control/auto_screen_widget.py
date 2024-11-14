@@ -8,21 +8,17 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.uix.gridlayout import GridLayout
 # import paho.mqtt.client as mqtt
 # import re
-
+from functools import partial
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         ### mqtt setup ###
-        # self.mqtt_host = "mqtt-dashboard.com"
-        # self.mqtt_port = "8884"
-        # self.mqtt_client = mqtt.Client() 
-        # self.mqtt_topic = "testtopic/1"
-        # self.mqtt_client.on_connect = self.on_connect
-        # self.mqtt_client.on_disconnect = self.on_disconnect
-        # self.is_auto_mode = "Auto off"
-
         self.capture = None
         self.selected_points = []      # List to store selected points as (x, y) in image coordinates
         self.polygon_lines = None      # Line instruction for the polygon
@@ -55,13 +51,6 @@ class SetAutoScreen(Screen):
         self.static_blur_kernel = (55,55) 
         self.static_min_area = 50000
         self.static_max_area = 130000 #130000
-        # self.speed_screw = 1
-        # self.distance_mm = 1
-
-        # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
-        # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
-        # rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/
-        # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
         self.camera_connection = ""
         self.helio_stats_connection = ""
         
@@ -723,10 +712,6 @@ class SetAutoScreen(Screen):
                 ### using crop data ###
                 else:
                     try:
-                        # x, y, w, h = 1247, 590,0,160
-                        # frame = frame[y:y+h, x:x+w]
-                        
-
                         frame = self.apply_crop_methods(frame)
                         if frame.size == 0:
                             return
@@ -753,16 +738,7 @@ class SetAutoScreen(Screen):
                         bounding_box_frame_w = setting_system['max_width']
                         bounding_box_frame_h = setting_system['max_height']
 
-                        # static_min_area = 0
-                        # Draw centers and bounding boxes
                         counting_light_center = 0
-                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        #     c_area = cv2.contourArea(contours_light[idx])
-                        #     if self.static_min_area < c_area and self.static_max_area < c_area:
-                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                        
-                        ### draw center of frame
                         cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                         cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
@@ -882,8 +858,7 @@ class SetAutoScreen(Screen):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
             self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
-            # self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
-            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['auto_mode']['step'])
         except Exception as e:
             self.show_popup("Error file not found", f"Failed to load setting file {e}")
 
@@ -892,7 +867,7 @@ class SetAutoScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['distance_mm'] = int(step_input)
+            setting_data['control_speed_distance']['auto_mode']['step'] = int(step_input)
         except Exception as e:
             print(e)
             self.show_popup("Error", f"Failed to upload value in setting file: {e}")
@@ -903,7 +878,7 @@ class SetAutoScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['speed_screw'] = int(speed_input)
+            setting_data['control_speed_distance']['auto_mode']['speed'] = int(speed_input)
         except Exception as e:
             print(e)
             self.show_popup("Error", f"Failed to upload value in setting file: {e}")
@@ -924,14 +899,14 @@ class SetAutoScreen(Screen):
         with open('./data/setting/setting.json', 'r') as file:
             setting_data = json.load(file)
 
-        setting_data['control_speed_distance']['speed_screw'] = 100 ## default speed_screw
-        setting_data['control_speed_distance']['distance_mm'] = 10  ## default distance_mm 
+        setting_data['control_speed_distance']['auto_mode']['speed'] = 100 
+        setting_data['control_speed_distance']['auto_mode']['step'] = 10  
 
         with open("./data/setting/setting.json", "w") as file:
             json.dump(setting_data, file, indent=4) 
 
-        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
-        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
+        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['auto_mode']['speed'])
+        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['auto_mode']['step'])
 
     def haddle_reset_default_threshold_low_v(self):
         with open('./data/setting/setting.json', 'r') as file:
@@ -952,3 +927,179 @@ class SetAutoScreen(Screen):
         self.ids.selected_label_camera.text = setting_data['storage_endpoint']['camera_ip']['id']
         self.camera_connection =  setting_data['storage_endpoint']['camera_ip']['ip']
         self.helio_stats_connection = setting_data['storage_endpoint']['helio_stats_ip']['ip']
+
+
+    def open_config_popup_start(self):
+        self.config_popup("Config")
+
+
+    def config_popup(self, title):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file) 
+
+        # Create the main vertical layout for the popup
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        # Define the parameters and their corresponding handler functions
+        parameters = [
+            {
+                "label": "Speed",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['speed']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
+            {
+                "label": "KI",
+                "text_input": TextInput(
+                    text=str(setting_data['auto_mode_config']['ki']),
+                    hint_text="Enter your KI",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_KI_change
+            },
+            {
+                "label": "KP",
+                "text_input": TextInput(
+                    text=str(setting_data['auto_mode_config']['kp']),
+                    hint_text="Enter your KP",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_KP_change
+            },
+            {
+                "label": "KD",
+                "text_input": TextInput(
+                    text=str(setting_data['auto_mode_config']['kd']),
+                    hint_text="Enter your KD",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_KD_change
+            },
+            {
+                "label": "Off-set",
+                "text_input": TextInput(
+                    text=str(setting_data['auto_mode_config']['offset']),
+                    hint_text="Enter your Off-set",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_offset_change
+            },
+        ]
+
+        # Iterate over each parameter to create GridLayouts
+        for param in parameters:
+            grid = GridLayout(cols=3, size_hint=(1, 1), height=40, spacing=10)
+            
+            # Label
+            label = Label(text=param["label"], size_hint=(0.3, 1))
+            grid.add_widget(label)
+            
+            # TextInput
+            text_input = param["text_input"]
+            grid.add_widget(text_input)
+            
+            # Update Button
+            update_btn = Button(text='Update', size_hint=(0.2, 1))
+            # Bind the Update button to the respective handler with TextInput
+            update_btn.bind(on_release=partial(param["handler"], text_input))
+            grid.add_widget(update_btn)
+            
+            # Add the GridLayout to the main layout
+            layout.add_widget(grid)
+        
+        # Add the Reset button
+        reset_layout = GridLayout(cols=3, size_hint=(1, 1), height=40, spacing=10)
+        reset_layout.add_widget(Label())  # Empty label for spacing
+        reset_layout.add_widget(Label())  # Empty label for spacing
+        reset_btn = Button(text="Reset", size_hint=(.7, 1), on_press=self.reset_setting)
+        # reset_btn.bind(on_release=self.reset_settings)
+        reset_layout.add_widget(reset_btn)
+        layout.add_widget(reset_layout)
+        
+        # Create the Popup
+        popup = Popup(
+            title=title,
+            content=layout,
+            size_hint=(None, None),
+            size=(850, 590),
+            auto_dismiss=True  # Allow dismissal by clicking outside or pressing Escape
+        )
+        popup.open()
+
+    def reset_setting(self, instance):
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['auto_mode_config']['ki'] = 1.0
+            setting_data['auto_mode_config']['kp'] = 1.0
+            setting_data['auto_mode_config']['kd'] = 2.0
+            setting_data['auto_mode_config']['offset'] = 1.0
+            setting_data['control_speed_distance']['auto_mode']['speed'] = 100
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def handle_speed_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['speed'] = val
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+        
+
+    def handle_KI_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['auto_mode_config']['ki'] = float(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def handle_KP_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['auto_mode_config']['kp'] = float(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def handle_KD_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['auto_mode_config']['kd'] = float(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def handle_offset_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['auto_mode_config']['offset'] = float(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")

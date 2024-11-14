@@ -814,8 +814,8 @@ class ManualScreen(Screen):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
             self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
-            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
-            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['manual_mode']['speed'])
+            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['manual_mode']['step'])
         except Exception as e:
             print(e)
             self.show_popup("Error file not found", f"Failed to load setting file {e}")
@@ -828,7 +828,7 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['distance_mm'] = int(step_input)
+            setting_data['control_speed_distance']['manual_mode']['step'] = int(step_input)
 
             with open("./data/setting/setting.json", "w") as file:
                 json.dump(setting_data, file, indent=4)
@@ -842,7 +842,7 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['speed_screw'] = int(speed_input)
+            setting_data['control_speed_distance']['manual_mode']['speed'] = int(speed_input)
 
             with open("./data/setting/setting.json", "w") as file:
                 json.dump(setting_data, file, indent=4)
@@ -867,15 +867,15 @@ class ManualScreen(Screen):
             setting_data = json.load(file)
 
         # setting_data['hsv_threshold']['low_v'] = 180 ## default low_v
-        setting_data['control_speed_distance']['speed_screw'] = 100 ## default speed_screw
-        setting_data['control_speed_distance']['distance_mm'] = 10  ## default distance_mm 
+        setting_data['control_speed_distance']['manual_mode']['speed']= 100 ## default speed_screw
+        setting_data['control_speed_distance']['manual_mode']['step'] = 10  ## default distance_mm 
 
         with open("./data/setting/setting.json", "w") as file:
             json.dump(setting_data, file, indent=4)
 
         self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
-        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['distance_mm'])
-        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['speed_screw'])
+        self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['manual_mode']['step'])
+        self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['manual_mode']['speed'])
 
     def haddle_reset_default_threshold_low_v(self):
         with open('./data/setting/setting.json', 'r') as file:

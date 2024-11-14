@@ -54,15 +54,7 @@ class ControllerAuto(BoxLayout):
             self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
             h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
             c_id = storage['storage_endpoint']['camera_ip']['id']
-            # for helio_data in storage['helio_stats_ip']:
-            #     if h_id == helio_data['id']:
-            #         self.helio_stats_id_endpoint = helio_data['ip']
-            #         break
 
-            # for camera_data in storage['camera_url']:
-            #     if c_id == camera_data['id']:
-            #         self.camera_endpoint = camera_data['url']
-            #         break
             return h_id, c_id
         except Exception as e:
             self.show_popup("Error", f"{e}")
@@ -203,7 +195,7 @@ class ControllerAuto(BoxLayout):
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
-                "max_speed":setting_data['control_speed_distance']['speed_screw'],
+                "max_speed":setting_data['control_speed_distance']['auto_mode']['speed'],
                 "off_set":off_set,
                 "status": status
             }

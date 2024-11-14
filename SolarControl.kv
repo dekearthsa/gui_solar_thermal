@@ -14,6 +14,9 @@
 #:import ControllerManual command.manual_command.ControllerManual
 #:import ControllerAuto command.auto_command.ControllerAuto
 
+### Path control
+#:import PathControlWidget path_control.path_control_widget.PathControlWidget
+
 ### animation 
 #:import BlinkSpot animation.blinking.BlinkSpot
 
@@ -22,6 +25,14 @@ MainFrameWidget:
 
 <MainFrameWidget>:
     LabHeaderWidget:
+
+
+
+<PathControlWidget>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Path control'
 
 <ControllerManual>:
     orientation: 'vertical'
@@ -86,7 +97,7 @@ MainFrameWidget:
         orientation: 'vertical'
         padding: 5
         spacing: 5
-
+        
         # Camera status label
         BoxLayout:
             orientation: 'vertical'
@@ -395,26 +406,13 @@ MainFrameWidget:
 
         # Camera status label
         BoxLayout:
-            orientation: 'vertical'
-            size_hint_y: .09
+            orientation: 'horizontal'
+            size_hint_y: .05
             Label:
                 id: auto_camera_status
                 text: 'Auto menu || Camera status: Off'
                 bold: True
-            NavigationLayout:
-                ScreenManager:
-    
-            Screen:
-
-                BoxLayout:
-                    orientation: 'vertical'
-
-                    MDToolbar:
-                        title: "Navigation Drawer"
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-                        
-            MDNavigationDrawer:
+                height: self.texture_size[1]
 
         # Camera control buttons
         GridLayout:
@@ -503,7 +501,7 @@ MainFrameWidget:
             orientation: 'vertical'
             size_hint_y: 0.1
             GridLayout:
-                cols: 3
+                cols: 2
                 GridLayout:
                     cols: 4
                     Label:
@@ -520,37 +518,32 @@ MainFrameWidget:
                         id: slider_hsv_low_v_label
                         text: str(slider_hsv_low_v.value)
                     Button:
+                        size_hint_x: .42
                         text: "Reset low_v"
                         on_press: root.haddle_reset_default_threshold_low_v()
 
-                GridLayout:
-                    rows: 1
-                    # GridLayout:
-                    #     cols: 3
-                    #     Label:
-                    #         text:"Step machine"
-                    #     TextInput:
-                    #         id: set_step_machine
-                    #         text: "Step machine"
-                    #     Button:
-                    #         id: btn_change_step_machine
-                    #         text: "update"
-                    #         on_press: root.haddle_change_step_machine()
-                    GridLayout:
-                        cols: 3
-                        Label:
-                            text:"Speed machine"
-                        TextInput:
-                            id: set_speed_machine
-                            text: "Speed machine"
-                        Button:
-                            id: btn_change_step_machine
-                            text: "update"
-                            on_press: root.haddle_change_speed_machine()
+                # GridLayout:
+                #     rows: 1
+                #     GridLayout:
+                #         cols: 3
+                #         Label:
+                #             text:"Speed machine"
+                #         TextInput:
+                #             id: set_speed_machine
+                #             text: "Speed machine"
+                #         Button:
+                #             id: btn_change_step_machine
+                #             text: "update"
+                #             on_press: root.haddle_change_speed_machine()
+                # Button:
+                #     size_hint_x: .15
+                #     text: 'Reset threshold'
+                #     on_press: root.haddle_reset_default_threshold()
+
                 Button:
-                    size_hint_x: .15
-                    text: 'Reset threshold'
-                    on_press: root.haddle_reset_default_threshold()
+                    size_hint_x: .1
+                    text: 'Config'
+                    on_press: root.open_config_popup_start()
 
         GridLayout:
             cols: 5
@@ -675,6 +668,7 @@ MainFrameWidget:
             GridLayout:
                 cols: 3
                 spacing: 10
+                size_hint_x: .5
                 Button:
                     text: 'Reset Crop'
                     on_press: root.reset_crop_value()
@@ -703,6 +697,7 @@ MainFrameWidget:
 
 <ControllerAuto>:
     orientation: 'vertical'
+    size_hint_x: .5
     # Label:
     #     id: return_value
     #     text: "Return: "
@@ -748,45 +743,214 @@ MainFrameWidget:
 <Description>:
     BoxLayout:
         orientation: 'vertical'
-        padding: dp(10)
-        spacing: dp(10)
-        GridLayout:
-            cols: 2
-            row_default_height: self.minimum_height
-            row_force_default: False
-            spacing: dp(10)
+        ScrollView:
+            do_scroll_y: True
             BoxLayout:
                 orientation: 'vertical'
-                Label:
-                    text: "Helio Stats IP"
+                size_hint_y: None
+                height: self.minimum_height
+                GridLayout:
+                    cols: 2
                     size_hint_y: None
-                    height: self.texture_size[1]
-                Button:
-                    text: 'Reload'
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_timestamp'
+                        text: 'Timestamp'
+                    Label:
+                        id: 'd_timestamp'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
                     size_hint_y: None
-                    height: dp(40)
-                    on_press: helio_list.reload()
-                ListHelioStatsIp:
-                    id: helio_list
-            BoxLayout:
-                orientation: 'vertical'
-                Label:
-                    text: "Camera IP"
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_currentX'
+                        text: 'currentX'
+                    Label:
+                        id: 'd_currentX'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
                     size_hint_y: None
-                    height: self.texture_size[1]
-                Button:
-                    text: 'Reload'
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_currentY'
+                        text: 'currentY'
+                    Label:
+                        id: 'd_currentY'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
                     size_hint_y: None
-                    height: dp(40)
-                    on_press: camera_list.reload()
-                ListCameraIp:
-                    id: camera_list
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_err_posx'
+                        text: 'err_posx'
+                    Label:
+                        id: 'd_err_posx'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_err_posy'
+                        text: 'err_posy'
+                    Label:
+                        id: 'd_err_posy'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_x'
+                        text: 'x'
+                    Label:
+                        id: 'd_x'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_y'
+                        text: 'y'
+                    Label:
+                        id: 'd_y'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_x1'
+                        text: 'x1'
+                    Label:
+                        id: 'd_x1'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_y1'
+                        text: 'y1'
+                    Label:
+                        id: 'd_y1'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_ls1'
+                        text: 'ls1'
+                    Label:
+                        id: 'd_ls1'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_st_path'
+                        text: 'st_path'
+                    Label:
+                        id: 'd_st_path'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_move_comp'
+                        text: 'move_comp'
+                    Label:
+                        id: 'd_move_comp'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_elevation'
+                        text: 'elevation'
+                    Label:
+                        id: 'd_elevation'
+                        text: 'Null'
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: self.minimum_height
+                    row_default_height: '40dp'
+                    row_force_default: True
+                    Label:
+                        id: 'l_azimuth'
+                        text: 'azimuth'
+                    Label:
+                        id: 'd_azimuth'
+                        text: 'Null'
+    
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_y: .1
         BoxLayout:
-            orientation: 'vertical'
+            canvas.before:
+                Color: 
+                    rgba: (.3,.3,.3,1)
+                Rectangle: 
+                    pos:self.pos
+                    size:self.size
             Label:
-                text: 'Reset storage result CSV file.'
-            Button:
-                text: 'REST'
+                id: "status_auto_get"
+                text: "Auto get data off"
+            
+        GridLayout:
+            cols: 3
+            BoxLayout:
+                orientation: 'vertical'
+                Button:
+                    id: 'auto_get_data'
+                    text: 'Auto get data'
+            BoxLayout:
+                orientation: 'vertical'
+                Button:
+                    id: 'manual_get_data'
+                    text: 'Manual get data'
+            Spinner:
+                id: spinner_helio_stats_desc
+                text: 'Select helio'
+                size: 200, 44
+                pos_hint: {'center_x': 0.5}
+                on_text: root.haddle_helio_stats_selection(self, self.text)
+        
                 
 <UploadConnectionPage>:
     BoxLayout:
@@ -838,11 +1002,15 @@ MainFrameWidget:
             text: "Auto mode"
             on_press: root.ids.screen_manager.current = 'auto'
         Button:
+            text: "Path control"
+            on_press: root.ids.screen_manager.current = 'path_control'
+        Button:
             text: "Description"
             on_press: root.ids.screen_manager.current = 'description'
         Button:
             text: "Connection upload"
             on_press: root.ids.screen_manager.current = 'upload_connection'
+        
 
     ScreenManager:
         id: screen_manager
@@ -850,9 +1018,11 @@ MainFrameWidget:
             name: 'manual'
         SetAutoScreen:
             name: 'auto'
+        PathControlWidget:
+            name: 'path_control'
         Description:
             name: 'description'
         UploadConnectionPage:
             name: 'upload_connection'
-
+        
 
