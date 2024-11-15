@@ -20,7 +20,7 @@ check_file_path = os.path.isfile(filepath_by_date)
 
 
 if check_file_path == False: ## create csv and write
-    with open(path_file_by_date, mode='w', newline='') as file:
+    with open(filepath_by_date, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(adding_time.keys())
         writer.writerow(adding_time.values())

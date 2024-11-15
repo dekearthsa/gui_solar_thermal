@@ -311,6 +311,7 @@ class ControllerManual(BoxLayout):
 
                     now = datetime.now()
                     timestamp = now.strftime("%d/%m/%y %H:%M:%S")
+                    path_time_stamp = now.strftime("%d_%m_%y")
 
                     adding_time = {
                         "timestamp": timestamp,
@@ -334,13 +335,28 @@ class ControllerManual(BoxLayout):
                     }
 
                     filename = "./data/result/error_data.csv"
+                    path_file_by_date = f"./data/result/{path_time_stamp}.csv"
                     filepath = os.path.join(os.getcwd(), filename)
+                    filepath_by_date = os.path.join(os.getcwd(), path_file_by_date)
+                    check_file_path = os.path.isfile(filepath_by_date)
+
                     try:
                         fieldnames = adding_time.keys()
                         with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
                             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                             writer.writerow(adding_time)
-                        self.show_popup("Error alert",f"Data successfully saved to {filename}.")
+
+                        if check_file_path == False:
+                            with open(path_file_by_date, mode='w', newline='') as file:
+                                writer = csv.writer(file)
+                                writer.writerow(adding_time.keys())
+                                writer.writerow(adding_time.values())
+                            self.show_popup("Alert",f"Data successfully saved to {filename}.")
+                        else:
+                            with open(filepath_by_date, mode='a', newline='', encoding='utf-8') as csv_file:
+                                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                                writer.writerow(adding_time)
+                            self.show_popup("Alert",f"Data successfully saved to {filename}.")
                     except Exception as e:
                         self.show_popup("Error alert",f"Error saving file:\n{str(e)}")
                 except Exception as e:

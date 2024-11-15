@@ -269,7 +269,7 @@ class ControllerAuto(BoxLayout):
                 writer.writerow(adding_time)
                 
                 if check_file_path == False: ## create csv and write
-                    with open(path_file_by_date, mode='w', newline='') as file:
+                    with open(filepath_by_date, mode='w', newline='') as file:
                         writer = csv.writer(file)
                         writer.writerow(adding_time.keys())
                         writer.writerow(adding_time.values())
@@ -282,7 +282,7 @@ class ControllerAuto(BoxLayout):
                     with open(filepath_by_date, mode='a', newline='', encoding='utf-8') as csv_file:
                         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                         writer.writerow(adding_time)
-                        
+
                     self.show_popup("Finish", f"Auto mode off")
                     self.turn_on_auto_mode = False
                     self.ids.label_auto_mode.text = "Auto off"
