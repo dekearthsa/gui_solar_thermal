@@ -31,8 +31,179 @@ MainFrameWidget:
 <PathControlWidget>:
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Path control'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: .05
+            canvas.before:
+                Color:
+                    rgba: .35, .35, .35, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            Label:
+                text: 'Path control menu'
+            
+        GridLayout:
+            cols: 2
+            GridLayout:
+                rows: 2
+                BoxLayout:
+                    orientation: 'vertical'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: .6
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                        Image:
+                            id: path_cam_image
+                            source: 'images/sample_image_2.png'  # Initial image
+                            allow_stretch: True
+                            keep_ratio: True
+                            on_touch_down: None
+                            on_touch_move: None
+                            on_touch_up: None
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: .05
+                        GridLayout:
+                            cols:4
+                            Button:
+                                id: path_start_camera
+                                text: "Camera on"
+                                on_press: root.call_open_camera()
+                            GridLayout:
+                                rows: 1
+                                Spinner:
+                                    id: spinner_camera_selection
+                                    text: 'Select camera'
+                                    pos_hint: {'center_x': 0.5}
+                                    on_text: root.select_drop_down_menu_camera_path(self, self.text)
+                            GridLayout:
+                                rows: 1
+                                Spinner:
+                                    id: spinner_helio_selection
+                                    text: 'Select helio'
+                                    pos_hint: {'center_x': 0.5}
+                                    on_text: root.select_drop_down_menu_helio_path(self, self.text)
+                                    
+                            Button:
+                                id: 'start_run_path'
+                                text: "Start run path"
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: .3
+                GridLayout:
+                    rows:2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: .1
+                        GridLayout:
+                            cols: 2
+                            canvas.before:
+                                Color:
+                                    rgba: .2, .2, .2, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+                            Label:
+                                text:"Selection path: "
+                            Button:
+                                text: "Open file"
+                    BoxLayout:
+                        orientation: 'vertical'
+                        ScrollView:
+                            # do_scroll_y: True
+                            BoxLayout:
+                                orientation: 'vertical'
+                                # size_hint_y: None
+                                # height: self.minimum_height
+                                GridLayout:
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    cols:2
+                                    Label:
+                                        text: 'cx'
+                                    Label:
+                                        id: 'val_cx'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'cy'
+                                    Label:
+                                        id: 'val_cy'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'target_x'
+                                    Label:
+                                        id: 'val_target_x'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'target_y'
+                                    Label:
+                                        id: 'val_target_y'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'kp'
+                                    Label:
+                                        id: 'val_kp'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'ki'
+                                    Label:
+                                        id: 'val_ki'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'kd'
+                                    Label:
+                                        id: 'val_kd'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'max_speed'
+                                    Label:
+                                        id: 'val_max_speed'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'off_set'
+                                    Label:
+                                        id: 'val_off_set'
+                                        text:'Null'
+                    
 
 <ControllerManual>:
     orientation: 'vertical'

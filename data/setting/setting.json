@@ -3,7 +3,7 @@
     "crop_status": false,
     "is_light_target_threshold": 0,
     "limit_center": 2,
-    "is_use_contour": true,
+    "is_use_contour": false,
     "perspective_transform": [
         [
             1.2125443283275097,
@@ -41,7 +41,7 @@
             "step": 10
         },
         "auto_mode": {
-            "speed": 100,
+            "speed": "1000",
             "step": 8
         },
         "path_mode": {
@@ -51,9 +51,9 @@
     },
     "auto_mode_config": {
         "set_axis": "x",
-        "ki": 1.1,
-        "kp": 1.1,
-        "kd": 2.1,
+        "ki": 1.12,
+        "kp": 1.12,
+        "kd": 2.12,
         "offset": 4.0,
         "set_status": "1"
     },

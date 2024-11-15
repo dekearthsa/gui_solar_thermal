@@ -235,6 +235,7 @@ class ControllerAuto(BoxLayout):
             self.__off_loop_auto_calculate_diff() 
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
+        
         adding_time = {
             "timestamp": timestamp,
             "helio_stats_id": helio_stats_id,
@@ -255,9 +256,9 @@ class ControllerAuto(BoxLayout):
             "azimuth": azimuth,
             "control_by": "machine"
         }
-
+        
         filename = "./data/result/error_data.csv"
-        path_file_by_date = f"./data/result/{pathTimestap}.csv"
+        path_file_by_date = f"./data/result/{pathTimestap}_{self.helio_stats_id.text}.csv"
         filepath = os.path.join(os.getcwd(), filename)
         filepath_by_date = os.path.join(os.getcwd(), path_file_by_date)
         check_file_path = os.path.isfile(filepath_by_date)
