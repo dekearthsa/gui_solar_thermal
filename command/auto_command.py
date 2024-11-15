@@ -85,6 +85,7 @@ class ControllerAuto(BoxLayout):
         if self.status_auto.text == self.static_title_mode:
                 now = datetime.now()
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
+                path_time_stamp = now.strftime("%d_%m_%y")
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         # with open('./data/setting/setting.json', 'r') as file:
@@ -96,6 +97,7 @@ class ControllerAuto(BoxLayout):
                         # setJson = json.dumps(payload)
                         self.__haddle_save_positon(
                             timestamp=timestamp,
+                            pathTimestap=path_time_stamp,
                             helio_stats_id=self.helio_stats_selection_id,
                             camera_use = self.camera_endpoint,
                             id=setJson['id'],
@@ -113,6 +115,7 @@ class ControllerAuto(BoxLayout):
                             elevation=setJson['elevation'],
                             azimuth=setJson['azimuth'],
                         )
+
                     except Exception as e:
                         self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
                         self.turn_on_auto_mode = False
@@ -137,7 +140,6 @@ class ControllerAuto(BoxLayout):
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
             self.show_popup("Alert", "Camera is offline.")
-            
 
     def __on_loop_auto_calculate_diff(self):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
@@ -232,7 +234,7 @@ class ControllerAuto(BoxLayout):
             self.ids.label_auto_mode.text = "Auto off"
             self.__off_loop_auto_calculate_diff() 
 
-    def __haddle_save_positon(self,timestamp,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
+    def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
         adding_time = {
             "timestamp": timestamp,
             "helio_stats_id": helio_stats_id,
@@ -255,16 +257,37 @@ class ControllerAuto(BoxLayout):
         }
 
         filename = "./data/result/error_data.csv"
+        path_file_by_date = f"./data/result/{pathTimestap}.csv"
         filepath = os.path.join(os.getcwd(), filename)
+        filepath_by_date = os.path.join(os.getcwd(), path_file_by_date)
+        check_file_path = os.path.isfile(filepath_by_date)
+        
         try:
             fieldnames = adding_time.keys()
             with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
                 writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                 writer.writerow(adding_time)
-                self.show_popup("Finish", f"Auto mode off")
-                self.turn_on_auto_mode = False
-                self.ids.label_auto_mode.text = "Auto off"
-                self.__off_loop_auto_calculate_diff()
+                
+                if check_file_path == False: ## create csv and write
+                    with open(path_file_by_date, mode='w', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(adding_time.keys())
+                        writer.writerow(adding_time.values())
+
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+                else: ## write csv
+                    with open(filepath_by_date, mode='a', newline='', encoding='utf-8') as csv_file:
+                        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                        writer.writerow(adding_time)
+                        
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+                
         except Exception as e:
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
