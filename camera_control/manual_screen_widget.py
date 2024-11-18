@@ -553,7 +553,7 @@ class ManualScreen(Screen):
                 else:
                     self.show_popup("Alert", "Camera or helio stats must not empty.")
             else:
-                self.show_popup("Alert", "Path system is running\n Stop path system to run manual")
+                self.show_popup("Alert", "Path system is running\n Stop path system to run ")
         except Exception as e:
             print(e)
 
