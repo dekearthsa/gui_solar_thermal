@@ -520,23 +520,34 @@ class SetAutoScreen(Screen):
 
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
-        if self.camera_connection != "" and self.helio_stats_connection != "":
-            if not self.capture:
-                # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
-                # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                try:
-                    self.capture = cv2.VideoCapture(self.camera_connection)
-                    if not self.capture.isOpened():
-                        self.show_popup("Error", "Could not open camera.")
-                        self.ids.auto_camera_status.text = "Error: Could not open camera"
-                        return
-                    # controller_manual =self.ids.controller_manual
-                    self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
-                    Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-                except Exception as e:
-                    self.show_popup("Error camera", f"{e}")
-        else: 
-            self.show_popup("Alert", "Camera or helio stats must not empty.")
+        try:
+            with open('./data/setting/setting.json') as file:
+                setting_json = json.load(file)
+
+            if setting_json['is_run_path'] != 1:
+                if self.camera_connection != "" and self.helio_stats_connection != "":
+                    if self.camera_connection != "":
+                        if not self.capture:
+                            # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
+                            # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
+                            try:
+                                self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                                if not self.capture.isOpened():
+                                    self.show_popup("Error", "Could not open camera.")
+                                    self.ids.camera_status.text = "Error: Could not open camera"
+                                    return
+                                controller_manual =self.ids.controller_manual
+                                controller_manual.camera_status_controll = "On"
+                                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                                self.ids.camera_status.text = "Manual menu || Camera status:On"
+                            except Exception as e:
+                                self.show_popup("Camera error", f"{e}")
+                else:
+                    self.show_popup("Alert", "Camera or helio stats must not empty.")
+            else:
+                self.show_popup("Alert", "Path system is running\n Stop path system to run auto")
+        except Exception as e:
+            print(e)
 
     def __recheck_perspective_transform(self,perspective):
         for el_array in  perspective:
