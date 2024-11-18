@@ -36,7 +36,7 @@ class ManualScreen(Screen):
 
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
         Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
-        Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(), 2)
+        # Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(), 2)
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -55,25 +55,25 @@ class ManualScreen(Screen):
         self.camera_connection = ""
         self.helio_stats_connection = ""
         self.menu_now="manual"
-        Clock.schedule_once(lambda dt: self.checking_menu())
+        # Clock.schedule_once(lambda dt: self.checking_menu())
         # self.start_time = time.time()
-    def receive_text(self, text):
-        app = App.get_running_app()
-        current_mode = app.current_mode
-        if self.menu_now != current_mode:
-            self.call_close_camera()
-            self.close_loop()
-            # print(current_mode)
-            # print("close")
-        else:
-            self.checking_menu()
-            # print("open")
+    # def receive_text(self, text):
+    #     app = App.get_running_app()
+    #     current_mode = app.current_mode
+    #     if self.menu_now != current_mode:
+    #         self.call_close_camera()
+    #         self.close_loop()
+    #         # print(current_mode)
+    #         # print("close")
+    #     else:
+    #         self.checking_menu()
+    #         # print("open")
 
-    def checking_menu(self):
-        Clock.schedule_interval(self.receive_text, 2)
+    # def checking_menu(self):
+    #     Clock.schedule_interval(self.receive_text, 2)
 
-    def close_loop(self):
-        Clock.unschedule(self.receive_text)
+    # def close_loop(self):
+    #     Clock.unschedule(self.receive_text)
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -842,6 +842,7 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
+
             self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
             self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['manual_mode']['speed'])
             self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['manual_mode']['step'])

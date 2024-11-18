@@ -46,22 +46,23 @@ class PathControlWidget(Screen):
         self.path_file_selection = ""
         self.menu_now="path_control"
         self.is_path_running = False
+        self.start_loop_get_data= False
     
-    def receive_text(self, text):
-        app = App.get_running_app()
-        current_mode = app.current_mode
-        if self.menu_now != current_mode:
-            self.call_close_camera()
-            self.close_loop()
-        else:
-            self.checking_menu()
-            # self.fetch_data_helio_stats()
+    # def receive_text(self, text):
+    #     app = App.get_running_app()
+    #     current_mode = app.current_mode
+    #     if self.menu_now != current_mode:
+    #         self.call_close_camera()
+    #         self.close_loop()
+    #     else:
+    #         self.checking_menu()
+    #         # self.fetch_data_helio_stats()
 
-    def checking_menu(self):
-        Clock.schedule_interval(self.receive_text, 1)
+    # def checking_menu(self):
+    #     Clock.schedule_interval(self.receive_text, 1)
 
-    def close_loop(self):
-        Clock.unschedule(self.receive_text)
+    # def close_loop(self):
+    #     Clock.unschedule(self.receive_text)
 
     def send_file_selected(self,instance):
         headers = {}
@@ -86,7 +87,7 @@ class PathControlWidget(Screen):
 
     def get_path_file(self, instance, path_file):
         self.path_file_selection = path_file
-        print(self.path_file_selection)
+        # print(self.path_file_selection)
         self.show_popup("Alert", f"Path selected: {path_file}")
 
     def fetch_list_file(self):
@@ -190,10 +191,13 @@ class PathControlWidget(Screen):
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
         if self.camera_online_status == False:
+            print("ss")
             self.camera_online_status = True
             if self.camera_endpoint != "" and self.helio_endpoint != "":
+                print("hjere1")
                 if not self.capture:
                     try:
+                        print("here 3")
                         self.capture = cv2.VideoCapture(self.camera_endpoint)
                         if not self.capture.isOpened():
                             self.show_popup("Error", "Could not open camera.")
@@ -206,6 +210,7 @@ class PathControlWidget(Screen):
             else: 
                 self.show_popup("Alert", "Camera or helio stats must not empty.")   
         else:
+            print("call_close_camera")
             # self.camera_online_status = False
             self.call_close_camera()
 
@@ -563,7 +568,24 @@ class PathControlWidget(Screen):
             img_widget.canvas.after.remove(self.rect)
             self.rect = None
 
-    def fetch_data_helio_stats(self):
+    def haddle_btn_get_data(self): 
+        if self.start_loop_get_data == False:
+            self.start_loop_get_data = True
+            self.ids.get_data_helio.text = "Off get data"
+            self.haddle_start_get_data()
+        else:
+            self.start_loop_get_data = False
+            self.ids.get_data_helio.text = "On get data"
+            self.haddle_off_get_data()
+
+    def haddle_start_get_data(self):
+        Clock.schedule_interval(self.fetch_data_helio_stats, 1)
+
+    def haddle_off_get_data(self):
+        Clock.unschedule(self.fetch_data_helio_stats)
+
+    def fetch_data_helio_stats(self, instance):
+        # print("loop on")
         try:  
             data = requests.get("http://"+self.helio_endpoint)
             setJson = data.json()
@@ -587,66 +609,68 @@ class PathControlWidget(Screen):
 
         
     def haddle_start_run_path(self):
-        self.is_path_running = True
-        try:
-            with open("./data/setting/setting.json", 'r') as file:
-                setting_json = json.load(file)
-            setting_json['is_run_path'] = 1
-
-            payload = {
-                "topic":"mode",
-                "status":1,
-                "speed":setting_json['path_mode']['speed']
-            }
-
-            with open("./data/setting/setting.json", 'w') as file:
-                json.dump(setting_json, file, indent=4)
-            headers={
-                'Content-Type': 'application/json'  
-            }
+        if self.helio_endpoint != "":
+            self.is_path_running = True
             try:
-                response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
-                if response.status_code == 200:
-                    self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
-                else:
-                    pass
+                with open("./data/setting/setting.json", 'r') as file:
+                    setting_json = json.load(file)
+                setting_json['is_run_path'] = 1
+
+                payload = {
+                    "topic":"mode",
+                    "status":1,
+                    "speed":setting_json['path_mode']['speed']
+                }
+
+                with open("./data/setting/setting.json", 'w') as file:
+                    json.dump(setting_json, file, indent=4)
+                headers={
+                    'Content-Type': 'application/json'  
+                }
+                try:
+                    response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+                    if response.status_code == 200:
+                        self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                    else:
+                        pass
+                except Exception as e:
+                    print("Connection error: "+str(e))
+                    self.show_popup("Alert connection error", e+"\n loop fetch data close")
             except Exception as e:
-                print("Connection error: "+str(e))
-                self.show_popup("Alert connection error", e+"\n loop fetch data close")
-        except Exception as e:
-            print(e)
+                print(e)
 
 
 
     def haddle_stop_run_path(self):
-        self.is_path_running = False
-        try:
-            with open("./data/setting/setting.json", 'r') as file:
-                setting_json = json.load(file)
-            setting_json['is_run_path'] = 1
-
-            payload = {
-                "topic":"mode",
-                "status":0,
-                "speed":setting_json['path_mode']['speed']
-            }
-
-            with open("./data/setting/setting.json", 'w') as file:
-                json.dump(setting_json, file, indent=4)
-            headers={
-                'Content-Type': 'application/json'  
-            }
+        if self.helio_endpoint != "":
+            self.is_path_running = False
             try:
-                response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
-                if response.status_code == 200:
-                    self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
-                else:
-                    pass
+                with open("./data/setting/setting.json", 'r') as file:
+                    setting_json = json.load(file)
+                setting_json['is_run_path'] = 1
+
+                payload = {
+                    "topic":"mode",
+                    "status":0,
+                    "speed":setting_json['path_mode']['speed']
+                }
+
+                with open("./data/setting/setting.json", 'w') as file:
+                    json.dump(setting_json, file, indent=4)
+                headers={
+                    'Content-Type': 'application/json'  
+                }
+                try:
+                    response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+                    if response.status_code == 200:
+                        self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                    else:
+                        pass
+                except Exception as e:
+                    print("Connection error: "+str(e))
+                    self.show_popup("Alert connection error", e+"\n loop fetch data close")
             except Exception as e:
-                print("Connection error: "+str(e))
-                self.show_popup("Alert connection error", e+"\n loop fetch data close")
-        except Exception as e:
-            print(e)
+                print(e)
 
     def haddle_update_speed(self, text_input, instance):
         val = text_input.text.strip()

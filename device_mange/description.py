@@ -15,19 +15,19 @@ class Description(Screen):
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_list())
         self.menu_now="description"
 
-    def receive_text(self, text):
-        app = App.get_running_app()
-        current_mode = app.current_mode  # Assuming you have a global property 'current_mode'
-        if self.menu_now != current_mode:
-            self.stop_fetch_loop()
-        else:
-            self.checking_menu()
+    # def receive_text(self, text):
+    #     app = App.get_running_app()
+    #     current_mode = app.current_mode  # Assuming you have a global property 'current_mode'
+    #     if self.menu_now != current_mode:
+    #         self.stop_fetch_loop()
+    #     else:
+    #         self.checking_menu()
 
-    def checking_menu(self):
-        Clock.schedule_interval(self.receive_text, 2)
+    # def checking_menu(self):
+    #     Clock.schedule_interval(self.receive_text, 2)
 
-    def close_loop(self):
-        Clock.unschedule(self.receive_text)
+    # def close_loop(self):
+    #     Clock.unschedule(self.receive_text)
 
     def start_fetch_loop(self):
         if self.start_loop == False:

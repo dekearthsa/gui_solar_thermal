@@ -26,7 +26,7 @@
     "hsv_threshold": {
         "low_h": 0,
         "low_s": 0,
-        "low_v": 190,
+        "low_v": 130,
         "high_h": 179,
         "high_s": 255,
         "high_v": 255

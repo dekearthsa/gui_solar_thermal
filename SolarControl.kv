@@ -107,7 +107,7 @@ MainFrameWidget:
                 orientation: 'vertical'
                 size_hint_x: .3
                 GridLayout:
-                    rows:2
+                    rows:3
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: .1
@@ -258,7 +258,13 @@ MainFrameWidget:
                                     Label:
                                         id: 'val_azimuth'
                                         text:'Null'
-                    
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: 0.05
+                        Button:
+                            id: get_data_helio
+                            text: "Start get data"
+                            on_press: root.haddle_btn_get_data()
 
 <ControllerManual>:
     orientation: 'vertical'
