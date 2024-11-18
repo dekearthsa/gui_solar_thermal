@@ -41,11 +41,11 @@
             "step": 10
         },
         "auto_mode": {
-            "speed": "1000",
+            "speed": 600,
             "step": 8
         },
         "path_mode": {
-            "speed": 100,
+            "speed": 500,
             "step": 8
         }
     },
@@ -71,5 +71,6 @@
             "id": "camera-bottom",
             "ip": "test_video.avi"
         }
-    }
+    },
+    "is_menu": "manual"
 }

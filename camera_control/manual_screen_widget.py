@@ -9,6 +9,7 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
 import requests
+from kivy.app import App
 # import time
 
 class ManualScreen(Screen):
@@ -53,7 +54,26 @@ class ManualScreen(Screen):
         # "rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/""
         self.camera_connection = ""
         self.helio_stats_connection = ""
+        self.menu_now="manual"
+        Clock.schedule_once(lambda dt: self.checking_menu())
         # self.start_time = time.time()
+    def receive_text(self, text):
+        app = App.get_running_app()
+        current_mode = app.current_mode
+        if self.menu_now != current_mode:
+            self.call_close_camera()
+            self.close_loop()
+            # print(current_mode)
+            # print("close")
+        else:
+            self.checking_menu()
+            # print("open")
+
+    def checking_menu(self):
+        Clock.schedule_interval(self.receive_text, 2)
+
+    def close_loop(self):
+        Clock.unschedule(self.receive_text)
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -824,7 +844,7 @@ class ManualScreen(Screen):
         
         
         step_input = self.ids.set_step_machine.text
-        print(step_input)
+        # print(step_input)
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)

@@ -70,7 +70,7 @@ MainFrameWidget:
                         orientation: 'vertical'
                         size_hint_y: .05
                         GridLayout:
-                            cols:4
+                            cols:6
                             Button:
                                 id: path_start_camera
                                 text: "Camera on"
@@ -92,7 +92,16 @@ MainFrameWidget:
                                     
                             Button:
                                 id: 'start_run_path'
-                                text: "Start run path"
+                                text: "Start path"
+                                on_press: root.haddle_start_run_path()
+                            Button:
+                                id: 'stop_run_path'
+                                text: "Stop path"
+                                on_press: root.haddle_stop_run_path()
+                            Button:
+                                id: 'conf_speed'
+                                text: "config"
+                                on_press: root.haddle_config_path()
 
             BoxLayout:
                 orientation: 'vertical'
@@ -114,6 +123,7 @@ MainFrameWidget:
                                 text:"Selection path: "
                             Button:
                                 text: "Open file"
+                                on_press: root.show_popup_path_control()
                     BoxLayout:
                         orientation: 'vertical'
                         ScrollView:
@@ -127,81 +137,126 @@ MainFrameWidget:
                                     # size_hint_y: None
                                     cols:2
                                     Label:
-                                        text: 'cx'
+                                        text: 'id'
                                     Label:
-                                        id: 'val_cx'
+                                        id: 'val_id'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'cy'
+                                        text: 'currentX'
                                     Label:
-                                        id: 'val_cy'
+                                        id: 'val_currentX'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'target_x'
+                                        text: 'currentY'
                                     Label:
-                                        id: 'val_target_x'
+                                        id: 'val_currentY'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'target_y'
+                                        text: 'err_posx'
                                     Label:
-                                        id: 'val_target_y'
+                                        id: 'val_err_posx'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'kp'
+                                        text: 'err_posy'
                                     Label:
-                                        id: 'val_kp'
+                                        id: 'val_err_posy'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'ki'
+                                        text: 'x'
                                     Label:
-                                        id: 'val_ki'
+                                        id: 'val_x'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'kd'
+                                        text: 'y'
                                     Label:
-                                        id: 'val_kd'
+                                        id: 'val_y'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'max_speed'
+                                        text: 'x1'
                                     Label:
-                                        id: 'val_max_speed'
+                                        id: 'val_x1'
                                         text:'Null'
                                 GridLayout:
                                     cols:2
                                     # height: self.minimum_height
                                     # size_hint_y: None
                                     Label:
-                                        text: 'off_set'
+                                        text: 'y1'
                                     Label:
-                                        id: 'val_off_set'
+                                        id: 'val_y1'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'ls1'
+                                    Label:
+                                        id: 'val_ls1'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'st_path'
+                                    Label:
+                                        id: 'val_st_path'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'move_comp'
+                                    Label:
+                                        id: 'val_move_comp'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'elevation'
+                                    Label:
+                                        id: 'val_elevation'
+                                        text:'Null'
+                                GridLayout:
+                                    cols:2
+                                    # height: self.minimum_height
+                                    # size_hint_y: None
+                                    Label:
+                                        text: 'azimuth'
+                                    Label:
+                                        id: 'val_azimuth'
                                         text:'Null'
                     
 
@@ -1168,19 +1223,24 @@ MainFrameWidget:
                 size:self.size
         Button:
             text: "Manual"
-            on_press: root.ids.screen_manager.current = 'manual'
+            on_press: root.change_screen('manual', 'manual')
+            # on_press: root.ids.screen_manager.current = 'manual'
         Button:
             text: "Auto mode"
-            on_press: root.ids.screen_manager.current = 'auto'
+            on_press: root.change_screen('auto', 'auto_mode')
+            # on_press: root.ids.screen_manager.current = 'auto'
         Button:
             text: "Path control"
-            on_press: root.ids.screen_manager.current = 'path_control'
+            on_press: root.change_screen('path_control', 'path_control')
+            # on_press: root.ids.screen_manager.current = 'path_control'
         Button:
             text: "Description"
-            on_press: root.ids.screen_manager.current = 'description'
+            on_press: root.change_screen('description', 'description')
+            # on_press: root.ids.screen_manager.current = 'description'
         Button:
             text: "Connection upload"
-            on_press: root.ids.screen_manager.current = 'upload_connection'
+            on_press: root.change_screen('upload_connection', 'connection_upload')
+            # on_press: root.ids.screen_manager.current = 'upload_connection'
         
 
     ScreenManager:

@@ -1,13 +1,25 @@
-from kivy.uix.screenmanager import Screen
 import json
 from kivy.clock import Clock
-from kivy.uix.popup import Popup
-from kivy.uix.label import Label
 from kivy.core.image import Image as CoreImage
 import cv2
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 import numpy as np
 from kivy.graphics.texture import Texture
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.screenmanager import Screen
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+import os
+from os import listdir
+from os.path import isfile, join
+import requests
+from kivy.app import App
+from functools import partial
+
 
 class PathControlWidget(Screen):
 
@@ -19,6 +31,9 @@ class PathControlWidget(Screen):
         self.camera_endpoint = ""
         self.camera_online_status= False
         Clock.schedule_once(lambda dt: self.fetch_all_helio_cam())
+        Clock.schedule_once(lambda dt: self.fetch_list_file())
+        # Clock.schedule_once(lambda dt: self.checking_menu())
+        self.list_file_path = []
         self.capture = None
         self.selected_points = []      # List to store selected points as (x, y) in image coordinates
         self.polygon_lines = None      # Line instruction for the polygon
@@ -27,10 +42,124 @@ class PathControlWidget(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
+        self.popup = None  # To keep a reference to the popup
+        self.path_file_selection = ""
+        self.menu_now="path_control"
+        self.is_path_running = False
+    
+    def receive_text(self, text):
+        app = App.get_running_app()
+        current_mode = app.current_mode
+        if self.menu_now != current_mode:
+            self.call_close_camera()
+            self.close_loop()
+        else:
+            self.checking_menu()
+            # self.fetch_data_helio_stats()
+
+    def checking_menu(self):
+        Clock.schedule_interval(self.receive_text, 1)
+
+    def close_loop(self):
+        Clock.unschedule(self.receive_text)
+
+    def send_file_selected(self,instance):
+        headers = {}
+        try:
+            with open(self.path_file_selection, 'rb') as file:
+            # Prepare the files dictionary for multipart/form-data
+                files = {'file': (os.path.basename(self.path_file_selection), file, 'text/csv')}
+
+            response = requests.post("http://"+self.helio_endpoint+"/update-path", files=files, headers=headers, timeout=30)
+
+            if response.status_code == 200:
+                self.show_popup("Success", "File uploaded successfully.")
+                print("File uploaded successfully.")
+            else:
+                error_message = f"Failed to upload file. Status code: {response.status_code}\nResponse: {response.text}"
+                self.show_popup("Upload Error", error_message)
+                print(error_message)
+
+        except Exception as e:
+            print("error "+ "http://"+self.helio_endpoint+"/auto-data"+ " " + str(e))
+            self.show_popup("Alert Error", e)
+
+    def get_path_file(self, instance, path_file):
+        self.path_file_selection = path_file
+        print(self.path_file_selection)
+        self.show_popup("Alert", f"Path selected: {path_file}")
+
+    def fetch_list_file(self):
+        directory = "./data/result"
+        try:
+            self.list_file_path = [
+                join(directory, f) for f in listdir(directory) if isfile(join(directory, f))
+            ]
+            # print(self.list_file_path)
+        except FileNotFoundError:
+            print(f"Directory {directory} does not exist.")
+            self.list_file_path = []
 
 
     def show_popup_path_control(self):
-        pass
+        self.fetch_list_file()
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        btn_reload = Button(
+            text="Reload",
+            size_hint=(1, 0.1),
+            on_press=self.reload_popup
+        )
+        layout.add_widget(btn_reload)
+        scroll_view = ScrollView(size_hint=(1, 0.9))
+
+        self.file_list_layout = BoxLayout(orientation="vertical", spacing=5, size_hint=(1, 0.9))
+        self.populate_file_list()
+
+        scroll_view.add_widget(self.file_list_layout)
+        layout.add_widget(scroll_view)
+
+        boxlayout_btn_send = BoxLayout(orientation="vertical", spacing=5, size_hint_y=.1)
+        send_path_selection = Button(text="send path", on_press=self.send_file_selected)
+        boxlayout_btn_send.add_widget(send_path_selection)
+        layout.add_widget(boxlayout_btn_send)
+
+        self.popup = Popup(
+            title="Select Path Data",
+            content=layout,
+            size_hint=(0.8, 0.8),
+            auto_dismiss=True 
+        )
+        self.popup.open()
+
+    def populate_file_list(self):
+        self.file_list_layout.clear_widgets()
+
+        if not self.list_file_path:
+            no_files_label = Label(text="No files found in ./data/result", size_hint=(1, 1))
+            self.file_list_layout.add_widget(no_files_label)
+            return
+
+        for path in self.list_file_path:
+            grid = GridLayout(cols=2, size_hint_y=None, height=50, spacing=10)
+            label = Label(text=path, halign="left", valign="middle", size_hint=(0.8, 1))
+            label.bind(size=label.setter('text_size'))  
+
+            btn_select = Button(
+                text="Select",
+                size_hint=(0.2, 1)
+            )
+            btn_select.bind(on_press=lambda instance, p=path: self.get_path_file(instance, p))
+            grid.add_widget(label)
+            grid.add_widget(btn_select)
+            self.file_list_layout.add_widget(grid)
+
+    def reload_popup(self, instance):
+        self.fetch_list_file()
+        self.populate_file_list()
+
+    def select_file(self, path):
+        if self.popup:
+            self.popup.dismiss()
     
     def fetch_all_helio_cam(self):
         with open('./data/setting/connection.json', 'r') as file:
@@ -55,7 +184,7 @@ class PathControlWidget(Screen):
         ### Display a popup with a given title and message. ###
         popup = Popup(title=title,
                     content=Label(text=message),
-                    size_hint=(None, None), size=(400, 200))
+                    size_hint=(None, None), size=(800, 200))
         popup.open()
 
     def call_open_camera(self):
@@ -64,8 +193,6 @@ class PathControlWidget(Screen):
             self.camera_online_status = True
             if self.camera_endpoint != "" and self.helio_endpoint != "":
                 if not self.capture:
-                    # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
-                    # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
                     try:
                         self.capture = cv2.VideoCapture(self.camera_endpoint)
                         if not self.capture.isOpened():
@@ -98,14 +225,17 @@ class PathControlWidget(Screen):
                 self.ids.path_cam_image.texture = texture_rgb
 
     def call_close_camera(self):
-        self.camera_online_status = False
-        self.capture.release()
-        self.capture = None
-        Clock.unschedule(self.update_frame)
-        self.ids.path_start_camera.text = "Camera on"
-        image_standby_path = "./images/sample_image_2.png"
-        core_image = CoreImage(image_standby_path).texture
-        self.ids.path_cam_image.texture = core_image
+        if self.capture!=None:
+            self.camera_online_status = False
+            self.capture.release()
+            self.capture = None
+            Clock.unschedule(self.update_frame)
+            self.ids.path_start_camera.text = "Camera on"
+            image_standby_path = "./images/sample_image_2.png"
+            core_image = CoreImage(image_standby_path).texture
+            self.ids.path_cam_image.texture = core_image
+        else:
+            pass
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -210,8 +340,6 @@ class PathControlWidget(Screen):
         return super().on_touch_down(touch)
 
     def on_touch_move(self, touch):
-        ### Handle touch move events for rectangle cropping.### 
-        # img_widget = self.ids.path_cam_image
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -400,8 +528,6 @@ class PathControlWidget(Screen):
             img_x2 = max(0, min(img_x2, self.ids.path_cam_image.texture.width - 1))
             img_y2 = max(0, min(img_y2, self.ids.path_cam_image.texture.height - 1))
             
-
-
             self.crop_area = (min(img_x1, img_x2), min(img_y1, img_y2), max(img_x1, img_x2), max(img_y1, img_y2))
 
     def remove_draw_point_marker(self):
@@ -436,3 +562,135 @@ class PathControlWidget(Screen):
         if hasattr(self, 'rect') and self.rect:
             img_widget.canvas.after.remove(self.rect)
             self.rect = None
+
+    def fetch_data_helio_stats(self):
+        try:  
+            data = requests.get("http://"+self.helio_endpoint)
+            setJson = data.json()
+            self.ids.val_id.text = str(setJson['id'])
+            self.ids.val_currentX.text = str(setJson['currentX'])
+            self.ids.val_currentY.text = str(setJson['currentY'])
+            self.ids.val_err_posx.text = str(setJson['err_posx'])
+            self.ids.val_err_posy.text = str(setJson['err_posy'])
+            self.ids.val_x.text= str(setJson['safety']['x'])
+            self.ids.val_y.text= str(setJson['safety']['y'])
+            self.ids.val_x1.text= str(setJson['safety']['x1'])
+            self.ids.val_y1.text= str(setJson['safety']['y1'])
+            self.ids.val_ls1.text= str(setJson['safety']['ls1'])
+            self.ids.val_st_path.text= str(setJson['safety']['st_path'])
+            self.ids.val_move_comp.text= str(setJson['safety']['move_comp'])
+            self.ids.val_elevation.text= str(setJson['elevation'])
+            self.ids.val_azimuth.text= str(setJson['azimuth'])
+        except Exception as e:
+            print(f"error connection {e}")
+            pass
+
+        
+    def haddle_start_run_path(self):
+        self.is_path_running = True
+        try:
+            with open("./data/setting/setting.json", 'r') as file:
+                setting_json = json.load(file)
+            setting_json['is_run_path'] = 1
+
+            payload = {
+                "topic":"mode",
+                "status":1,
+                "speed":setting_json['path_mode']['speed']
+            }
+
+            with open("./data/setting/setting.json", 'w') as file:
+                json.dump(setting_json, file, indent=4)
+            headers={
+                'Content-Type': 'application/json'  
+            }
+            try:
+                response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+                if response.status_code == 200:
+                    self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                else:
+                    pass
+            except Exception as e:
+                print("Connection error: "+str(e))
+                self.show_popup("Alert connection error", e+"\n loop fetch data close")
+        except Exception as e:
+            print(e)
+
+
+
+    def haddle_stop_run_path(self):
+        self.is_path_running = False
+        try:
+            with open("./data/setting/setting.json", 'r') as file:
+                setting_json = json.load(file)
+            setting_json['is_run_path'] = 1
+
+            payload = {
+                "topic":"mode",
+                "status":0,
+                "speed":setting_json['path_mode']['speed']
+            }
+
+            with open("./data/setting/setting.json", 'w') as file:
+                json.dump(setting_json, file, indent=4)
+            headers={
+                'Content-Type': 'application/json'  
+            }
+            try:
+                response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+                if response.status_code == 200:
+                    self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                else:
+                    pass
+            except Exception as e:
+                print("Connection error: "+str(e))
+                self.show_popup("Alert connection error", e+"\n loop fetch data close")
+        except Exception as e:
+            print(e)
+
+    def haddle_update_speed(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['path_mode']['speed'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def haddle_config_path(self):
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file) 
+
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        grid = GridLayout(cols=3, size_hint=(1, 1), height=40, spacing=10)
+        # Label
+        label = Label(text="Path speed", size_hint=(0.3, 1))
+        grid.add_widget(label)
+
+        # TextInput
+        text_input =  TextInput(text=str(setting_data['control_speed_distance']['path_mode']['speed']),
+                    hint_text="Enter speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                )
+        grid.add_widget(text_input)
+
+        # Update Button
+        update_btn = Button(text='Update', size_hint=(0.2, 1))
+        # Bind the Update button to the respective handler with TextInput
+        update_btn.bind(on_release=partial(self.haddle_update_speed, text_input))
+        grid.add_widget(update_btn)
+
+        # Add the GridLayout to the main layout
+        layout.add_widget(grid)
+        # Create the Popup
+        popup = Popup(
+            title="config path parameter",
+            content=layout,
+            size_hint=(None, .12),
+            size=(850, 190),
+            auto_dismiss=True  # Allow dismissal by clicking outside or pressing Escape
+        )
+        popup.open()

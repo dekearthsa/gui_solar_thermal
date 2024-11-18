@@ -5,6 +5,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.clock import Clock
 from datetime import datetime
+from kivy.app import App
 class Description(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)  
@@ -12,6 +13,21 @@ class Description(Screen):
         self.helio_endpoint=""
         self.status_auto_get="Auto get data off"
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_list())
+        self.menu_now="description"
+
+    def receive_text(self, text):
+        app = App.get_running_app()
+        current_mode = app.current_mode  # Assuming you have a global property 'current_mode'
+        if self.menu_now != current_mode:
+            self.stop_fetch_loop()
+        else:
+            self.checking_menu()
+
+    def checking_menu(self):
+        Clock.schedule_interval(self.receive_text, 2)
+
+    def close_loop(self):
+        Clock.unschedule(self.receive_text)
 
     def start_fetch_loop(self):
         if self.start_loop == False:

@@ -15,6 +15,7 @@ from kivy.uix.gridlayout import GridLayout
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
+from kivy.app import App
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -40,6 +41,7 @@ class SetAutoScreen(Screen):
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
         Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
         Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(),2)
+        
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -53,6 +55,25 @@ class SetAutoScreen(Screen):
         self.static_max_area = 130000 #130000
         self.camera_connection = ""
         self.helio_stats_connection = ""
+        self.menu_now="auto_mode"
+    
+    def receive_text(self, text):
+        app = App.get_running_app()
+        current_mode = app.current_mode
+        if self.menu_now != current_mode:
+            self.call_close_camera()
+            self.close_loop()
+            # print(current_mode)
+            # print("close")
+        else:
+            self.checking_menu()
+            # print("open")
+
+    def checking_menu(self):
+        Clock.schedule_interval(self.receive_text, 2)
+
+    def close_loop(self):
+        Clock.unschedule(self.receive_text)
         
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -955,7 +976,7 @@ class SetAutoScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['auto_mode']['speed'] = val
+            setting_data['control_speed_distance']['auto_mode']['speed'] = int(val)
             with open('./data/setting/setting.json', 'w') as file_save:
                 json.dump(setting_data, file_save, indent=4)
         except Exception as e:

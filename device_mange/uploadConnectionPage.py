@@ -8,7 +8,7 @@ from kivy.uix.popup import Popup
 
 # Ensure that FileChooserPopup is accessible
 from .fileChooserPopup import FileChooserPopup  # Assuming FileChooserPopup is in the same 'widget' package
-
+from kivy.app import App
 
 class UploadConnectionPage(Screen):
     
@@ -22,6 +22,12 @@ class UploadConnectionPage(Screen):
                             content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
+
+    # def receive_text(self, text):
+    #     app = App.get_running_app()
+    #     current_mode = app.current_mode  # Assuming you have a global property 'current_mode'
+    #     if current_mode != "connection_upload":
+    #         print(current_mode)
 
     def __check__list_connection(self, data):
         print(data)
