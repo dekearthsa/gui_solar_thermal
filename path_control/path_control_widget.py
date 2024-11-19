@@ -14,12 +14,12 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 import os
-from os import listdir
-from os.path import isfile, join
+# from os import listdir
+# from os.path import isfile, join
 import requests
-from kivy.app import App
+# from kivy.app import App
 from functools import partial
-
+import subprocess
 
 class PathControlWidget(Screen):
 
@@ -31,7 +31,7 @@ class PathControlWidget(Screen):
         self.camera_endpoint = ""
         self.camera_online_status= False
         Clock.schedule_once(lambda dt: self.fetch_all_helio_cam())
-        Clock.schedule_once(lambda dt: self.fetch_list_file())
+        # Clock.schedule_once(lambda dt: self.fetch_list_file())
         # Clock.schedule_once(lambda dt: self.checking_menu())
         self.list_file_path = []
         self.capture = None
@@ -64,66 +64,32 @@ class PathControlWidget(Screen):
     # def close_loop(self):
     #     Clock.unschedule(self.receive_text)
 
-    def send_file_selected(self,instance):
-        headers = {}
-        try:
-            with open(self.path_file_selection, 'rb') as file:
-            # Prepare the files dictionary for multipart/form-data
-                files = {'file': (os.path.basename(self.path_file_selection), file, 'text/csv')}
-
-            response = requests.post("http://"+self.helio_endpoint+"/update-path", files=files, headers=headers, timeout=30)
-
-            if response.status_code == 200:
-                self.show_popup("Success", "File uploaded successfully.")
-                print("File uploaded successfully.")
-            else:
-                error_message = f"Failed to upload file. Status code: {response.status_code}\nResponse: {response.text}"
-                self.show_popup("Upload Error", error_message)
-                print(error_message)
-
-        except Exception as e:
-            print("error "+ "http://"+self.helio_endpoint+"/auto-data"+ " " + str(e))
-            self.show_popup("Alert Error", e)
-
-    def get_path_file(self, instance, path_file):
-        self.path_file_selection = path_file
-        # print(self.path_file_selection)
-        self.show_popup("Alert", f"Path selected: {path_file}")
-
-    def fetch_list_file(self):
-        directory = "./data/result"
-        try:
-            self.list_file_path = [
-                join(directory, f) for f in listdir(directory) if isfile(join(directory, f))
-            ]
-            # print(self.list_file_path)
-        except FileNotFoundError:
-            print(f"Directory {directory} does not exist.")
-            self.list_file_path = []
-
+    def open_web_upload(self, instance, endpoint):
+        
+        url="http://"+ str(endpoint.text)+ "/update-path"
+        # print(url)
+        subprocess.run(["msedge", url], check=True)
 
     def show_popup_path_control(self):
-        self.fetch_list_file()
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-        btn_reload = Button(
-            text="Reload",
-            size_hint=(1, 0.1),
-            on_press=self.reload_popup
-        )
-        layout.add_widget(btn_reload)
-        scroll_view = ScrollView(size_hint=(1, 0.9))
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        with open("./data/setting/connection.json", "r") as file:
+            conn_file = json.load(file)
+        for conn in conn_file['helio_stats_ip']:
+            grid = GridLayout(cols=2, size_hint=(1, 1), height=40, spacing=10)
+            
+            label = Label(text="Helio ID " + conn['id'], size_hint=(1, .14))
+            grid.add_widget(label)
+            
+            # label = Label(text=conn['ip'], size_hint=(1, .14))
+            # grid.add_widget(label)
+        
+            btn_open_wb = Button(text=str(conn['ip']), size_hint=(1, .14))
+            # Correctly pass the IP string to the callback function
+            btn_open_wb.bind(on_release=partial(self.open_web_upload, conn['ip']))
+            grid.add_widget(btn_open_wb)
+            layout.add_widget(grid)
 
-        self.file_list_layout = BoxLayout(orientation="vertical", spacing=5, size_hint=(1, 0.9))
-        self.populate_file_list()
-
-        scroll_view.add_widget(self.file_list_layout)
-        layout.add_widget(scroll_view)
-
-        boxlayout_btn_send = BoxLayout(orientation="vertical", spacing=5, size_hint_y=.1)
-        send_path_selection = Button(text="send path", on_press=self.send_file_selected)
-        boxlayout_btn_send.add_widget(send_path_selection)
-        layout.add_widget(boxlayout_btn_send)
-
+        
         self.popup = Popup(
             title="Select Path Data",
             content=layout,
@@ -132,36 +98,6 @@ class PathControlWidget(Screen):
         )
         self.popup.open()
 
-    def populate_file_list(self):
-        self.file_list_layout.clear_widgets()
-
-        if not self.list_file_path:
-            no_files_label = Label(text="No files found in ./data/result", size_hint=(1, 1))
-            self.file_list_layout.add_widget(no_files_label)
-            return
-
-        for path in self.list_file_path:
-            grid = GridLayout(cols=2, size_hint_y=None, height=50, spacing=10)
-            label = Label(text=path, halign="left", valign="middle", size_hint=(0.8, 1))
-            label.bind(size=label.setter('text_size'))  
-
-            btn_select = Button(
-                text="Select",
-                size_hint=(0.2, 1)
-            )
-            btn_select.bind(on_press=lambda instance, p=path: self.get_path_file(instance, p))
-            grid.add_widget(label)
-            grid.add_widget(btn_select)
-            self.file_list_layout.add_widget(grid)
-
-    def reload_popup(self, instance):
-        self.fetch_list_file()
-        self.populate_file_list()
-
-    def select_file(self, path):
-        if self.popup:
-            self.popup.dismiss()
-    
     def fetch_all_helio_cam(self):
         with open('./data/setting/connection.json', 'r') as file:
             data = json.load(file)
@@ -684,7 +620,7 @@ class PathControlWidget(Screen):
             self.show_popup("Error", f"Failed to reset crop values: {e}")
 
     def haddle_config_path(self):
-        with open('./data/setting/setting.json', 'r') as file:
+        with open('./data/setting/connection.json', 'r') as file:
             setting_data = json.load(file) 
 
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -694,7 +630,7 @@ class PathControlWidget(Screen):
         grid.add_widget(label)
 
         # TextInput
-        text_input =  TextInput(text=str(setting_data['control_speed_distance']['path_mode']['speed']),
+        text_input =  TextInput(text=str(setting_data['helio_stats_ip']['path_mode']['speed']),
                     hint_text="Enter speed",
                     multiline=False,
                     size_hint=(.3, 1)
