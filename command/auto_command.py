@@ -256,45 +256,59 @@ class ControllerAuto(BoxLayout):
             "azimuth": azimuth,
             "control_by": "machine"
         }
+
+
+        now = datetime.now()
+        path_time_stamp = now.strftime("%d_%m_%y"+"_"+helio_stats_id)
+        timing =  now.strftime("%H:%M:%S")
+        adding_path_data = {
+            "timestamp": timing,
+            "x":  currentX,
+            "y": currentY,
+        }
         
+        json_str = json.dumps(adding_path_data)
+        perfixed_json = f"*{json_str}"
+
         filename = "./data/result/error_data.csv"
-        path_file_by_date = f"./data/result/{pathTimestap}_{self.helio_stats_id.text}.csv"
+        path_file_by_date = f"./data/result/{path_time_stamp}/data.txt"
+        path_folder_by_date = f"./data/result/{path_time_stamp}"
         filepath = os.path.join(os.getcwd(), filename)
-        filepath_by_date = os.path.join(os.getcwd(), path_file_by_date)
-        check_file_path = os.path.isfile(filepath_by_date)
+        filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+        check_file_path = os.path.isdir(filepath_by_date)
+
         
         try:
             fieldnames = adding_time.keys()
             with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
                 writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                 writer.writerow(adding_time)
-                
-                if check_file_path == False: ## create csv and write
-                    with open(filepath_by_date, mode='w', newline='') as file:
-                        writer = csv.writer(file)
-                        writer.writerow(adding_time.keys())
-                        writer.writerow(adding_time.values())
 
-                    self.show_popup("Finish", f"Auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
-                else: ## write csv
-                    with open(filepath_by_date, mode='a', newline='', encoding='utf-8') as csv_file:
-                        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                        writer.writerow(adding_time)
-
-                    self.show_popup("Finish", f"Auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
+            if check_file_path == False:
+                os.mkdir(path_folder_by_date)
+                with open(path_file_by_date, mode='w', newline='') as text_f:
+                    text_f.write(perfixed_json+"\n")
+                self.show_popup("Finish", f"Auto mode off")
+                self.turn_on_auto_mode = False
+                self.ids.label_auto_mode.text = "Auto off"
+                self.__off_loop_auto_calculate_diff()
+            else:
+                with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                    text_f.write(perfixed_json+"\n")
+                self.show_popup("Finish", f"Auto mode off")
+                self.turn_on_auto_mode = False
+                self.ids.label_auto_mode.text = "Auto off"
+                self.__off_loop_auto_calculate_diff()
                 
         except Exception as e:
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
             self.__off_loop_auto_calculate_diff()
-            self.show_popup(f"Error saving file:\n{str(e)}")    
-
+            self.show_popup("Error",f"Error saving file:\n{str(e)}")    
+                    # self.show_popup("Finish", f"Auto mode off")
+                    # self.turn_on_auto_mode = False
+                    # self.ids.label_auto_mode.text = "Auto off"
+                    # self.__off_loop_auto_calculate_diff()
     def haddle_extact_boarding_frame(self):
         data = self.bounding_box_frame_data.text
         numbers = re.findall(r'\d+', data)

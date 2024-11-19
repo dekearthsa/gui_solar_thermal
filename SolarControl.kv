@@ -91,15 +91,15 @@ MainFrameWidget:
                                     on_text: root.select_drop_down_menu_helio_path(self, self.text)
                                     
                             Button:
-                                id: 'start_run_path'
+                                id: start_run_path
                                 text: "Start path"
                                 on_press: root.haddle_start_run_path()
                             Button:
-                                id: 'stop_run_path'
+                                id: stop_run_path
                                 text: "Stop path"
                                 on_press: root.haddle_stop_run_path()
                             Button:
-                                id: 'conf_speed'
+                                id: conf_speed
                                 text: "config"
                                 on_press: root.haddle_config_path()
 
@@ -139,7 +139,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'id'
                                     Label:
-                                        id: 'val_id'
+                                        id: val_id
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -148,7 +148,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'currentX'
                                     Label:
-                                        id: 'val_currentX'
+                                        id: val_currentX
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -157,7 +157,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'currentY'
                                     Label:
-                                        id: 'val_currentY'
+                                        id: val_currentY
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -166,7 +166,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'err_posx'
                                     Label:
-                                        id: 'val_err_posx'
+                                        id: val_err_posx
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -175,7 +175,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'err_posy'
                                     Label:
-                                        id: 'val_err_posy'
+                                        id: val_err_posy
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -184,7 +184,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'x'
                                     Label:
-                                        id: 'val_x'
+                                        id: val_x
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -193,7 +193,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'y'
                                     Label:
-                                        id: 'val_y'
+                                        id: val_y
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -202,7 +202,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'x1'
                                     Label:
-                                        id: 'val_x1'
+                                        id: val_x1
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -211,7 +211,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'y1'
                                     Label:
-                                        id: 'val_y1'
+                                        id: val_y1
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -220,7 +220,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'ls1'
                                     Label:
-                                        id: 'val_ls1'
+                                        id: val_ls1
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -229,7 +229,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'st_path'
                                     Label:
-                                        id: 'val_st_path'
+                                        id: val_st_path
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -238,7 +238,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'move_comp'
                                     Label:
-                                        id: 'val_move_comp'
+                                        id: val_move_comp
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -247,7 +247,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'elevation'
                                     Label:
-                                        id: 'val_elevation'
+                                        id: val_elevation
                                         text:'Null'
                                 GridLayout:
                                     cols:2
@@ -256,7 +256,7 @@ MainFrameWidget:
                                     Label:
                                         text: 'azimuth'
                                     Label:
-                                        id: 'val_azimuth'
+                                        id: val_azimuth
                                         text:'Null'
                     BoxLayout:
                         orientation: 'vertical'
@@ -988,10 +988,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_timestamp'
+                        id: l_timestamp
                         text: 'Timestamp'
                     Label:
-                        id: 'd_timestamp'
+                        id: d_timestamp
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1000,10 +1000,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_currentX'
+                        id: l_currentX
                         text: 'currentX'
                     Label:
-                        id: 'd_currentX'
+                        id: d_currentX
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1012,10 +1012,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_currentY'
+                        id: l_currentY
                         text: 'currentY'
                     Label:
-                        id: 'd_currentY'
+                        id: d_currentY
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1024,10 +1024,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_err_posx'
+                        id: l_err_posx
                         text: 'err_posx'
                     Label:
-                        id: 'd_err_posx'
+                        id: d_err_posx
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1036,10 +1036,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_err_posy'
+                        id: l_err_posy
                         text: 'err_posy'
                     Label:
-                        id: 'd_err_posy'
+                        id: d_err_posy
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1048,10 +1048,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_x'
+                        id: l_x
                         text: 'x'
                     Label:
-                        id: 'd_x'
+                        id: d_x
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1060,10 +1060,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_y'
+                        id: l_y
                         text: 'y'
                     Label:
-                        id: 'd_y'
+                        id: d_y
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1072,10 +1072,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_x1'
+                        id: l_x1
                         text: 'x1'
                     Label:
-                        id: 'd_x1'
+                        id: d_x1
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1084,10 +1084,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_y1'
+                        id: l_y1
                         text: 'y1'
                     Label:
-                        id: 'd_y1'
+                        id: d_y1
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1096,10 +1096,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_ls1'
+                        id: l_ls1
                         text: 'ls1'
                     Label:
-                        id: 'd_ls1'
+                        id: d_ls1
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1108,10 +1108,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_st_path'
+                        id: l_st_path
                         text: 'st_path'
                     Label:
-                        id: 'd_st_path'
+                        id: d_st_path
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1120,10 +1120,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_move_comp'
+                        id: l_move_comp
                         text: 'move_comp'
                     Label:
-                        id: 'd_move_comp'
+                        id: d_move_comp
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1132,10 +1132,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_elevation'
+                        id: l_elevation
                         text: 'elevation'
                     Label:
-                        id: 'd_elevation'
+                        id: d_elevation
                         text: 'Null'
                 GridLayout:
                     cols: 2
@@ -1144,10 +1144,10 @@ MainFrameWidget:
                     row_default_height: '40dp'
                     row_force_default: True
                     Label:
-                        id: 'l_azimuth'
+                        id:l_azimuth
                         text: 'azimuth'
                     Label:
-                        id: 'd_azimuth'
+                        id: d_azimuth
                         text: 'Null'
     
     BoxLayout:
@@ -1161,21 +1161,29 @@ MainFrameWidget:
                     pos:self.pos
                     size:self.size
             Label:
-                id: "status_auto_get"
+                id: status_auto_get
                 text: "Auto get data off"
             
         GridLayout:
-            cols: 3
+            cols: 4
             BoxLayout:
                 orientation: 'vertical'
                 Button:
-                    id: 'auto_get_data'
+                    id: auto_get_data
                     text: 'Auto get data'
+                    on_press:  root.start_fetch_loop()
             BoxLayout:
                 orientation: 'vertical'
                 Button:
-                    id: 'manual_get_data'
+                    id: manual_get_data
                     text: 'Manual get data'
+                    on_press:  root.haddle_fetch_once()
+            BoxLayout:
+                orientation: 'vertical'
+                Button:
+                    id: update_rtc_id
+                    text: "Update rtc"
+                    on_press: root.haddle_update_rtc()
             Spinner:
                 id: spinner_helio_stats_desc
                 text: 'Select helio'

@@ -293,26 +293,27 @@ class ControllerManual(BoxLayout):
     
 
     def update_and_submit(self):
-        if int(self.number_center_light.text) == 1:
+        # if int(self.number_center_light.text) == 1:
             self.__haddle_submit_cap_error()
-        else:
-            self.show_popup("Alert", f"Light center must detected equal 1.")
+        # else:
+        #     self.show_popup("Alert", "Light center must detected equal 1.")
 
     def __haddle_submit_cap_error(self):
         status_camera = self.__checking_status_camera_open()
         # print(status_camera)
+        with open('./data/setting/setting.json', 'r') as file:
+            setting_data = json.load(file)
         if status_camera == True:
-            if self.helio_stats_selection != "" and self.camera_endpoint != "":
+            if setting_data['storage_endpoint']['helio_stats_ip']['id'] != "":
                 try:
-                    with open('./data/setting/setting.json', 'r') as file:
-                        setting_data = json.load(file)
-                    payload = requests.get(url="http://"+self.static_get_api_helio_stats_endpoint)
+                    
+                    payload = requests.get(url="http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip'])
                     setJson = payload.json()
 
                     now = datetime.now()
                     timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-                    path_time_stamp = now.strftime("%d_%m_%y")
-
+                    path_time_stamp = now.strftime("%d_%m_%y"+"_"+setting_data['storage_endpoint']['helio_stats_ip']['id'])
+                    timing =  now.strftime("%H:%M:%S")
                     adding_time = {
                         "timestamp": timestamp,
                         "helio_stats_id": setting_data['storage_endpoint']['helio_stats_ip']['id'],
@@ -334,11 +335,21 @@ class ControllerManual(BoxLayout):
                         "control_by": "human"
                     }
 
+                    adding_path_data = {
+                         "timestamp": timing,
+                         "x":  setJson['currentX'],
+                         "y": setJson['currentY'],
+                    }
+
+                    json_str = json.dumps(adding_path_data)
+                    perfixed_json = f"*{json_str}"
+
                     filename = "./data/result/error_data.csv"
-                    path_file_by_date = f"./data/result/{path_time_stamp}.csv"
+                    path_file_by_date = f"./data/result/{path_time_stamp}/data.txt"
+                    path_folder_by_date = f"./data/result/{path_time_stamp}"
                     filepath = os.path.join(os.getcwd(), filename)
-                    filepath_by_date = os.path.join(os.getcwd(), path_file_by_date)
-                    check_file_path = os.path.isfile(filepath_by_date)
+                    filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+                    check_file_path = os.path.isdir(filepath_by_date)
 
                     try:
                         fieldnames = adding_time.keys()
@@ -347,15 +358,13 @@ class ControllerManual(BoxLayout):
                             writer.writerow(adding_time)
 
                         if check_file_path == False:
-                            with open(path_file_by_date, mode='w', newline='') as file:
-                                writer = csv.writer(file)
-                                writer.writerow(adding_time.keys())
-                                writer.writerow(adding_time.values())
+                            os.mkdir(path_folder_by_date)
+                            with open(path_file_by_date, mode='w', newline='') as text_f:
+                                text_f.write(perfixed_json+"\n")
                             self.show_popup("Alert",f"Data successfully saved to {filename}.")
                         else:
-                            with open(filepath_by_date, mode='a', newline='', encoding='utf-8') as csv_file:
-                                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                                writer.writerow(adding_time)
+                            with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                                text_f.write(perfixed_json+"\n")
                             self.show_popup("Alert",f"Data successfully saved to {filename}.")
                     except Exception as e:
                         self.show_popup("Error alert",f"Error saving file:\n{str(e)}")
@@ -436,7 +445,7 @@ class ControllerManual(BoxLayout):
             'Content-Type': 'application/json'  
         }
 
-        print("payload in manual function => ",payload)
+        # print("payload in manual function => ",payload)
 
         try:
             response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)

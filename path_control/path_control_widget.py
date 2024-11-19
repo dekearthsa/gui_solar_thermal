@@ -28,6 +28,7 @@ class PathControlWidget(Screen):
         self.list_data_helio = []
         self.list_data_cam = []
         self.helio_endpoint = ""
+        self.helio_get_data = ""
         self.camera_endpoint = ""
         self.camera_online_status= False
         Clock.schedule_once(lambda dt: self.fetch_all_helio_cam())
@@ -68,7 +69,7 @@ class PathControlWidget(Screen):
         
         url="http://"+ str(endpoint.text)+ "/update-path"
         # print(url)
-        subprocess.run(["msedge", url], check=True)
+        subprocess.run(["C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", url], check=True)
 
     def show_popup_path_control(self):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -110,7 +111,8 @@ class PathControlWidget(Screen):
     def select_drop_down_menu_helio_path(self, spinner, text):
         for h_data in self.list_data_helio:
             if text == h_data['id']:
-                self.helio_endpoint = "http://"+h_data['ip']+"/update-datas"
+                self.helio_endpoint = "http://"+h_data['ip']+"/update-data"
+                self.helio_get_data = h_data['ip']
 
     def select_drop_down_menu_camera_path(self, spinner, text):
         for c_data in self.list_data_cam:
@@ -523,8 +525,13 @@ class PathControlWidget(Screen):
     def fetch_data_helio_stats(self, instance):
         # print("loop on")
         try:  
-            data = requests.get("http://"+self.helio_endpoint)
+            # print(self.helio_get_data)
+            data = requests.get("http://"+self.helio_get_data+"/",timeout=3)
+            # data = requests.get("http://"+"192.168.0.106"+"/")
+            # data = requests.get(url="http://192.168.0.106/")
+            
             setJson = data.json()
+            # print(setJson)
             self.ids.val_id.text = str(setJson['id'])
             self.ids.val_currentX.text = str(setJson['currentX'])
             self.ids.val_currentY.text = str(setJson['currentY'])
@@ -541,10 +548,13 @@ class PathControlWidget(Screen):
             self.ids.val_azimuth.text= str(setJson['azimuth'])
         except Exception as e:
             print(f"error connection {e}")
-            pass
+            self.show_popup("Alert", "connection error close get data.")
+            self.haddle_off_get_data()
 
         
     def haddle_start_run_path(self):
+        print("run path")
+        print(self.helio_endpoint)
         if self.helio_endpoint != "":
             self.is_path_running = True
             try:
@@ -555,8 +565,9 @@ class PathControlWidget(Screen):
                 payload = {
                     "topic":"mode",
                     "status":1,
-                    "speed":setting_json['path_mode']['speed']
+                    "speed":setting_json['control_speed_distance']['path_mode']['speed']
                 }
+                print(payload)
 
                 with open("./data/setting/setting.json", 'w') as file:
                     json.dump(setting_json, file, indent=4)
@@ -564,32 +575,39 @@ class PathControlWidget(Screen):
                     'Content-Type': 'application/json'  
                 }
                 try:
-                    response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
-                    if response.status_code == 200:
-                        self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                    print(self.helio_endpoint)
+                    print(payload)
+                    response = requests.post(self.helio_endpoint, data=json.dumps(payload), headers=headers, timeout=3)
+                    # print(response)
+                    if response.status_code != 200:
+                        print(response.status_code)
+                        self.show_popup("Alert connection error", "error connection loop fetch data close")
                     else:
                         pass
                 except Exception as e:
-                    print("Connection error: "+str(e))
-                    self.show_popup("Alert connection error", e+"\n loop fetch data close")
+                    print(e)
+                    self.show_popup("Alert connection error", " loop fetch data close")
             except Exception as e:
-                print(e)
+                print("error =>",e)
 
 
 
     def haddle_stop_run_path(self):
+        # print("run path")
+        # print(self.helio_endpoint)
         if self.helio_endpoint != "":
-            self.is_path_running = False
+            self.is_path_running = True
             try:
                 with open("./data/setting/setting.json", 'r') as file:
                     setting_json = json.load(file)
-                setting_json['is_run_path'] = 1
+                setting_json['is_run_path'] = 0
 
                 payload = {
                     "topic":"mode",
                     "status":0,
-                    "speed":setting_json['path_mode']['speed']
+                    "speed":setting_json['control_speed_distance']['path_mode']['speed']
                 }
+                print(payload)
 
                 with open("./data/setting/setting.json", 'w') as file:
                     json.dump(setting_json, file, indent=4)
@@ -597,16 +615,20 @@ class PathControlWidget(Screen):
                     'Content-Type': 'application/json'  
                 }
                 try:
-                    response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
-                    if response.status_code == 200:
-                        self.show_popup("Alert connection error", response.status_code+"\n loop fetch data close")
+                    print(self.helio_endpoint)
+                    print(payload)
+                    response = requests.post(self.helio_endpoint, data=json.dumps(payload), headers=headers, timeout=5)
+                    # print(response)
+                    if response.status_code != 200:
+                        print(response.status_code)
+                        self.show_popup("Alert connection error", "error connection loop fetch data close")
                     else:
                         pass
                 except Exception as e:
-                    print("Connection error: "+str(e))
-                    self.show_popup("Alert connection error", e+"\n loop fetch data close")
+                    print(e)
+                    self.show_popup("Alert connection error", " loop fetch data close")
             except Exception as e:
-                print(e)
+                print("error =>",e)
 
     def haddle_update_speed(self, text_input, instance):
         val = text_input.text.strip()
@@ -620,7 +642,7 @@ class PathControlWidget(Screen):
             self.show_popup("Error", f"Failed to reset crop values: {e}")
 
     def haddle_config_path(self):
-        with open('./data/setting/connection.json', 'r') as file:
+        with open('./data/setting/setting.json', 'r') as file:
             setting_data = json.load(file) 
 
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -630,7 +652,7 @@ class PathControlWidget(Screen):
         grid.add_widget(label)
 
         # TextInput
-        text_input =  TextInput(text=str(setting_data['helio_stats_ip']['path_mode']['speed']),
+        text_input =  TextInput(text=str(setting_data['control_speed_distance']['path_mode']['speed']),
                     hint_text="Enter speed",
                     multiline=False,
                     size_hint=(.3, 1)

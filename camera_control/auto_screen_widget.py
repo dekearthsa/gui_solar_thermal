@@ -57,23 +57,23 @@ class SetAutoScreen(Screen):
         self.helio_stats_connection = ""
         self.menu_now="auto_mode"
     
-    def receive_text(self, text):
-        app = App.get_running_app()
-        current_mode = app.current_mode
-        if self.menu_now != current_mode:
-            self.call_close_camera()
-            self.close_loop()
-            # print(current_mode)
-            # print("close")
-        else:
-            self.checking_menu()
-            # print("open")
+    # def receive_text(self, text):
+    #     app = App.get_running_app()
+    #     current_mode = app.current_mode
+    #     if self.menu_now != current_mode:
+    #         self.call_close_camera()
+    #         self.close_loop()
+    #         # print(current_mode)
+    #         # print("close")
+    #     else:
+    #         self.checking_menu()
+    #         # print("open")
 
-    def checking_menu(self):
-        Clock.schedule_interval(self.receive_text, 2)
+    # def checking_menu(self):
+    #     Clock.schedule_interval(self.receive_text, 2)
 
-    def close_loop(self):
-        Clock.unschedule(self.receive_text)
+    # def close_loop(self):
+    #     Clock.unschedule(self.receive_text)
         
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.

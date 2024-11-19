@@ -6,6 +6,10 @@ from kivy.uix.label import Label
 from kivy.clock import Clock
 from datetime import datetime
 from kivy.app import App
+import logging
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 class Description(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)  
@@ -32,21 +36,21 @@ class Description(Screen):
     def start_fetch_loop(self):
         if self.start_loop == False:
             self.start_loop = True
-            self.status_auto_get = "Auto get data on"
-            Clock.schedule_interval(self.haddle_fetch_loop, 2)
+            self.status_auto_get.text = "Auto get data on"
+            Clock.schedule_interval(self.haddle_fetch_loop, 1)
         else: 
             self.start_loop = False
-            self.status_auto_get = "Auto get data off"
+            self.status_auto_get.text = "Auto get data off"
             self.stop_fetch_loop()
 
     def stop_fetch_loop(self):
         Clock.unschedule(self.haddle_fetch_loop)
 
-    def haddle_fetch_loop(self):
-        if self.self.helio_endpoint != "":
+    def haddle_fetch_loop(self, dt):
+        if self.helio_endpoint != "":
             try:
-                data = requests.get(url="http://"+self.helio_endpoint)
-                set_data = json.load(data)
+                data = requests.get(url="http://"+self.helio_endpoint+"/")
+                set_data = data.json()
                 now = datetime.now()
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
 
@@ -73,10 +77,12 @@ class Description(Screen):
         if self.start_loop == True:
             self.show_popup("Alert", "Auto get data is running.")
         else:
-            if self.self.helio_endpoint != "":
+            if self.helio_endpoint != "":
                 try:
-                    data = requests.get(url="http://"+self.helio_endpoint)
-                    set_data = json.load(data)
+                    # print(self.helio_endpoint)
+                    data = requests.get(url="http://"+self.helio_endpoint+"/", timeout=5)
+                    set_data = data.json()
+                    # print(set_data)
                     now = datetime.now()
                     timestamp = now.strftime("%d/%m/%y %H:%M:%S")
 
@@ -103,6 +109,35 @@ class Description(Screen):
         with open('./data/setting/connection.json', 'r') as file:
             data = json.load(file)
         self.ids.spinner_helio_stats_desc.values  = [item['id'] for item in data.get('helio_stats_ip', [])]
+
+    def haddle_update_rtc(self):
+        if self.helio_endpoint != "":
+            now = datetime.now()
+            hrs = now.strftime("%H")
+            min = now.strftime("%M")
+            sec = now.strftime("%S")
+
+            try:
+                payload = {
+                    "topic":"rtc",
+                    "hour":hrs,
+                    "minute":min,
+                    "sec":sec
+                }
+                res = requests.post("http://"+self.helio_endpoint+"/update-rtc", json=payload)
+                if res.status_code == 200:
+                    data = json.loads(res.text)
+                    # print(data)
+                    self.show_popup("Alert", f"update time {data['time']}")
+                else:
+                    # print(res.status_code)
+                    self.show_popup("error post: ", "error post ")            
+            except Exception as e:
+                # print(e)
+                self.show_popup("error rtc", str(e))
+        else:
+            self.show_popup("Alert", "Select heliostats!")
+
 
     def haddle_helio_stats_selection(self, spinner,text):
         
