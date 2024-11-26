@@ -56,24 +56,6 @@ class SetAutoScreen(Screen):
         self.camera_connection = ""
         self.helio_stats_connection = ""
         self.menu_now="auto_mode"
-    
-    # def receive_text(self, text):
-    #     app = App.get_running_app()
-    #     current_mode = app.current_mode
-    #     if self.menu_now != current_mode:
-    #         self.call_close_camera()
-    #         self.close_loop()
-    #         # print(current_mode)
-    #         # print("close")
-    #     else:
-    #         self.checking_menu()
-    #         # print("open")
-
-    # def checking_menu(self):
-    #     Clock.schedule_interval(self.receive_text, 2)
-
-    # def close_loop(self):
-    #     Clock.unschedule(self.receive_text)
         
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -727,15 +709,19 @@ class SetAutoScreen(Screen):
         popup.open()
 
     def call_close_camera(self):
-        if self.capture:
-            self.capture.release()
-            self.capture = None
-            Clock.unschedule(self.update_frame)
-            image_standby_path = "./images/sample_image_2.png"
-            core_image = CoreImage(image_standby_path).texture
-            self.ids.auto_cam_image.texture = core_image
-            self.ids.auto_cam_image_demo.texture = core_image
-            self.ids.auto_camera_status.text = "Manual menu || camera status off"
+        try:
+            if self.capture:
+                self.capture.release()
+                self.capture = None
+                Clock.unschedule(self.update_frame)
+                image_standby_path = "./images/sample_image_2.png"
+                core_image = CoreImage(image_standby_path).texture
+                self.ids.auto_cam_image.texture = core_image
+                self.ids.auto_cam_image_demo.texture = core_image
+                self.ids.auto_camera_status.text = "Manual menu || camera status off"
+        except:
+            pass
+        
 
     def fetch_helio_stats_data(self):
         with open('./data/setting/connection.json', 'r') as file:
@@ -1036,3 +1022,11 @@ class SetAutoScreen(Screen):
                 json.dump(setting_data, file_save, indent=4)
         except Exception as e:
             self.show_popup("Error", f"Failed to reset crop values: {e}")
+
+    def haddle_off_get_data(self):
+        pass
+
+    def stop_fetch_loop(self):
+        pass
+    # def test_send_main_function(self):
+    #     print("ok") 

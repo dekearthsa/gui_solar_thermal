@@ -44,7 +44,10 @@ class Description(Screen):
             self.stop_fetch_loop()
 
     def stop_fetch_loop(self):
-        Clock.unschedule(self.haddle_fetch_loop)
+        try:
+            Clock.unschedule(self.haddle_fetch_loop)
+        except:
+            pass
 
     def haddle_fetch_loop(self, dt):
         if self.helio_endpoint != "":
@@ -157,3 +160,10 @@ class Description(Screen):
                 content=Label(text=message),
                 size_hint=(None, None), size=(400, 200))
         popup.open()
+
+    def haddle_off_get_data(self):
+        pass
+
+    def call_close_camera(self):
+        pass
+

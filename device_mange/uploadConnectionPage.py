@@ -131,3 +131,13 @@ class UploadConnectionPage(Screen):
                         size_hint=(0.6, 0.4))
         popup_button.bind(on_release=popup.dismiss)
         popup.open()
+
+
+    def haddle_off_get_data(self):
+        pass
+
+    def call_close_camera(self):
+        pass
+
+    def stop_fetch_loop(self):
+        pass

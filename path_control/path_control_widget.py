@@ -168,16 +168,19 @@ class PathControlWidget(Screen):
                 self.ids.path_cam_image.texture = texture_rgb
 
     def call_close_camera(self):
-        if self.capture!=None:
-            self.camera_online_status = False
-            self.capture.release()
-            self.capture = None
-            Clock.unschedule(self.update_frame)
-            self.ids.path_start_camera.text = "Camera on"
-            image_standby_path = "./images/sample_image_2.png"
-            core_image = CoreImage(image_standby_path).texture
-            self.ids.path_cam_image.texture = core_image
-        else:
+        try:
+            if self.capture!=None:
+                self.camera_online_status = False
+                self.capture.release()
+                self.capture = None
+                Clock.unschedule(self.update_frame)
+                self.ids.path_start_camera.text = "Camera on"
+                image_standby_path = "./images/sample_image_2.png"
+                core_image = CoreImage(image_standby_path).texture
+                self.ids.path_cam_image.texture = core_image
+            else:
+                pass
+        except:
             pass
 
     def get_image_display_size_and_pos(self):
@@ -520,7 +523,11 @@ class PathControlWidget(Screen):
         Clock.schedule_interval(self.fetch_data_helio_stats, 1)
 
     def haddle_off_get_data(self):
-        Clock.unschedule(self.fetch_data_helio_stats)
+        try:
+            Clock.unschedule(self.fetch_data_helio_stats)
+        except:
+            pass
+        
 
     def fetch_data_helio_stats(self, instance):
         # print("loop on")
@@ -676,3 +683,6 @@ class PathControlWidget(Screen):
             auto_dismiss=True  # Allow dismissal by clicking outside or pressing Escape
         )
         popup.open()
+
+    def stop_fetch_loop(self):
+        pass

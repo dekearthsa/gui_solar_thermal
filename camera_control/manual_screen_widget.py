@@ -772,17 +772,20 @@ class ManualScreen(Screen):
         popup.open()
 
     def call_close_camera(self):
-        if self.capture:
-            self.capture.release()
-            self.capture = None
-            Clock.unschedule(self.update_frame)
-            image_standby_path = "./images/sample_image_2.png"
-            core_image = CoreImage(image_standby_path).texture
-            self.ids.manual_cam_image.texture = core_image
-            self.ids.manual_cam_image_demo.texture = core_image
-            controller_manual =self.ids.controller_manual
-            controller_manual.camera_status_controll = "Off"
-            self.ids.camera_status.text = "Manual menu || camera status off"
+        try:
+            if self.capture:
+                self.capture.release()
+                self.capture = None
+                Clock.unschedule(self.update_frame)
+                image_standby_path = "./images/sample_image_2.png"
+                core_image = CoreImage(image_standby_path).texture
+                self.ids.manual_cam_image.texture = core_image
+                self.ids.manual_cam_image_demo.texture = core_image
+                controller_manual =self.ids.controller_manual
+                controller_manual.camera_status_controll = "Off"
+                self.ids.camera_status.text = "Manual menu || camera status off"
+        except:
+            pass
 
     def fetch_helio_stats_data(self):
         with open('./data/setting/connection.json', 'r') as file:
@@ -957,3 +960,9 @@ class ManualScreen(Screen):
         self.ids.selected_label_camera.text = setting_data['storage_endpoint']['camera_ip']['id']
         self.camera_connection =  setting_data['storage_endpoint']['camera_ip']['ip']
         self.helio_stats_connection = setting_data['storage_endpoint']['helio_stats_ip']['ip']
+
+    def haddle_off_get_data(self):
+        pass
+
+    def stop_fetch_loop(self):
+        pass
