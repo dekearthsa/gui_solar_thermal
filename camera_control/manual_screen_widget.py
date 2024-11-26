@@ -847,8 +847,8 @@ class ManualScreen(Screen):
                 setting_data = json.load(file)
 
             self.ids.slider_hsv_low_v.value = setting_data['hsv_threshold']['low_v']
-            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['manual_mode']['speed'])
-            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['manual_mode']['step'])
+            self.ids.set_step_machine.text = str(setting_data['control_speed_distance']['manual_mode']['step'])
+            self.ids.set_speed_machine.text = str(setting_data['control_speed_distance']['manual_mode']['speed'])
         except Exception as e:
             print(e)
             self.show_popup("Error file not found", f"Failed to load setting file {e}")

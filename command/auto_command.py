@@ -25,8 +25,8 @@ class ControllerAuto(BoxLayout):
         self.static_title_mode = "Auto menu || Camera status:On"
         self.array_helio_stats = []
         self.time_loop_update = 5 ## 2 sec test update frame
-        self.stop_move_helio_x_stats = 12 ### Stop move axis x when diff in theshold
-        self.stop_move_helio_y_stats = 12 ### Stop move axis y when diff in theshold
+        self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
+        self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
         self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
         
         self.set_axis = "x"

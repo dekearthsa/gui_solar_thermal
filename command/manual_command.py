@@ -408,7 +408,7 @@ class ControllerManual(BoxLayout):
             self.error_center_t.text
             )
         
-        print(center_x, center_y, target_y, target_y)
+        print(center_x, center_y, target_x, target_y)
         
         _, _, frame_w, frame_h = self.haddle_extact_boarding_frame()
 
@@ -431,8 +431,8 @@ class ControllerManual(BoxLayout):
                 "axis": "x",
                 "cx":int(target_x/scaling_x), # center x light
                 "cy":int((scaling_height-target_y)/scaling_y), # center y light
-                "target_x":int(target_x/scaling_x),
-                "target_y":int((scaling_height-target_y)/scaling_y), # center y light
+                "target_x":int(center_x/scaling_x),
+                "target_y":int(center_y/scaling_y), # center y light
                 "kp":1,
                 "ki":1,
                 "kd":2,
@@ -440,6 +440,10 @@ class ControllerManual(BoxLayout):
                 "off_set":1,
                 "status": "1"
             }
+        
+        print(f"cx={target_x}, cy={target_y}, target_x={center_x}, target_y={center_y}, scaling_x={scaling_x}, scaling_y={scaling_y}, scaling_height={scaling_height} \n")
+        print(f"cx/scaling_x={int(target_x/scaling_x)}, (scaling_height - cy)/scaling_y={int((scaling_height-target_y)/scaling_y)}, target_x/scaling_x={int(center_x/scaling_x)} target_y/scaling_y={int(center_y/scaling_y)} \n")
+        print("Payload before send => ", payload)
 
         headers = {
             'Content-Type': 'application/json'  
