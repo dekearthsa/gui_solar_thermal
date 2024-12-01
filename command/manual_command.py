@@ -36,8 +36,6 @@ class ControllerManual(BoxLayout):
             "right_down": "bottom_right",   
             "right_up": "top_right" 
             }
-        self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
-        # Clock.schedule_once(lambda dt: self.loop_checking_status())
 
     def show_popup_camera(self, message):
         popup = Popup(title='Camera status',
@@ -449,7 +447,6 @@ class ControllerManual(BoxLayout):
             'Content-Type': 'application/json'  
         }
 
-        # print("payload in manual function => ",payload)
 
         try:
             response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
@@ -464,9 +461,7 @@ class ControllerManual(BoxLayout):
 
         except Exception as e:
             self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-            #self.turn_on_auto_mode = False
-            #self.ids.label_auto_mode.text = "Auto off"
-            #self.__off_loop_auto_calculate_diff() 
+
 
     def haddle_convert_to_old_resolution(self,current_width, current_height):
         try:

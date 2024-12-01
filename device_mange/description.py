@@ -36,11 +36,11 @@ class Description(Screen):
     def start_fetch_loop(self):
         if self.start_loop == False:
             self.start_loop = True
-            self.status_auto_get.text = "Auto get data on"
+            self.ids.status_auto_get.text = "Auto get data on"
             Clock.schedule_interval(self.haddle_fetch_loop, 1)
         else: 
             self.start_loop = False
-            self.status_auto_get.text = "Auto get data off"
+            self.ids.status_auto_get.text = "Auto get data off"
             self.stop_fetch_loop()
 
     def stop_fetch_loop(self):

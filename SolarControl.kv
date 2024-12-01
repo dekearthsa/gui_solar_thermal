@@ -9,7 +9,7 @@
 ### Camera control
 #:import SetAutoScreen camera_control.auto_screen_widget.SetAutoScreen
 #:import ManualScreen camera_control.manual_screen_widget.ManualScreen
-
+#:import CameraSettingWidget camera_control.camera_setting_widget
 ### command 
 #:import ControllerManual command.manual_command.ControllerManual
 #:import ControllerAuto command.auto_command.ControllerAuto
@@ -26,6 +26,86 @@ MainFrameWidget:
 <MainFrameWidget>:
     LabHeaderWidget:
 
+<CameraSettingWidget>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: .1
+            Label:
+                id: camera_setting_status
+                text: "Camera status:Off"
+                canvas.before:
+                    Color: 
+                        rgba: (.2,.2,.2,1)
+                    Rectangle: 
+                        pos:self.pos
+                        size:self.size
+        GridLayout:
+            cols: 3
+            size_hint_y: .1
+            spacing: 5
+            padding: 5
+            Button:
+                text: 'Stop Camera'
+                background_color: (.4, .4, .4, 1)
+                on_press: root.call_close_camera()
+            Button:
+                text: 'Start Camera'
+                background_color: (.4, .4, .4, 1)
+                on_press: root.call_open_camera()
+
+        GridLayout:
+            cols: 2
+            GridLayout:
+                rows: 1
+                Image:
+                    id: camera_setting
+                    source: 'images/sample_image_2.png'  # Initial image
+                    allow_stretch: True
+                    keep_ratio: True
+                    on_touch_down: None
+                    on_touch_move: None
+                    on_touch_up: None
+            GridLayout:
+                rows: 2
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Top camera'
+                        size_hint_y: .1
+                    Image:
+                        id: camera_setting_top
+                        source: 'images/sample_image_2.png'  # Initial image
+                        allow_stretch: True
+                        keep_ratio: True
+                        on_touch_down: None
+                        on_touch_move: None
+                        on_touch_up: None
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        size_hint_y: .1
+                        text: 'Bottom camera'
+                    Image:
+                        id: camera_setting_bottom
+                        source: 'images/sample_image_2.png'  # Initial image
+                        allow_stretch: True
+                        keep_ratio: True
+                        on_touch_down: None
+                        on_touch_move: None
+                        on_touch_up: None
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: .1
+            GridLayout:
+                cols: 2
+                # Button:
+                #     id: camera_setting_save_crop
+                #     text: 'Save crop'
+                Button:
+                    id: camera_reset_crop
+                    text: 'Reset crop'
+                    on_press: root.haddle_reset_all_camera_setting()
 
 
 <PathControlWidget>:
@@ -58,14 +138,24 @@ MainFrameWidget:
                             Rectangle:
                                 pos: self.pos
                                 size: self.size
-                        Image:
-                            id: path_cam_image
-                            source: 'images/sample_image_2.png'  # Initial image
-                            allow_stretch: True
-                            keep_ratio: True
-                            on_touch_down: None
-                            on_touch_move: None
-                            on_touch_up: None
+                        GridLayout:
+                            rows: 2
+                            Image:
+                                id: path_cam_image_top
+                                source: 'images/sample_image_2.png'  # Initial image
+                                allow_stretch: True
+                                keep_ratio: True
+                                on_touch_down: None
+                                on_touch_move: None
+                                on_touch_up: None
+                            Image:
+                                id: path_cam_image
+                                source: 'images/sample_image_2.png'  # Initial image
+                                allow_stretch: True
+                                keep_ratio: True
+                                on_touch_down: None
+                                on_touch_move: None
+                                on_touch_up: None
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: .05
@@ -74,7 +164,7 @@ MainFrameWidget:
                             Button:
                                 id: path_start_camera
                                 text: "Camera on"
-                                on_press: root.call_open_camera()
+                                on_press: root.haddle_control_cam()
                             GridLayout:
                                 rows: 1
                                 Spinner:
@@ -268,12 +358,6 @@ MainFrameWidget:
 
 <ControllerManual>:
     orientation: 'vertical'
-    # size_hint_y: .5
-    # Label:
-    #     id: return_value
-    #     text: "Return: "
-    #     bold: True
-    #     size_hint_y: .2
     GridLayout:
         cols: 3
         spacing: 5
@@ -578,7 +662,7 @@ MainFrameWidget:
 
             # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
-                cols: 5
+                cols: 2
                 spacing: 5
                 GridLayout:
                     rows: 2
@@ -588,9 +672,10 @@ MainFrameWidget:
                     Spinner:
                         id: spinner_camera
                         text: 'Select Camera'
-                        size_hint: None, None
-                        size: 200, 44
-                        pos_hint: {'center_x': 0.5}
+                        size_hint_y: .25
+                        # size_hint: None, None
+                        # size: 550, 44
+                        pos_hint: {'center_x': 1}
                         on_text: root.select_drop_down_menu_camera(self, self.text)
                 GridLayout:
                     rows: 2
@@ -600,24 +685,25 @@ MainFrameWidget:
                     Spinner:
                         id: spinner_helio_stats
                         text: 'Select helio'
-                        size_hint: None, None
-                        size: 200, 44
-                        pos_hint: {'center_x': 0.5}
+                        size_hint_y: .25
+                        # size_hint: None, None
+                        # size: 550, 44
+                        pos_hint: {'center_x': 1}
                         on_text: root.select_drop_down_menu_helio_stats(self, self.text)
-                Button:
-                    text: 'Reset Crop'
-                    on_press: root.reset_crop_value()
-                    background_color: (.4, .4, .4, 1)
+                # Button:
+                #     text: 'Reset Crop'
+                #     on_press: root.reset_crop_value()
+                #     background_color: (.4, .4, .4, 1)
 
-                Button:
-                    text: "Save Crop"
-                    on_press: root.save_crop_value_image()
-                    background_color: (.4, .4, .4, 1)
+                # Button:
+                #     text: "Save Crop"
+                #     on_press: root.save_crop_value_image()
+                #     background_color: (.4, .4, .4, 1)
 
-                Button:
-                    text: 'Crop Mode'
-                    on_press: root.active_crop_value()
-                    background_color: (.4, .4, .4, 1)
+                # Button:
+                #     text: 'Crop Mode'
+                #     on_press: root.active_crop_value()
+                #     background_color: (.4, .4, .4, 1)
 
             ControllerManual:
                 id: controller_manual
@@ -753,32 +839,13 @@ MainFrameWidget:
                         size_hint_x: .42
                         text: "Reset low_v"
                         on_press: root.haddle_reset_default_threshold_low_v()
-
-                # GridLayout:
-                #     rows: 1
-                #     GridLayout:
-                #         cols: 3
-                #         Label:
-                #             text:"Speed machine"
-                #         TextInput:
-                #             id: set_speed_machine
-                #             text: "Speed machine"
-                #         Button:
-                #             id: btn_change_step_machine
-                #             text: "update"
-                #             on_press: root.haddle_change_speed_machine()
-                # Button:
-                #     size_hint_x: .15
-                #     text: 'Reset threshold'
-                #     on_press: root.haddle_reset_default_threshold()
-
                 Button:
                     size_hint_x: .1
                     text: 'Config'
                     on_press: root.open_config_popup_start()
 
         GridLayout:
-            cols: 5
+            cols: 4
             size_hint_y: .3
             spacing: 5
 
@@ -877,8 +944,9 @@ MainFrameWidget:
                 Spinner:
                     id: spinner_camera
                     text: 'Select Camera'
-                    size_hint: None, None
-                    size: 200, 44
+                    size_hint_y: .25
+                    # size_hint: None, None
+                    # size: 200, 44
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_camera(self, self.text)
             
@@ -891,30 +959,31 @@ MainFrameWidget:
                 Spinner:
                     id: spinner_helio_stats
                     text: 'Select helio'
-                    size_hint: None, None
-                    size: 200, 44
+                    size_hint_y: .25
+                    # size_hint: None, None
+                    # size: 200, 44
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_helio_stats(self, self.text)
 
             ### Right side: Control buttons __recheck_perspective_transform
-            GridLayout:
-                cols: 3
-                spacing: 10
-                size_hint_x: .5
-                Button:
-                    text: 'Reset Crop'
-                    on_press: root.reset_crop_value()
-                    background_color: (.4, .4, .4, 1)
+            # GridLayout:
+            #     cols: 3
+            #     spacing: 10
+            #     size_hint_x: .5
+            #     Button:
+            #         text: 'Reset Crop'
+            #         on_press: root.reset_crop_value()
+            #         background_color: (.4, .4, .4, 1)
 
-                Button:
-                    text: "Save Crop"
-                    on_press: root.save_crop_value_image()
-                    background_color: (.4, .4, .4, 1)
+            #     Button:
+            #         text: "Save Crop"
+            #         on_press: root.save_crop_value_image()
+            #         background_color: (.4, .4, .4, 1)
 
-                Button:
-                    text: 'Crop Mode'
-                    on_press: root.active_crop_value()
-                    background_color: (.4, .4, .4, 1)
+            #     Button:
+            #         text: 'Crop Mode'
+            #         on_press: root.active_crop_value()
+            #         background_color: (.4, .4, .4, 1)
 
             ControllerAuto:
                 id: controller_auto
@@ -1236,6 +1305,10 @@ MainFrameWidget:
                 pos:self.pos
                 size:self.size
         Button:
+            text: 'Camera setting'
+            on_press: root.change_screen('camera_setting', 'camera_setting')
+
+        Button:
             text: "Manual"
             on_press: root.change_screen('manual', 'manual')
             # on_press: root.ids.screen_manager.current = 'manual'
@@ -1259,6 +1332,8 @@ MainFrameWidget:
 
     ScreenManager:
         id: screen_manager
+        CameraSettingWidget:
+            name: 'camera_setting'
         ManualScreen:
             name: 'manual'
         SetAutoScreen:

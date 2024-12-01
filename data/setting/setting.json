@@ -1,32 +1,52 @@
 {
     "helio_stat_id_selection": "",
-    "crop_status": false,
+    "crop_status": true,
     "is_light_target_threshold": 0,
     "limit_center": 2,
-    "is_use_contour": true,
+    "is_use_contour": false,
+    "number_of_perspective_transform": 2,
     "perspective_transform": [
         [
-            1.0793611617885248,
-            0.023695286670603645,
-            -1348.13598141433
+            0.9281411358430199,
+            -0.0967443529217481,
+            -1062.9604381615334
         ],
         [
-            0.009350760507633407,
-            1.1181951107044945,
-            -419.74550919711345
+            0.006567909402565096,
+            0.8702479958398597,
+            -715.590149182961
         ],
         [
-            -2.2030621022373772e-05,
-            8.632141608358977e-05,
+            4.4646804564983056e-05,
+            -0.00018288157452126292,
             1.0
         ]
     ],
-    "max_width": 1595,
-    "max_height": 1321,
+    "max_width": 530,
+    "max_height": 315,
+    "perspective_transform_bottom": [
+        [
+            3.327632740543535,
+            0.9440755808845415,
+            -6849.212255619478
+        ],
+        [
+            -0.06930039832066795,
+            3.3803194291970295,
+            -2281.5462137343225
+        ],
+        [
+            0.0002568533223091864,
+            0.0016382791897135692,
+            1.0
+        ]
+    ],
+    "max_width_bottom": 531,
+    "max_height_bottom": 379,
     "hsv_threshold": {
         "low_h": 0,
         "low_s": 0,
-        "low_v": 217,
+        "low_v": 164,
         "high_h": 179,
         "high_s": 255,
         "high_v": 255
@@ -69,7 +89,7 @@
         },
         "camera_ip": {
             "id": "camera-bottom",
-            "ip": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+            "ip": "test_video.avi"
         }
     },
     "is_menu": "manual"

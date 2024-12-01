@@ -9,8 +9,6 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.core.image import Image as CoreImage
 import requests
-from kivy.app import App
-# import time
 
 class ManualScreen(Screen):
     def __init__(self, **kwargs):
@@ -36,7 +34,6 @@ class ManualScreen(Screen):
 
         Clock.schedule_once(lambda dt: self.fetch_helio_stats_data())
         Clock.schedule_once(lambda dt: self.haddle_fetch_threshold_data())
-        # Clock.schedule_interval(lambda dt: self.fetch_storage_endpoint(), 2)
 
         #### IN DEBUG MODE CHANGE THRES HERE ####
         self.static_low_h = 0 #10
@@ -48,58 +45,24 @@ class ManualScreen(Screen):
         self.static_blur_kernel = (55,55) 
         self.static_min_area = 40000
         self.static_max_area = 230000
-        # self.camera_connection = "vid_2.avi" ## path mp4 or camera url 
-        # self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
-        # "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
-        # "rtsp://admin:NU12131213@192.168.1.171:554/Streaming/Channels/101/""
+
         self.camera_connection = ""
         self.helio_stats_connection = ""
         self.menu_now="manual"
-        # Clock.schedule_once(lambda dt: self.checking_menu())
-        # self.start_time = time.time()
-    # def receive_text(self, text):
-    #     app = App.get_running_app()
-    #     current_mode = app.current_mode
-    #     if self.menu_now != current_mode:
-    #         self.call_close_camera()
-    #         self.close_loop()
-    #         # print(current_mode)
-    #         # print("close")
-    #     else:
-    #         self.checking_menu()
-    #         # print("open")
 
-    # def checking_menu(self):
-    #     Clock.schedule_interval(self.receive_text, 2)
-
-    # def close_loop(self):
-    #     Clock.unschedule(self.receive_text)
 
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
         img_widget = self.ids.manual_cam_image
         if not img_widget.texture:
             return None, None, None, None  # Texture not loaded yet
-
-        # Original image size
         img_width, img_height = img_widget.texture.size
-
-        # Widget size
         widget_width, widget_height = img_widget.size
-
-        # Calculate scaling factor to fit the image within the widget while maintaining aspect ratio
         scale = min(widget_width / img_width, widget_height / img_height)
-
-        # Calculate the size of the image as displayed
         display_width = img_width * scale
         display_height = img_height * scale
-
-        # Calculate the position (bottom-left corner) of the image within the widget
         pos_x = img_widget.x + (widget_width - display_width) / 2
         pos_y = img_widget.y + (widget_height - display_height) / 2
-
-        # print(display_width, display_height, img_widget.x, img_widget.y)
-
         return display_width, display_height, pos_x, pos_y
 
     def map_touch_to_image_coords(self, touch_pos):
@@ -285,32 +248,44 @@ class ManualScreen(Screen):
         # Area should be positive and above a minimum threshold
         return area > 100  # Adjust the threshold as needed
     
-    # if is_use_contour status active using this function #
+    # # if is_use_contour status active using this function #
+    # def apply_crop_methods(self, frame):
+
+    #     with open('./data/setting/setting.json', 'r') as file:
+    #         setting_data = json.load(file)
+
+    #     M = np.array(setting_data['perspective_transform'])
+    #     max_width = setting_data['max_width']
+    #     max_height = setting_data['max_height']
+    #     warped = cv2.warpPerspective(frame, M, (max_width, max_height))
+    #     return warped
+    
     def apply_crop_methods(self, frame):
 
         with open('./data/setting/setting.json', 'r') as file:
             setting_data = json.load(file)
 
-        M = np.array(setting_data['perspective_transform'])
-        max_width = setting_data['max_width']
-        max_height = setting_data['max_height']
-        warped = cv2.warpPerspective(frame, M, (max_width, max_height))
-        return warped
+        M_top = np.array(setting_data['perspective_transform'])
+        max_width_top = setting_data['max_width']
+        max_height_top = setting_data['max_height']
+        warped_top = cv2.warpPerspective(frame, M_top, (max_width_top, max_height_top))
+
+        M_bottom = np.array(setting_data['perspective_transform_bottom'])
+        max_width_bottom = setting_data['max_width_bottom']
+        max_height_bottom = setting_data['max_height_bottom']
+        warped_bottom = cv2.warpPerspective(frame, M_bottom, (max_width_bottom, max_height_bottom))
+
+        return [warped_top, warped_bottom, max_width_bottom, max_height_bottom]
 
     def apply_perspective_transform(self, frame):
         ###Apply perspective transform based on selected polygon points.###
         if len(self.selected_points) != 4:
             self.show_popup("Error", "Exactly 4 points are required.")
             return frame  # Not enough points to perform transform
-
-        # Order points: top-left, top-right, bottom-right, bottom-left
         pts = self.order_points(np.array(self.selected_points, dtype='float32'))
-
         if not self.is_valid_quadrilateral(pts):
             self.show_popup("Error", "Selected points do not form a valid quadrilateral.")
             return frame
-
-        # Compute width and height of the new image
         width_a = np.linalg.norm(pts[0] - pts[1])
         width_b = np.linalg.norm(pts[2] - pts[3])
         max_width = max(int(width_a), int(width_b))
@@ -328,15 +303,10 @@ class ManualScreen(Screen):
 
         # Compute the perspective transform matrix
         M = cv2.getPerspectiveTransform(pts, dst)
-        
-        # update crop value
+
         self.perspective_transform = M
         self.max_width = max_width
         self.max_height = max_height
-
-        # print(max_width, max_height)
-        
-
         warped = cv2.warpPerspective(frame, M, (max_width, max_height))
         return warped
 
@@ -377,8 +347,6 @@ class ManualScreen(Screen):
             img_y1 = max(0, min(img_y1, self.ids.manual_cam_image.texture.height - 1))
             img_x2 = max(0, min(img_x2, self.ids.manual_cam_image.texture.width - 1))
             img_y2 = max(0, min(img_y2, self.ids.manual_cam_image.texture.height - 1))
-            
-
 
             self.crop_area = (min(img_x1, img_x2), min(img_y1, img_y2), max(img_x1, img_x2), max(img_y1, img_y2))
 
@@ -490,7 +458,6 @@ class ManualScreen(Screen):
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         return contours, thresh
 
-
     def __find_bounding_boxes_hsv_mode(self, frame_color, low_H, low_S, low_V, high_H, high_S, high_V, blur_kernel):
         frame_HSV = cv2.cvtColor(frame_color, cv2.COLOR_BGR2HSV)
         blurred = cv2.GaussianBlur(frame_HSV, blur_kernel, 0)
@@ -531,29 +498,31 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json') as file:
                 setting_json = json.load(file)
-
-            if setting_json['is_run_path'] != 1:
-                if self.camera_connection != "" and self.helio_stats_connection != "":
-                    if self.camera_connection != "":
-                        if not self.capture:
-                            # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
-                            # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
-                            try:
-                                self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
-                                if not self.capture.isOpened():
-                                    self.show_popup("Error", "Could not open camera.")
-                                    self.ids.camera_status.text = "Error: Could not open camera"
-                                    return
-                                controller_manual =self.ids.controller_manual
-                                controller_manual.camera_status_controll = "On"
-                                Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
-                                self.ids.camera_status.text = "Manual menu || Camera status:On"
-                            except Exception as e:
-                                self.show_popup("Camera error", f"{e}")
+            if setting_json['crop_status'] == True:
+                if setting_json['is_run_path'] != 1:
+                    if self.camera_connection != "" and self.helio_stats_connection != "":
+                        if self.camera_connection != "":
+                            if not self.capture:
+                                # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
+                                # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
+                                try:
+                                    self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                                    if not self.capture.isOpened():
+                                        self.show_popup("Error", "Could not open camera.")
+                                        self.ids.camera_status.text = "Error: Could not open camera"
+                                        return
+                                    controller_manual =self.ids.controller_manual
+                                    controller_manual.camera_status_controll = "On"
+                                    Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
+                                    self.ids.camera_status.text = "Manual menu || Camera status:On"
+                                except Exception as e:
+                                    self.show_popup("Camera error", f"{e}")
+                    else:
+                        self.show_popup("Alert", "Camera or helio stats must not empty.")
                 else:
-                    self.show_popup("Alert", "Camera or helio stats must not empty.")
+                    self.show_popup("Alert", "Path system is running\n Stop path system to run ")
             else:
-                self.show_popup("Alert", "Path system is running\n Stop path system to run ")
+                self.show_popup("Alert", "Camera not setting.")
         except Exception as e:
             print(e)
 
@@ -575,186 +544,121 @@ class ManualScreen(Screen):
                 ### log time start here ###
                 ### create image file ### 
                 try:
-                    with open('./data/setting/setting.json', 'r') as file:
-                        setting_system = json.load(file)
-                except Exception as e:
-                    self.show_popup("Error", f"Failed to load settings: {e}")
-                    return
+                    frame = self.apply_crop_methods(frame)
+                    frame_top = frame[0]
+                    frame_bottom = frame[1]
+                    max_height = frame[3] # max_height_bottom
+                    max_width =  frame[2] # max_width_bottom
+                    # frame = cv2.flip(frame, 0)  # Flip frame vertically
 
-                if not setting_system.get('is_use_contour', False):
-                    # Polygon Cropping Mode
-
-                    if len(self.selected_points) == 4:
-                        # Apply perspective transform
-                        frame = self.apply_perspective_transform(frame)
-                        if frame is None:
-                            return
-
-                    frame = cv2.flip(frame, 0)  # Flip frame vertically
-
-                    
-
-                    contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
-                            frame_color=frame, 
-                            low_H=self.static_low_h, 
-                            low_S=self.static_low_s, 
-                            low_V=self.static_low_v,
-                            high_H=self.static_high_h,
-                            high_S=self.static_high_s,
-                            high_V=self.static_high_v,
-                            blur_kernel=self.static_blur_kernel
-                        )
+                    ### frame bottom ###
+                    contours_light_bottom, _ = self.__find_bounding_boxes_hsv_mode(
+                        frame_color=frame_bottom, 
+                        low_H=self.static_low_h, 
+                        low_S=self.static_low_s, 
+                        low_V=self.static_low_v,
+                        high_H=self.static_high_h,
+                        high_S=self.static_high_s,
+                        high_V=self.static_high_v,
+                        blur_kernel=self.static_blur_kernel
+                    )
 
                     # Calculate centers
-                    centers_light = self.calculate_centers(contours_light)
+                    centers_light_bottom = self.calculate_centers(contours_light_bottom)
+                    centers_frame_bottom = self.__calulate_centers_frame(frame_bottom)
 
-                    ### using contours frame 
-                    # centers_frame = self.calculate_centers(contours_frame)
-                    ### calulate center of frame
-                    centers_frame = self.__calulate_centers_frame(frame)
+                    bounding_box_frame_x = centers_frame_bottom[0]
+                    bounding_box_frame_y = centers_frame_bottom[1]
+                    bounding_box_frame_w = max_width
+                    bounding_box_frame_h = max_height
 
-                    bounding_box_frame_x = centers_frame[0]
-                    bounding_box_frame_y = centers_frame[1]
-                    bounding_box_frame_w = setting_system['max_width']
-                    bounding_box_frame_h = setting_system['max_height']
-                    # static_min_area = 100
-                    # Draw centers and bounding boxes
+                    counting_light_center_bottom = 0
 
-                    counting_light_center = 0
-                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        #     c_area = cv2.contourArea(contours_light[idx])
-                        #     if self.static_min_area < c_area and self.static_max_area > c_area:
-                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-
-                    for cnt in contours_light:
+                    for cnt in contours_light_bottom:
                         c_area = cv2.contourArea(cnt)
                         if self.static_min_area < c_area: #and self.static_max_area > c_area:
-                            counting_light_center += 1
+                            counting_light_center_bottom += 1
                             x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                            cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
-                            cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                            cv2.rectangle(frame_bottom, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                            cv2.circle(frame_bottom, (centers_light_bottom[0][0], centers_light_bottom[1][0]), 5, (255, 0, 0), -1)
+                            cv2.putText(frame_bottom, "C-L", (centers_light_bottom[0][0], centers_light_bottom[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                     ### draw center of frame
-                    cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
-                    cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
+                    cv2.circle(frame_bottom, centers_frame_bottom, 5,  (0, 255, 0), -1)
+                    cv2.putText(frame_bottom, "C-F", centers_frame_bottom, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     
-
-                    # Convert frame to RGB
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    # debug_stop = time.time()
-                    # print(f"Time taken: {(debug_stop-debug_start)*10**3:.03f}ms")
-
                     # Convert frame to Kivy texture
+                    frame_rgb = cv2.cvtColor(frame_bottom, cv2.COLOR_BGR2RGB)
                     texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
                     texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-
-                    texture_bin = Texture.create(size=(demo_light.shape[1], demo_light.shape[0]), colorfmt='luminance')
-                    texture_bin.blit_buffer(demo_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
-
                     self.ids.manual_cam_image.texture = texture_rgb
-                    self.ids.manual_cam_image_demo.texture = texture_bin
 
                     # Update UI labels
-                    if centers_light[0] and centers_frame[0]:
-                        self.ids.number_of_center_light_detected.text = str(counting_light_center)
-                        self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
-                        self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                        self.ids.manual_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
-                        error_x = centers_frame[0] - centers_light[0][0]
-                        error_y = centers_frame[1] - centers_light[1][0]
+                    if centers_light_bottom[0] and centers_frame_bottom[0]:
+                        self.ids.number_of_center_light_detected.text = str(counting_light_center_bottom)
+                        self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center_bottom)
+                        self.ids.manual_center_target_position.text = f"X: {centers_light_bottom[0][0]}px Y: {centers_light_bottom[1][0]}px"
+                        self.ids.manual_center_frame_position.text = f"X: {centers_frame_bottom[0]}px Y: {centers_frame_bottom[1]}px"
+                        error_x = centers_frame_bottom[0] - centers_light_bottom[0][0]
+                        error_y = centers_frame_bottom[1] - centers_light_bottom[1][0]
                         self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                
-                ### using crop data ###
-                else:
-                    try:
-                        frame = self.apply_crop_methods(frame)
-                        if frame.size == 0:
-                            return
-                        
-                        frame = cv2.flip(frame, 0)  # Flip frame vertically
-                        
 
-                        contours_light, demo_light = self.__find_bounding_boxes_hsv_mode(
-                            frame_color=frame, 
-                            low_H=self.static_low_h, 
-                            low_S=self.static_low_s, 
-                            low_V=self.static_low_v,
-                            high_H=self.static_high_h,
-                            high_S=self.static_high_s,
-                            high_V=self.static_high_v,
-                            blur_kernel=self.static_blur_kernel
-                        )
-                        
-                        # Calculate centers
-                        centers_light = self.calculate_centers(contours_light)
-                        centers_frame = self.__calulate_centers_frame(frame)
+                    contours_light_top, _ = self.__find_bounding_boxes_hsv_mode(
+                        frame_color=frame_top, 
+                        low_H=self.static_low_h, 
+                        low_S=self.static_low_s, 
+                        low_V=self.static_low_v,
+                        high_H=self.static_high_h,
+                        high_S=self.static_high_s,
+                        high_V=self.static_high_v,
+                        blur_kernel=self.static_blur_kernel
+                    )
+                    
 
-                        bounding_box_frame_x = centers_frame[0]
-                        bounding_box_frame_y = centers_frame[1]
-                        bounding_box_frame_w = setting_system['max_width']
-                        bounding_box_frame_h = setting_system['max_height']
+                    #### frame Top ####
+                    # Calculate centers #
+                    centers_light_top = self.calculate_centers(contours_light_top)
+                    centers_frame_top = self.__calulate_centers_frame(frame_top)
+                    counting_light_center_top = 0
 
-                        # static_min_area = 0
-                        # Draw centers and bounding boxes
-                        counting_light_center = 0
-                        # for idx, (cx, cy) in enumerate(zip(centers_light[0], centers_light[1])):
-                        #     c_area = cv2.contourArea(contours_light[idx])
-                        #     if self.static_min_area < c_area and self.static_max_area > c_area:
-                        #         cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
-                        #         cv2.putText(frame, "C-L", (cx, cy + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                    ### draw center of frame
+                    cv2.circle(frame_top, centers_frame_bottom, 5,  (0, 255, 0), -1)
+                    cv2.putText(frame_top, "C-F", centers_frame_bottom, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    
+                    # Convert frame to Kivy texture
+                    frame_rgb_top = cv2.cvtColor(frame_top, cv2.COLOR_BGR2RGB)
+                    texture_rgb_top = Texture.create(size=(frame_rgb_top.shape[1], frame_rgb_top.shape[0]), colorfmt='rgb')
+                    texture_rgb_top.blit_buffer(frame_rgb_top.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                    self.ids.manual_cam_image_demo.texture = texture_rgb_top
 
-                        for cnt in contours_light:
-                            c_area = cv2.contourArea(cnt)
-                            if self.static_min_area < c_area: #and self.static_max_area > c_area:
-                                counting_light_center += 1
-                                x, y, w, h = cv2.boundingRect(cnt)
-                                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                                cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
-                                cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                        
+                    for cnt in contours_light_top:
+                        c_area = cv2.contourArea(cnt)
+                        if self.static_min_area < c_area: #and self.static_max_area > c_area:
+                            counting_light_center_top += 1
+                            x, y, w, h = cv2.boundingRect(cnt)
+                            cv2.rectangle(frame_top, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                            cv2.circle(frame_top, (centers_light_top[0][0], centers_light_top[1][0]), 5, (255, 0, 0), -1)
+                            cv2.putText(frame_top, "C-L", (centers_light_top[0][0], centers_light_top[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
                         ### draw center of frame
-                        cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
-                        cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        cv2.circle(frame_top, centers_frame_top, 5,  (0, 255, 0), -1)
+                        cv2.putText(frame_top, "C-F", centers_frame_top, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-
-
-                        # Convert frame to RGB
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                        ### log stop time and delta time stop - start ### 
-
-                        # Convert frame to Kivy texture
-                        texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
-                        texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-
-                        texture_bin = Texture.create(size=(demo_light.shape[1], demo_light.shape[0]), colorfmt='luminance')
-                        texture_bin.blit_buffer(demo_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
-
-                        self.ids.manual_cam_image.texture = texture_rgb
-                        self.ids.manual_cam_image_demo.texture = texture_bin
-
-                        #print("centers_light => ",centers_light)
-                        #print("centers_frame => ", centers_frame)
-                        #print("manual_bounding_frame_position => X:", bounding_box_frame_x, "Y: ", f"w: {bounding_box_frame_w}", f"h:{bounding_box_frame_h}")
                         # Update UI labels
-                        if centers_light[0] and centers_frame[0]:
-                            self.ids.number_of_center_light_detected.text = str(counting_light_center)
-                            self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
-                            self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                            self.ids.manual_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
-                            error_x = centers_frame[0] - centers_light[0][0]
-                            error_y = centers_frame[1] - centers_light[1][0]
-                            self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
-                            self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                            # debug_stop = time.time()
-                            # print(f"Time taken: {(debug_stop-debug_start)*10**3:.03f}ms")
-                    except Exception as e:
-                        self.show_popup("Error", str(e))
-                        return
+                        # if centers_light_bottom[0] and centers_frame_bottom[0]:
+                        #     self.ids.number_of_center_light_detected.text = str(counting_light_center_bottom)
+                        #     self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center_bottom)
+                        #     self.ids.manual_center_target_position.text = f"X: {centers_light_bottom[0][0]}px Y: {centers_light_bottom[1][0]}px"
+                        #     self.ids.manual_center_frame_position.text = f"X: {centers_frame_bottom[0]}px Y: {centers_frame_bottom[1]}px"
+                        #     error_x = centers_frame_bottom[0] - centers_light_bottom[0][0]
+                        #     error_y = centers_frame_bottom[1] - centers_light_bottom[1][0]
+                        #     self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                        #     self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
+
+                except Exception as e:
+                    self.show_popup("Error", str(e))
+                    return
 
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
@@ -861,7 +765,7 @@ class ManualScreen(Screen):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            setting_data['control_speed_distance']['manual_mode']['step'] = int(step_input)
+            setting_data['control_speed_distance']['manual_mode']['step'] = float(step_input)
 
             with open("./data/setting/setting.json", "w") as file:
                 json.dump(setting_data, file, indent=4)
