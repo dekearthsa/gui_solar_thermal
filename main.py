@@ -3,7 +3,6 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty
 class LabHeaderWidget(BoxLayout):
-
     def change_screen(self, screen_name, text):
         screen_manager = self.ids.screen_manager
         self.ids.screen_manager.current = screen_name
@@ -13,7 +12,6 @@ class LabHeaderWidget(BoxLayout):
         current_screen.call_close_camera()
         current_screen.haddle_off_get_data()
         current_screen.stop_fetch_loop()
-
 
 class MainFrameWidget(BoxLayout):
     pass

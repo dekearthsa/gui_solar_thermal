@@ -158,6 +158,7 @@ class PathControlWidget(Screen):
     def update_frame(self, dt):
         if self.capture:
             ret, frame = self.capture.read()
+            frame = cv2.flip(frame, 0) 
             if ret:
                 frame_top , frame_bottom = self.convert_crop(frame)
 

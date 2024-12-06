@@ -20,7 +20,7 @@ class CameraSettingWidget(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
-        self.camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+        self.camera_connection = "vid.avi"
         self.counting_number_crop = 0
         self.perspective_transform_top = []
         self.max_width_top = 0
@@ -157,9 +157,9 @@ class CameraSettingWidget(Screen):
 
         # Map to image pixel coordinates
         img_x = int(rel_x * img_width)
-        img_y = int((1 - rel_y) * img_height)  # Invert y-axis
-
-        return img_x, img_y
+        img_y = int((rel_y) * img_height)  # Invert y-axis
+        touch_y = int((1- rel_y) * img_height)
+        return img_x, img_y, touch_y 
 
     def on_touch_down(self, touch):
         ### Handle touch events for selecting points.### 
@@ -186,7 +186,7 @@ class CameraSettingWidget(Screen):
                     self.show_popup("Error", "Touch outside the image area.")
                     return True
 
-                img_x, img_y = img_coords
+                img_x, img_y, touch_y = img_coords
                 self.selected_points.append((img_x, img_y))
                 self.status_text = f"Selected {len(self.selected_points)} / 4 points."
 
@@ -197,7 +197,7 @@ class CameraSettingWidget(Screen):
                     # Convert back to widget coordinates for drawing
                     display_width, display_height, pos_x, pos_y = self.get_image_display_size_and_pos()
                     widget_x = pos_x + (img_x / img_widget.texture.width) * display_width
-                    widget_y = pos_y + ((img_widget.texture.height - img_y) / img_widget.texture.height) * display_height
+                    widget_y = pos_y + ((img_widget.texture.height - touch_y) / img_widget.texture.height) * display_height
                     ellipse = Ellipse(pos=(widget_x - d/2, widget_y - d/2), size=(d, d))
                     self.point_markers.append(ellipse)
 
