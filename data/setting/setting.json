@@ -88,7 +88,7 @@
             "ip": "192.168.0.106"
         },
         "camera_ip": {
-            "id": "camera-top",
+            "id": "camera-bottom",
             "ip": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         }
     },

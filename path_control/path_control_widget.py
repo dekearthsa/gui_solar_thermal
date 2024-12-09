@@ -74,8 +74,11 @@ class PathControlWidget(Screen):
         return frame_top, frame_bottom
 
     def open_web_upload(self, instance, endpoint):
-        url="http://"+ str(endpoint.text)+ "/update-path"
-        subprocess.run(["C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", url], check=True)
+        try:
+            url="http://"+ str(endpoint.text)+ "/update-path"
+            subprocess.run(["C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", url], check=True)
+        except Exception as e:
+            self.show_popup("File not found", f"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe \n ${e}")
 
     def show_popup_path_control(self):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -294,8 +297,9 @@ class PathControlWidget(Screen):
                     else:
                         pass
                 except Exception as e:
-                    print(e)
                     self.show_popup("Alert connection error", " loop fetch data close")
+                    print("connection fail => ",e)
+                    
             except Exception as e:
                 print("error =>",e)
 
