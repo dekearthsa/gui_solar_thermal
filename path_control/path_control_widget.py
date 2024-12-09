@@ -76,7 +76,7 @@ class PathControlWidget(Screen):
     def open_web_upload(self, instance, endpoint):
         try:
             url="http://"+ str(endpoint.text)+ "/update-path"
-            subprocess.run(["C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", url], check=True)
+            subprocess.run(["C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", url])
         except Exception as e:
             self.show_popup("File not found", f"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe \n ${e}")
 
@@ -141,8 +141,11 @@ class PathControlWidget(Screen):
 
     def call_open_camera(self):
         ###Initialize video capture and start updating frames.###
+        print(self.crop_status)
         if self.crop_status == True:
             if self.camera_endpoint != "" and self.helio_endpoint != "":
+                print(self.camera_endpoint)
+                print(self.helio_endpoint)
                 if not self.capture:
                     try:
                         self.capture = cv2.VideoCapture(self.camera_endpoint)
@@ -295,7 +298,9 @@ class PathControlWidget(Screen):
                         print(response.status_code)
                         self.show_popup("Alert connection error", "error connection loop fetch data close")
                     else:
+                        self.show_popup("Alert", "Path controll on")
                         pass
+
                 except Exception as e:
                     self.show_popup("Alert connection error", " loop fetch data close")
                     print("connection fail => ",e)
@@ -336,6 +341,7 @@ class PathControlWidget(Screen):
                         print(response.status_code)
                         self.show_popup("Alert connection error", "error connection loop fetch data close")
                     else:
+                        self.show_popup("Alert", "Path controll off")
                         pass
                 except Exception as e:
                     print(e)

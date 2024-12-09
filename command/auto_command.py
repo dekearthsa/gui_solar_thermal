@@ -17,6 +17,7 @@ class ControllerAuto(BoxLayout):
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
+        self.is_frist_time_open = True
 
         self.speed_screw = 1
         self.distance_mm = 1 
@@ -67,6 +68,7 @@ class ControllerAuto(BoxLayout):
                         self.turn_on_auto_mode = True
                         self.helio_stats_selection_id = h_id
                         self.ids.label_auto_mode.text = "Auto on"
+                        self.update_loop_calulate_diff(1)
                         self.__on_loop_auto_calculate_diff()
                     else:
                         self.show_popup("Alert", f"Light center must detected equal 1.")
@@ -86,10 +88,10 @@ class ControllerAuto(BoxLayout):
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
                 path_time_stamp = now.strftime("%d_%m_%y")
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
-                    try:
+                    # try:
                         # with open('./data/setting/setting.json', 'r') as file:
                         #     setting_data = json.load(file)
-                        payload = requests.get(url=self.helio_stats_id_endpoint)
+                        payload = requests.get(url="http://"+self.helio_stats_id_endpoint)
                         # print("payload => ", payload)
                         setJson = payload.json()
                         # print(setJson)
@@ -115,11 +117,6 @@ class ControllerAuto(BoxLayout):
                             azimuth=setJson['azimuth'],
                         )
 
-                    except Exception as e:
-                        self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-                        self.turn_on_auto_mode = False
-                        self.ids.label_auto_mode.text = "Auto off"
-                        self.__off_loop_auto_calculate_diff()
                 else:
                     self.__send_payload(
                         axis=self.set_axis,
@@ -141,6 +138,8 @@ class ControllerAuto(BoxLayout):
             self.show_popup("Alert", "Camera is offline.")
 
     def __on_loop_auto_calculate_diff(self):
+        # if self.is_frist_time_open == True:
+        
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
 
     def __off_loop_auto_calculate_diff(self):
@@ -234,11 +233,13 @@ class ControllerAuto(BoxLayout):
             self.__off_loop_auto_calculate_diff() 
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
-        
+        with open('./data/setting/setting.json', 'r') as file:
+            storage = json.load(file)
+
         adding_time = {
             "timestamp": timestamp,
             "helio_stats_id": helio_stats_id,
-            "camera_use": camera_use,
+            "camera_use": storage['storage_endpoint']['camera_ip']['id'],
             "id": id,
             "currentX":  currentX,
             "currentY": currentY,
@@ -269,45 +270,81 @@ class ControllerAuto(BoxLayout):
         json_str = json.dumps(adding_path_data)
         perfixed_json = f"*{json_str}"
 
-        filename = "./data/result/error_data.csv"
-        path_file_by_date = f"./data/result/{path_time_stamp}/data.txt"
-        path_folder_by_date = f"./data/result/{path_time_stamp}"
-        filepath = os.path.join(os.getcwd(), filename)
-        filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
-        check_file_path = os.path.isdir(filepath_by_date)
+        
+
+        if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
+            filename = "./data/calibrate/result/error_data.csv"
+            path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
+            path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}"
+            filepath = os.path.join(os.getcwd(), filename)
+            filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+            check_file_path = os.path.isdir(filepath_by_date)
+            try:
+                fieldnames = adding_time.keys()
+                with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                    writer.writerow(adding_time)
+
+                if check_file_path == False:
+                    os.mkdir(path_folder_by_date)
+                    with open(path_file_by_date, mode='w', newline='') as text_f:
+                        text_f.write(perfixed_json+"\n")
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+                else:
+                    with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                        text_f.write(perfixed_json+"\n")
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+            except Exception as e:
+                self.turn_on_auto_mode = False
+                self.ids.label_auto_mode.text = "Auto off"
+                self.__off_loop_auto_calculate_diff()
+                self.show_popup("Error",f"Error saving file:\n{str(e)}")  
+
+        else:
+            filename = "./data/receiver/result/error_data.csv"
+            path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
+            path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
+            filepath = os.path.join(os.getcwd(), filename)
+            filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+            check_file_path = os.path.isdir(filepath_by_date)
+            try:
+                fieldnames = adding_time.keys()
+                with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                    writer.writerow(adding_time)
+
+                if check_file_path == False:
+                    os.mkdir(path_folder_by_date)
+                    with open(path_file_by_date, mode='w', newline='') as text_f:
+                        text_f.write(perfixed_json+"\n")
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+                else:
+                    with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                        text_f.write(perfixed_json+"\n")
+                    self.show_popup("Finish", f"Auto mode off")
+                    self.turn_on_auto_mode = False
+                    self.ids.label_auto_mode.text = "Auto off"
+                    self.__off_loop_auto_calculate_diff()
+                    
+            except Exception as e:
+                self.turn_on_auto_mode = False
+                self.ids.label_auto_mode.text = "Auto off"
+                self.__off_loop_auto_calculate_diff()
+                self.show_popup("Error",f"Error saving file:\n{str(e)}")  
 
         
-        try:
-            fieldnames = adding_time.keys()
-            with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                writer.writerow(adding_time)
+          
 
-            if check_file_path == False:
-                os.mkdir(path_folder_by_date)
-                with open(path_file_by_date, mode='w', newline='') as text_f:
-                    text_f.write(perfixed_json+"\n")
-                self.show_popup("Finish", f"Auto mode off")
-                self.turn_on_auto_mode = False
-                self.ids.label_auto_mode.text = "Auto off"
-                self.__off_loop_auto_calculate_diff()
-            else:
-                with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
-                    text_f.write(perfixed_json+"\n")
-                self.show_popup("Finish", f"Auto mode off")
-                self.turn_on_auto_mode = False
-                self.ids.label_auto_mode.text = "Auto off"
-                self.__off_loop_auto_calculate_diff()
-                
-        except Exception as e:
-            self.turn_on_auto_mode = False
-            self.ids.label_auto_mode.text = "Auto off"
-            self.__off_loop_auto_calculate_diff()
-            self.show_popup("Error",f"Error saving file:\n{str(e)}")    
-                    # self.show_popup("Finish", f"Auto mode off")
-                    # self.turn_on_auto_mode = False
-                    # self.ids.label_auto_mode.text = "Auto off"
-                    # self.__off_loop_auto_calculate_diff()
+
     def haddle_extact_boarding_frame(self):
         data = self.bounding_box_frame_data.text
         numbers = re.findall(r'\d+', data)

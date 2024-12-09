@@ -342,30 +342,59 @@ class ControllerManual(BoxLayout):
                     json_str = json.dumps(adding_path_data)
                     perfixed_json = f"*{json_str}"
 
-                    filename = "./data/result/error_data.csv"
-                    path_file_by_date = f"./data/result/{path_time_stamp}/data.txt"
-                    path_folder_by_date = f"./data/result/{path_time_stamp}"
-                    filepath = os.path.join(os.getcwd(), filename)
-                    filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
-                    check_file_path = os.path.isdir(filepath_by_date)
+                    if setting_data['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
 
-                    try:
-                        fieldnames = adding_time.keys()
-                        with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                            writer.writerow(adding_time)
+                        filename = "./data/calibrate/result/error_data.csv"
+                        path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
+                        path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}"
+                        filepath = os.path.join(os.getcwd(), filename)
+                        filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+                        check_file_path = os.path.isdir(filepath_by_date)
 
-                        if check_file_path == False:
-                            os.mkdir(path_folder_by_date)
-                            with open(path_file_by_date, mode='w', newline='') as text_f:
-                                text_f.write(perfixed_json+"\n")
-                            self.show_popup("Alert",f"Data successfully saved to {filename}.")
-                        else:
-                            with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
-                                text_f.write(perfixed_json+"\n")
-                            self.show_popup("Alert",f"Data successfully saved to {filename}.")
-                    except Exception as e:
-                        self.show_popup("Error alert",f"Error saving file:\n{str(e)}")
+                        try:
+                            fieldnames = adding_time.keys()
+                            with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                                writer.writerow(adding_time)
+
+                            if check_file_path == False:
+                                os.mkdir(path_folder_by_date)
+                                with open(path_file_by_date, mode='w', newline='') as text_f:
+                                    text_f.write(perfixed_json+"\n")
+                                self.show_popup("Alert",f"Data successfully saved to {filename}.")
+                            else:
+                                with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                                    text_f.write(perfixed_json+"\n")
+                                self.show_popup("Alert",f"Data successfully saved to {filename}.")
+                        except Exception as e:
+                            self.show_popup("Error alert",f"Error saving file:\n{str(e)}")
+                    else:
+
+                        filename = "./data/receiver/result/error_data.csv"
+                        path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
+                        path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
+                        filepath = os.path.join(os.getcwd(), filename)
+                        filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
+                        check_file_path = os.path.isdir(filepath_by_date)
+
+                        try:
+                            fieldnames = adding_time.keys()
+                            with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                                writer.writerow(adding_time)
+
+                            if check_file_path == False:
+                                os.mkdir(path_folder_by_date)
+                                with open(path_file_by_date, mode='w', newline='') as text_f:
+                                    text_f.write(perfixed_json+"\n")
+                                self.show_popup("Alert",f"Data successfully saved to {filename}.")
+                            else:
+                                with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
+                                    text_f.write(perfixed_json+"\n")
+                                self.show_popup("Alert",f"Data successfully saved to {filename}.")
+                        except Exception as e:
+                            self.show_popup("Error alert",f"Error saving file:\n{str(e)}")
+
                 except Exception as e:
                     self.show_popup("Error alert",f"{e}")
             else:

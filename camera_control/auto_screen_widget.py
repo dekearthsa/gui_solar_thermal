@@ -667,9 +667,11 @@ class SetAutoScreen(Screen):
     def fetch_helio_stats_data(self):
         with open('./data/setting/connection.json', 'r') as file:
             data = json.load(file)
+        with open('./data/setting/setting.json', 'r') as setting_file:
+            setting_json = json.load(setting_file)
         self.ids.spinner_helio_stats.values = [item['id'] for item in data.get('helio_stats_ip', [])]
         self.ids.spinner_camera.values = [item['id'] for item in data.get('camera_url', [])]
-        self.camera_perspective = "camera-bottom"
+        self.camera_perspective = setting_json['storage_endpoint']['camera_ip']['id']
 
     def select_drop_down_menu_camera(self,spinner, text):
         # self.call_close_camera()
