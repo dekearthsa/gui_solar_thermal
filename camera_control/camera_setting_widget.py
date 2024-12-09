@@ -158,7 +158,7 @@ class CameraSettingWidget(Screen):
         # Map to image pixel coordinates
         img_x = int(rel_x * img_width)
         img_y = int((rel_y) * img_height)  # Invert y-axis
-        touch_y = int((1- rel_y) * img_height)
+        touch_y = int((1- rel_y) * img_height) 
         return img_x, img_y, touch_y 
 
     def on_touch_down(self, touch):

@@ -18,7 +18,6 @@ class ControllerAuto(BoxLayout):
         self.camera_selection = ""
         self.turn_on_auto_mode = False
 
-        # Clock.schedule_once(lambda dt: self.fetch_helio_stats_list()) mtd56790
         self.speed_screw = 1
         self.distance_mm = 1 
         self.is_auto_on = False
@@ -28,7 +27,7 @@ class ControllerAuto(BoxLayout):
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
         # self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
-        
+
         self.set_axis = "x"
         self.set_kp = 1
         self.set_ki = 1
