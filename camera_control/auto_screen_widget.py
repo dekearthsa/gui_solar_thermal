@@ -258,19 +258,6 @@ class SetAutoScreen(Screen):
 
         # Area should be positive and above a minimum threshold
         return area > 100  # Adjust the threshold as needed
-    
-    # if is_use_contour status active using this function #
-    # def apply_crop_methods(self, frame):
-
-    #     with open('./data/setting/setting.json', 'r') as file:
-    #         setting_data = json.load(file)
-
-    #     M = np.array(setting_data['perspective_transform'])
-    #     max_width = setting_data['max_width']
-    #     max_height = setting_data['max_height']
-    #     warped = cv2.warpPerspective(frame, M, (max_width, max_height))
-    #     return warped
-
 
     def apply_crop_methods(self, frame):
 

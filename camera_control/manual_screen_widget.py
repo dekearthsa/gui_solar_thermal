@@ -249,18 +249,6 @@ class ManualScreen(Screen):
         # Area should be positive and above a minimum threshold
         return area > 100  # Adjust the threshold as needed
     
-    # # if is_use_contour status active using this function #
-    # def apply_crop_methods(self, frame):
-
-    #     with open('./data/setting/setting.json', 'r') as file:
-    #         setting_data = json.load(file)
-
-    #     M = np.array(setting_data['perspective_transform'])
-    #     max_width = setting_data['max_width']
-    #     max_height = setting_data['max_height']
-    #     warped = cv2.warpPerspective(frame, M, (max_width, max_height))
-    #     return warped
-    
     def apply_crop_methods(self, frame):
 
         with open('./data/setting/setting.json', 'r') as file:
@@ -711,6 +699,28 @@ class ManualScreen(Screen):
         except Exception as e:
             self.show_popup("Error", f"{e}")
     
+    def haddle_mll_mode(self):
+        if self.helio_stats_connection != "":
+            try:
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file)
+                payload = {
+                    "topic": "mtt",
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed']
+                }
+                try:
+                    response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/update-data", json=payload, timeout=5)
+                    if response.status_code == 200:
+                        pass
+                    else:
+                        self.show_popup("Error requests", f"Requests status code {str(response.status_code)}")
+                except Exception as e:
+                    print("error func haddle_mll_mode => "+ e)
+                    self.show_popup("Error connection", f"Connection timeout\n"+"http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/update-data")
+            except Exception as e:
+                print("error func haddle_mll_mode => "+ e)
+                self.show_popup("Error", f"Failed to get value in setting file: {e}")
+    
     def haddle_fetch_threshold_data(self):
         try:
             with open('./data/setting/setting.json', 'r') as file:
@@ -742,6 +752,7 @@ class ManualScreen(Screen):
 
     def haddle_change_speed_machine(self):
         speed_input = self.ids.set_speed_machine.text
+        
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)

@@ -662,7 +662,7 @@ MainFrameWidget:
 
             # Right side: Control buttons __recheck_perspective_transform
             GridLayout:
-                cols: 2
+                cols: 3
                 spacing: 5
                 GridLayout:
                     rows: 2
@@ -690,6 +690,12 @@ MainFrameWidget:
                         # size: 550, 44
                         pos_hint: {'center_x': 1}
                         on_text: root.select_drop_down_menu_helio_stats(self, self.text)
+                GridLayout:
+                    rows:1
+                    size_hint_x: .5
+                    Button:
+                        text: 'MLL'
+                        on_press: root.haddle_mll_mode()
                 # Button:
                 #     text: 'Reset Crop'
                 #     on_press: root.reset_crop_value()
@@ -965,26 +971,6 @@ MainFrameWidget:
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_helio_stats(self, self.text)
 
-            ### Right side: Control buttons __recheck_perspective_transform
-            # GridLayout:
-            #     cols: 3
-            #     spacing: 10
-            #     size_hint_x: .5
-            #     Button:
-            #         text: 'Reset Crop'
-            #         on_press: root.reset_crop_value()
-            #         background_color: (.4, .4, .4, 1)
-
-            #     Button:
-            #         text: "Save Crop"
-            #         on_press: root.save_crop_value_image()
-            #         background_color: (.4, .4, .4, 1)
-
-            #     Button:
-            #         text: 'Crop Mode'
-            #         on_press: root.active_crop_value()
-            #         background_color: (.4, .4, .4, 1)
-
             ControllerAuto:
                 id: controller_auto
                 status_auto: auto_camera_status
@@ -999,14 +985,6 @@ MainFrameWidget:
 <ControllerAuto>:
     orientation: 'vertical'
     size_hint_x: .5
-    # Label:
-    #     id: return_value
-    #     text: "Return: "
-    #     bold: True
-    #     size_hint_y: .2
-    # Button:
-    #     text: "debug"
-    #     on_press:  root.haddle_extact_boarding_frame()
     Button:
         id: label_auto_mode
         text: 'Auto off'
@@ -1268,8 +1246,6 @@ MainFrameWidget:
             text: 'Syntax for adding Helio stats and camera ip'
         Image:
             source: './images/connection_array.png'
-
-    ## select connection file ##
     BoxLayout:
         orientation: 'vertical'
         padding: 10
@@ -1328,7 +1304,6 @@ MainFrameWidget:
             text: "Connection upload"
             on_press: root.change_screen('upload_connection', 'connection_upload')
             # on_press: root.ids.screen_manager.current = 'upload_connection'
-        
 
     ScreenManager:
         id: screen_manager
@@ -1344,5 +1319,4 @@ MainFrameWidget:
             name: 'description'
         UploadConnectionPage:
             name: 'upload_connection'
-        
 

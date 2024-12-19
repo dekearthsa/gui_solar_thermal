@@ -341,10 +341,6 @@ class ControllerAuto(BoxLayout):
                 self.__off_loop_auto_calculate_diff()
                 self.show_popup("Error",f"Error saving file:\n{str(e)}")  
 
-        
-          
-
-
     def haddle_extact_boarding_frame(self):
         data = self.bounding_box_frame_data.text
         numbers = re.findall(r'\d+', data)
