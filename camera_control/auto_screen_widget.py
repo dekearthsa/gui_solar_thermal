@@ -966,3 +966,4 @@ class SetAutoScreen(Screen):
         pass
     # def test_send_main_function(self):
     #     print("ok") 
+

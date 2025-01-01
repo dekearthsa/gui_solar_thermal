@@ -1,3 +1,5 @@
+from kivy.uix.actionbar import Button
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 import csv
 import os
@@ -8,16 +10,21 @@ import re
 from kivy.clock import Clock
 import json
 import requests
-
+from functools import partial
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.demo_timeout_reply = 2
+        self.is_loop_mode = False
         self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
         self.is_frist_time_open = True
+        self.pending_url = []
+        self.standby_url = []
+        self.fail_url = ["192.168.0.1","192.168.0.2"]
 
         self.speed_screw = 1
         self.distance_mm = 1 
@@ -27,7 +34,6 @@ class ControllerAuto(BoxLayout):
         self.time_loop_update = 5 ## 2 sec test update frame
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
-        # self.static_get_api_helio_stats_endpoint = "http://192.168.0.106/"
 
         self.set_axis = "x"
         self.set_kp = 1
@@ -58,6 +64,147 @@ class ControllerAuto(BoxLayout):
             return h_id, c_id
         except Exception as e:
             self.show_popup("Error", f"{e}")
+
+    def open_list_connection(self):
+        print("open list helio stats conn...")
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                storage = json.load(file)
+                list_conn = storage['helio_stats_ip']
+                return list_conn
+        except Exception as e:
+            self.show_popup("Error", f"{e}")
+
+    def save_pending(self, url):
+        print("save pending ip helio stats....")
+        try:
+            with open('./data/setting/pending.json', 'r') as file:
+                list_pending = json.load(file)
+                list_pending.append(url)
+            with open('./data/setting/pending.json', 'w') as file_save:
+                json.dump(list_pending, file_save)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to save pending: {e}")
+        print("done save pending ip helio stats.")
+
+    def save_standby(self, url):
+        print("save ip helio stats....")
+        try:
+            with open('./data/setting/standby.json', 'r') as file:
+                list_standby = json.load(file)
+                list_standby.append(url)
+            with open('./data/setting/standby.json', 'w') as file_save:
+                json.dump(list_standby, file_save)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to save standby: {e}")
+        print("done save ip helio stats.")
+
+    def handler_checking_connection(self, list_conn):
+        print("checking connection helio stats....")
+        for el in list_conn:
+            while i < self.time_loop_update:
+                payload = requests.get(url="http://"+el['ip'], timeout=3)
+                if payload.status_code == 200:
+                    self.save_standby(el)
+                    self.standby_url.append(el)
+                    break
+                else:
+                    i += 1
+                    if i >= self.time_loop_update:
+                        self.save_pending(el)
+                        self.pending_url.append(el)
+        print("checking connection helio stats done!")
+
+    def handler_reconn_pending(self):
+        print("checking reconnect pending...")
+        for url in self.pending_url:
+            payload = requests.get(url="http://"+url, timeout=3)
+            if payload.status_code == 200:
+                self.standby_url.append(url)
+            else:
+                self.fail_url.append(url)
+        self.pending_url = []
+        print("done checking reconnect pending.")
+
+    def handler_set_origin(self):
+        try:
+            for url in self.standby_url:
+                set_origin_x = {"topic": "origin", "axis": "x", "speed":400} 
+                set_origin_y = {"topic": "origin", "axis": "y", "speed":400} 
+                result_x = requests.post("http://"+url+"/update-data", json=set_origin_x, timeout=5)
+                if result_x.status_code != 200:
+                    self.show_popup("Error connection", f"connection timeout {url}")
+                
+                result_y = requests.post("https://"+url+"/update-data", json=set_origin_y, timeout=5)
+                if result_y.status_code != 200:
+                    self.show_popup("Error connection", f"connection timeout {url}")
+
+        except Exception as e:
+            print("error handler_set_origin func " + f"{e}")
+            self.show_popup("Error connection",f"connection timeout {url}")
+
+    def handler_get_current_pos(self):
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                list_url = json.load(file)
+            with open("./data/standby_conn/standby.json", 'r') as raw_standby:
+                standby_json = json.load(raw_standby)
+
+            with open("./data/standby_conn/pending.json", 'r') as raw_pending:
+                pending_json = json.load(raw_pending)
+
+            for url in list_url:
+                try:
+                    result = requests.get("http://" + url, timeout=3)
+                    setJson = result.json()
+
+                    if result.status_code == 200:
+                        payload = {
+                            "url": url,
+                            "current_x": setJson['currentX'],
+                            "current_y": setJson['currentY']
+                        }
+                        standby_json.append(payload)
+                    else:
+                        payload = {"url": url}
+                        pending_json.append(payload)
+                except Exception as req_error:
+                    print(f"Error connecting to {url}: {req_error}")
+                    pending_json.append({"url": url})
+
+            # Write back the updated data to files
+            with open("./data/standby_conn/standby.json", 'w') as write_file:
+                json.dump(standby_json, write_file, indent=4)
+
+            with open("./data/standby_conn/pending.json", 'w') as write_file:
+                json.dump(pending_json, write_file, indent=4)
+
+        except Exception as e:
+            print(f"Error in handler_get_current_pos: {e}")
+
+
+    def handler_loop_checking(self):
+        if self.is_loop_mode == True:
+            self.handler_get_current_pos()
+        else:
+            self.handler_auto_mode_setup()
+        
+
+    def handler_auto_mode_setup(self):
+        # if self.is_loop_mode == True:
+            list_conn = self.open_list_connection()
+            if len(list_conn) >= 1:
+                self.handler_checking_connection(list_conn)
+                self.handler_reconn_pending()
+                if len(self.fail_url) > 0:
+                    count_disconn = len(self.fail_url)
+                    self.show_popup("Warning", f"Heliostats disconnect {count_disconn} ip.")
+                else:
+                    self.handler_set_origin()
+            else:
+                self.show_popup("Alert", "Not found any helio stats!")
+        # else:
+        #     pass
 
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
@@ -270,8 +417,6 @@ class ControllerAuto(BoxLayout):
         json_str = json.dumps(adding_path_data)
         perfixed_json = f"*{json_str}"
 
-        
-
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
             filename = "./data/calibrate/result/error_data.csv"
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
@@ -359,4 +504,48 @@ class ControllerAuto(BoxLayout):
         scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
 
         return scaling_x, scaling_y, current_height
-    
+
+    def active_loop_mode(self):
+        if self.is_loop_mode == False:
+            self.is_loop_mode = True
+        else:
+            self.is_loop_mode = False
+
+    def list_fail_connection(self):
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        for url in self.fail_url:
+            grid = GridLayout(cols=2, size_hint=(1,1),height=40,spacing=10)
+            label = Label(text=url, size_hint=(0.3,1))
+            button_reconn = Button(text="Reconnect", size_hint=(0.2,1))
+            button_reconn.bind(on_release=partial(self.handler_reconn_helio, url))
+            grid.add_widget(label)
+            grid.add_widget(button_reconn)
+            layout.add_widget(grid)
+        
+        popup = Popup(
+            title="Reconnection list",
+            content=layout,
+            size_hint=(None, None),
+            size=(1050, 960),
+            auto_dismiss=True  # Allow dismissal by clicking outside or pressing Escape
+        )
+        popup.open()
+
+    def handler_reconn_helio(self, url, instance):
+        try:
+            payload = requests.get(url="http://"+url, timeout=3)
+            if payload.status_code == 200:
+                self.fail_url.remove(url)
+                self.standby_url.append(url)
+                self.show_popup("connected", f"{url} is connected.")
+            else:
+                self.show_popup("connection timeout", f"{url} connection timeout")
+        except Exception as e:
+            print("error handler_reconn_helio func " + f"{e}")
+            self.show_popup("Error", "Error in handler_reconn_helio\n" + f"{e}")
+
+
+        ### debug mode ###
+        # self.fail_url.remove(url)
+        

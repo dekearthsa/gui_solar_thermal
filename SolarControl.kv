@@ -818,8 +818,6 @@ MainFrameWidget:
                     on_touch_down: None
                     on_touch_move: None
                     on_touch_up: None
-
-
         # Information and controls
         BoxLayout:
             orientation: 'vertical'
@@ -985,20 +983,33 @@ MainFrameWidget:
 <ControllerAuto>:
     orientation: 'vertical'
     size_hint_x: .5
-    Button:
-        id: label_auto_mode
-        text: 'Auto off'
-        on_press: root.active_auto_mode()
-        BlinkSpot:
-            auto_text: self.parent.text
-            size: 50, 50  
-            pos: self.parent.x + 200, self.parent.center_y - self.height / 2
-            canvas:
-                Color:
-                    rgba: 1, 0, 0, self.opacity  # Red color with variable opacity
-                Ellipse:
-                    pos: self.pos
-                    size: self.size
+    GridLayout:
+        rows: 2
+        Button:
+            id: label_auto_mode
+            text: 'Auto off'
+            on_press: root.active_auto_mode()
+            BlinkSpot:
+                auto_text: self.parent.text
+                size: 50, 50  
+                pos: self.parent.x + 200, self.parent.center_y - self.height / 2
+                canvas:
+                    Color:
+                        rgba: 1, 0, 0, self.opacity  # Red color with variable opacity
+                    Ellipse:
+                        pos: self.pos
+                        size: self.size
+        GridLayout:
+            cols: 2
+            Button:
+                id: label_loop_mode
+                text: 'Loop off'
+                on_press: root.active_loop_mode()
+            Button:
+                id: reconn_list
+                text: 'Reconnect'
+                on_press: root.list_fail_connection()
+
 
 
 <ListHelioStatsIp>:

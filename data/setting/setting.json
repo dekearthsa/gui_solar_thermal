@@ -89,8 +89,9 @@
         },
         "camera_ip": {
             "id": "camera-bottom",
-            "ip": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
+            "ip": "test_video.avi"
         }
     },
+    "is_reconn": 2,
     "is_menu": "manual"
 }

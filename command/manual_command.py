@@ -334,9 +334,9 @@ class ControllerManual(BoxLayout):
                     }
 
                     adding_path_data = {
-                         "timestamp": timing,
-                         "x":  setJson['currentX'],
-                         "y": setJson['currentY'],
+                        "timestamp": timing,
+                        "x":  setJson['currentX'],
+                        "y": setJson['currentY'],
                     }
 
                     json_str = json.dumps(adding_path_data)
