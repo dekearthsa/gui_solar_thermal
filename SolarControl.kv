@@ -1000,7 +1000,7 @@ MainFrameWidget:
                         pos: self.pos
                         size: self.size
         GridLayout:
-            cols: 2
+            cols: 3
             Button:
                 id: label_loop_mode
                 text: 'Loop off'
@@ -1009,6 +1009,10 @@ MainFrameWidget:
                 id: reconn_list
                 text: 'Reconnect'
                 on_press: root.list_fail_connection()
+            Button:
+                id: origin_fail
+                text: 'Check origin'
+                on_press: root.handler_check_origin()
 
 
 
