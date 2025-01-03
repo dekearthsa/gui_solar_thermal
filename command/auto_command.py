@@ -26,7 +26,8 @@ class ControllerAuto(BoxLayout):
         self.is_frist_time_open = True
         self.pending_url = []
         self.standby_url = []
-        self.fail_url = ["192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"]
+        self.fail_url = [] # "192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"
+        self.list_fail_set_origin = [] # {"url": "102", "origin": "x"},{"url": "102", "origin": "x"}
 
         self.speed_screw = 1
         self.distance_mm = 1 
@@ -44,7 +45,30 @@ class ControllerAuto(BoxLayout):
         self.set_max_speed = 100
         self.set_off_set = 1
         self.set_status ="1"
-        self.list_fail_set_origin = [{"url": "102", "origin": "x"},{"url": "102", "origin": "x"}]
+        
+    def show_popup_continued(self, title, message, action):
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        label = Label(text=message)
+        layout.add_widget(label)
+        grid = GridLayout(cols=1, size_hint=(1,1) ,height=30)
+        if action == "to-origin":
+            button_con = Button(text="continue set origin")
+            button_con.bind(on_release=partial(self.handler_set_origin))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(400, 200))
+            popup.open()
+        if action == "to-auto":
+            button_con = Button(text="continue auto start")
+            button_con.bind(on_release=partial(self.handler_set_origin))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(400, 200))
+            popup.open()
 
     def show_popup(self, title, message):
         ###Display a popup with a given title and message.###
@@ -52,7 +76,6 @@ class ControllerAuto(BoxLayout):
                     content=Label(text=message),
                     size_hint=(None, None), size=(400, 200))
         popup.open()
-
     ### camera endpoint debug ###
     def selection_url_by_id(self):
         try:
@@ -85,6 +108,8 @@ class ControllerAuto(BoxLayout):
                     if i >= self.time_loop_update:
                         CrudData.save_pending(payload)
                         self.pending_url.append(payload)
+        if len(self.pending_url) > 0:
+            self.handler_reconn_pending()
         print("checking connection helio stats done!")
 
     def handler_reconn_pending(self):
@@ -204,19 +229,22 @@ class ControllerAuto(BoxLayout):
     def handler_loop_checking(self):
         if self.is_loop_mode == True:
             self.handler_get_current_pos()
+            if len(self.fail_url) > 0:
+                self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+            else:
+                self.handler_set_origin()
         else:
-            self.handler_auto_mode_setup()
+            self.handler_setup_without_loop_mode()
         
 
-    def handler_auto_mode_setup(self):
+    def handler_setup_without_loop_mode(self):
         # if self.is_loop_mode == True:
             list_conn = CrudData.open_list_connection()
             if len(list_conn) >= 1:
                 self.handler_checking_connection(list_conn)
-                self.handler_reconn_pending()
+                # self.handler_reconn_pending()
                 if len(self.fail_url) > 0:
-                    count_disconn = len(self.fail_url)
-                    self.show_popup("Warning", f"Heliostats disconnect {count_disconn} ip.")
+                    self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
                 else:
                     self.handler_set_origin()
             else:
