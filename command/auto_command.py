@@ -5,7 +5,7 @@ import csv
 import os
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from kivy.clock import Clock
 import json
@@ -45,6 +45,8 @@ class ControllerAuto(BoxLayout):
         self.set_max_speed = 100
         self.set_off_set = 1
         self.set_status ="1"
+        self.checking_light_target=False
+        self.checking_light_target_first_time=False
         
     def show_popup_continued(self, title, message, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -53,7 +55,7 @@ class ControllerAuto(BoxLayout):
         grid = GridLayout(cols=1, size_hint=(1,1) ,height=30)
         if action == "to-origin":
             button_con = Button(text="continue set origin")
-            button_con.bind(on_release=partial(self.handler_set_origin))
+            button_con.bind(on_release=partial(self.handler_set_origin,self.helio_stats_id.text))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup = Popup(title=title,
@@ -62,7 +64,7 @@ class ControllerAuto(BoxLayout):
             popup.open()
         if action == "to-auto":
             button_con = Button(text="continue auto start")
-            button_con.bind(on_release=partial(self.handler_set_origin))
+            button_con.bind(on_release=partial(self.handler_set_origin,self.helio_stats_id.text))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup = Popup(title=title,
@@ -126,37 +128,58 @@ class ControllerAuto(BoxLayout):
         self.pending_url = []
         print("done checking reconnect pending.")
 
-    def handler_set_origin(self):
+    def handler_set_origin(self, heliostats):
         # fail_list_origin = []
-        try:
-            for url in self.standby_url:
-                set_origin_x = {"topic": "origin", "axis": "x", "speed":400} 
-                set_origin_y = {"topic": "origin", "axis": "y", "speed":400} 
-                result_x = requests.post("http://"+url['url']+"/update-data", json=set_origin_x, timeout=5)
-                if result_x.status_code != 200:
-                    payload = {
-                        "url": url['url'],
-                        "origin": "x"
-                    }
-                    # fail_list_origin.append(payload)
-                    self.list_fail_set_origin.append(payload)
-                    # self.show_popup("Error connection", f"connection timeout {url['url']}")
+        set_origin_x = {"topic": "origin", "axis": "x", "speed":400} 
+        set_origin_y = {"topic": "origin", "axis": "y", "speed":400} 
+        if heliostats == "all":
+            try:
+                for url in self.standby_url:
+                    result_x = requests.post("http://"+url['url']+"/update-data", json=set_origin_x, timeout=5)
+                    if result_x.status_code != 200:
+                        payload = {
+                            "url": url['url'],
+                            "origin": "x"
+                        }
+                        # fail_list_origin.append(payload)
+                        self.list_fail_set_origin.append(payload)
+                        # self.show_popup("Error connection", f"connection timeout {url['url']}")
 
-                result_y = requests.post("https://"+url['url']+"/update-data", json=set_origin_y, timeout=5)
+                    result_y = requests.post("https://"+url['url']+"/update-data", json=set_origin_y, timeout=5)
+                    if result_y.status_code != 200:
+                        payload = {
+                            "url": url['url'],
+                            "origin": "y"
+                        }
+                        # fail_list_origin.append(payload)
+                        self.list_fail_set_origin.append(payload)
+                        # self.show_popup("Error connection", f"connection timeout {url}")
+                if len(self.list_fail_set_origin) > 0:
+                    CrudData.save_origin(self.list_fail_set_origin)
+                    self.show_popup("warning", "Number of origin fail " +f"{len(self.list_fail_set_origin)}")
+            except Exception as e:
+                print("error handler_set_origin func " + f"{e}")
+                self.show_popup("Error connection",f"connection timeout {e}")
+        else:
+            result_x = requests.post("http://"+heliostats+"/update-data", json=set_origin_x, timeout=5)
+            if result_x.status_code != 200:
+                payload = {
+                    "url": url['url'],
+                    "origin": "x"
+                }
+                # fail_list_origin.append(payload)
+                self.list_fail_set_origin.append(payload)
+                # self.show_popup("Error connection", f"connection timeout {url['url']}")
+
+                result_y = requests.post("https://"+heliostats+"/update-data", json=set_origin_y, timeout=5)
                 if result_y.status_code != 200:
                     payload = {
                         "url": url['url'],
                         "origin": "y"
                     }
-                    # fail_list_origin.append(payload)
-                    self.list_fail_set_origin.append(payload)
-                    # self.show_popup("Error connection", f"connection timeout {url}")
-            if len(self.list_fail_set_origin) > 0:
-                CrudData.save_origin(self.list_fail_set_origin)
-                self.show_popup("warning", "Number of origin fail " +f"{len(self.list_fail_set_origin)}")
-        except Exception as e:
-            print("error handler_set_origin func " + f"{e}")
-            self.show_popup("Error connection",f"connection timeout {e}")
+                # fail_list_origin.append(payload)
+                self.list_fail_set_origin.append(payload)
+                # self.show_popup("Error connection", f"connection timeout {url}")
 
     def handler_get_current_pos(self):
         try:
@@ -227,30 +250,45 @@ class ControllerAuto(BoxLayout):
 
 
     def handler_loop_checking(self):
-        if self.is_loop_mode == True:
-            self.handler_get_current_pos()
-            if len(self.fail_url) > 0:
-                self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+        if self.helio_stats_id.text == "all":
+            if self.is_loop_mode == True:
+                self.handler_get_current_pos()
+                if len(self.fail_url) > 0:
+                    self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+                else:
+                    self.handler_set_origin(heliostats=self.helio_stats_id.text)
             else:
-                self.handler_set_origin()
+                self.handler_setup_without_loop_mode()
         else:
-            self.handler_setup_without_loop_mode()
+            ip_helio_stats = CrudData.open_list_connection()
+            for h_ip in ip_helio_stats:
+                if h_ip == self.helio_stats_id.text:
+                    self.handler_set_origin(heliostats=h_ip)
         
 
     def handler_setup_without_loop_mode(self):
         # if self.is_loop_mode == True:
             list_conn = CrudData.open_list_connection()
-            if len(list_conn) >= 1:
+            if len(list_conn) > 0:
                 self.handler_checking_connection(list_conn)
                 # self.handler_reconn_pending()
                 if len(self.fail_url) > 0:
                     self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
                 else:
-                    self.handler_set_origin()
+                    self.handler_set_origin(heliostats=self.helio_stats_id.text)
             else:
                 self.show_popup("Alert", "Not found any helio stats!")
         # else:
         #     pass
+
+    def handler_checking_light_in_target(self):
+        # print("camera_url_id => ", self.camera_url_id.text)
+        # print("helio_stats_id => ", self.helio_stats_id.text)
+        if self.checking_light_target_first_time == False:
+            list_data = CrudData.open_previous_data(self.camera_selection.text, self.helio_stats_id.text) 
+        else:
+            pass
+
 
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
@@ -645,7 +683,9 @@ class CrudData:
             path_fail_json="./data/setting/failconn.json",
             path_setting_json="./data/setting/setting.json",
             path_connection_json="./data/setting/connection.json",
-            path_origin_json="./data/standby_conn/origin_fail.json"
+            path_origin_json="./data/standby_conn/origin_fail.json",
+            path_receiver="./data/receiver/result",
+            path_calibrate="./data/calibrate/result"
     ):
         self.path_standby_json = path_standby_json
         self.path_pending_json = path_pending_json
@@ -653,6 +693,9 @@ class CrudData:
         self.path_setting_json = path_setting_json
         self.path_connection_json = path_connection_json
         self.path_origin_json = path_origin_json
+        self.path_receiver = path_receiver
+        self.path_calibrate = path_calibrate
+        self.previous_date_lookback = 7
 
     def open_list_connection(self):
         print("open list helio stats conn...")
@@ -834,3 +877,46 @@ class CrudData:
         except Exception as e:
             print("error read failconn.json file" + f"{e}") 
         print("remove finish.")
+
+    def open_previous_data(self, target, heliostats_id):
+        data_list = []
+        counting_date = 0
+        now = datetime.now()
+        if target == "camera-bottom": ## calibrate
+            for is_date in range(self.previous_date_lookback):
+                counting_date += 1
+                previous_date = now - timedelta(days=is_date + 1)
+                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                try:
+                    with open(self.path_calibrate+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                        for line in file:
+                            clean_line = line.lstrip('*').strip()
+                            data_list.append(json.loads(clean_line))
+                    break
+                except Exception as e:
+                    print("cannot find " + self.path_calibrate+"/"+path_time_stamp+"/data.txt" + "find previous date...")
+            
+            if  counting_date >= self.previous_date_lookback:
+                print("cannot find date")
+                return {'found': False, 'data':[]}
+            else:
+                return {'found': True ,'data':data_list}
+        else: ## receiver
+            for is_date in range(self.previous_date_lookback):
+                counting_date += 1
+                previous_date = now - timedelta(days=is_date + 1)
+                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                try:
+                    with open(self.path_receiver+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                        for line in file:
+                            clean_line = line.lstrip('*').strip()
+                            data_list.append(json.loads(clean_line))
+                    break
+                except Exception as e:
+                    print("cannot find " + self.path_receiver+"/"+path_time_stamp+"/data.txt" + "find previous date...")
+            
+            if  counting_date >= self.previous_date_lookback:
+                print("cannot find date")
+                return {'found': False, 'data':[]}
+            else:
+                return {'found': True ,'data':data_list}

@@ -984,7 +984,10 @@ MainFrameWidget:
     orientation: 'vertical'
     size_hint_x: .5
     GridLayout:
-        rows: 2
+        rows: 3
+        Button:
+            text: 'debug'
+            on_press: root.handler_checking_light_in_target()
         Button:
             id: label_auto_mode
             text: 'Auto off'
