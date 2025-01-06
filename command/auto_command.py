@@ -5,13 +5,15 @@ import csv
 import os
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-from datetime import datetime, timedelta
+from datetime import datetime
 import re
 from kivy.clock import Clock
 import json
 import requests
 from functools import partial
-# from ..controller.crud_data import CrudData
+from controller.crud_data import CrudData
+from controller.control_origin import ControlOrigin
+from controller.control_get_current_pos import ControlGetCurrentPOS
 
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
@@ -129,31 +131,16 @@ class ControllerAuto(BoxLayout):
         print("done checking reconnect pending.")
 
     def handler_set_origin(self, heliostats):
-        # fail_list_origin = []
-        set_origin_x = {"topic": "origin", "axis": "x", "speed":400} 
-        set_origin_y = {"topic": "origin", "axis": "y", "speed":400} 
         if heliostats == "all":
             try:
                 for url in self.standby_url:
-                    result_x = requests.post("http://"+url['url']+"/update-data", json=set_origin_x, timeout=5)
-                    if result_x.status_code != 200:
-                        payload = {
-                            "url": url['url'],
-                            "origin": "x"
-                        }
-                        # fail_list_origin.append(payload)
-                        self.list_fail_set_origin.append(payload)
-                        # self.show_popup("Error connection", f"connection timeout {url['url']}")
+                    payload_x = ControlOrigin.send_set_origin_x(url['url'])
+                    if payload_x['is_fail'] == True:
+                        self.list_fail_set_origin.append(payload_x)
+                    payload_y = ControlOrigin.send_set_origin_y(url['url'])
+                    if payload_y['is_fail'] == True:
+                        self.list_fail_set_origin.append(payload_y)
 
-                    result_y = requests.post("https://"+url['url']+"/update-data", json=set_origin_y, timeout=5)
-                    if result_y.status_code != 200:
-                        payload = {
-                            "url": url['url'],
-                            "origin": "y"
-                        }
-                        # fail_list_origin.append(payload)
-                        self.list_fail_set_origin.append(payload)
-                        # self.show_popup("Error connection", f"connection timeout {url}")
                 if len(self.list_fail_set_origin) > 0:
                     CrudData.save_origin(self.list_fail_set_origin)
                     self.show_popup("warning", "Number of origin fail " +f"{len(self.list_fail_set_origin)}")
@@ -161,131 +148,49 @@ class ControllerAuto(BoxLayout):
                 print("error handler_set_origin func " + f"{e}")
                 self.show_popup("Error connection",f"connection timeout {e}")
         else:
-            result_x = requests.post("http://"+heliostats+"/update-data", json=set_origin_x, timeout=5)
-            if result_x.status_code != 200:
-                payload = {
-                    "url": url['url'],
-                    "origin": "x"
-                }
-                # fail_list_origin.append(payload)
-                self.list_fail_set_origin.append(payload)
-                # self.show_popup("Error connection", f"connection timeout {url['url']}")
-
-                result_y = requests.post("https://"+heliostats+"/update-data", json=set_origin_y, timeout=5)
-                if result_y.status_code != 200:
-                    payload = {
-                        "url": url['url'],
-                        "origin": "y"
-                    }
-                # fail_list_origin.append(payload)
-                self.list_fail_set_origin.append(payload)
-                # self.show_popup("Error connection", f"connection timeout {url}")
-
-    def handler_get_current_pos(self):
-        try:
-            list_url = CrudData.open_list_connection()
-            standby_json = CrudData.read_standby()
-            pending_json = CrudData.read_pending()
-            fail_conn_json = CrudData.read_fail_conn()
-
-            for url in list_url:
-                try:
-                    result = requests.get("http://" + url, timeout=3)
-                    setJson = result.json()
-
-                    if result.status_code == 200:
-                        payload = {
-                            "url": url,
-                            "current_x": setJson['currentX'],
-                            "current_y": setJson['currentY']
-                        }
-                        standby_json.append(payload)
-                        # CrudData.read_standby(payload)
-                        self.standby_url.append(payload)
-                    else:
-                        payload = {"url": url}
-                        pending_json.append(payload)
-                        # CrudData.read_pending(payload)
-                        self.pending_url.append(payload)
-                except Exception as req_error:
-                    print(f"Error connecting to {url}: {req_error}")
-                    pending_json.append({"url": url})
-            
-            if len(self.pending_url) > 0:
-                for url in self.pending_url:
-                    try:
-                        result = requests.get("http://" + url, timeout=3)
-                        setJson = result.json()
-                        if result.status_code == 200:
-                            payload = {
-                                "url": url,
-                                "current_x": setJson['currentX'],
-                                "current_y": setJson['currentY']
-                            }
-                            standby_json.append(payload)
-                            self.pending_url.remove(url)
-                            pending_json.remove(url)
-                            self.standby_url.append(payload)
-
-                            with open("./data/standby_conn/pending.json", 'w') as update_pending_file:
-                                json.dump(pending_json, update_pending_file)
-                        else:
-                            payload = {"url": url}
-                            fail_conn_json.append(payload)
-                            # CrudData.save_fail_conn(payload)
-                            self.fail_url.append(payload)
-                    except Exception as req_error:
-                        print(f"Error connecting to {url}: {req_error}")
-                        payload = {"url": url}
-                        fail_conn_json.append(payload)
-                        # CrudData.save_fail_conn(payload)
-                        self.fail_url.append(payload)
-
-            CrudData.update_standby(standby_json)
-            CrudData.update_pending(pending_json)
-            CrudData.update_failconn(fail_conn_json)
-
-        except Exception as e:
-            print(f"Error in handler_get_current_pos: {e}")
-
+            payload_x = ControlOrigin.send_set_origin_x(heliostats)
+            if payload_x['is_fail'] == True:
+                self.list_fail_set_origin.append(payload_x)
+            payload_y = ControlOrigin.send_set_origin_y(heliostats)
+            if payload_y['is_fail'] == True:
+                self.list_fail_set_origin.append(payload_y)
 
     def handler_loop_checking(self):
         if self.helio_stats_id.text == "all":
-            if self.is_loop_mode == True:
-                self.handler_get_current_pos()
-                if len(self.fail_url) > 0:
-                    self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+            list_conn = CrudData.open_list_connection()
+            if len(list_conn) > 0:
+                if self.is_loop_mode == True:
+                    list_standby, list_pending, list_fail = ControlGetCurrentPOS.handler_get_current_pos(list_url=list_conn)
+                    self.standby_url = list_standby
+                    self.pending_url = list_pending
+                    self.fail_url = list_fail
+                    if len(self.fail_url) > 0:
+                        self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+                    else:
+                        self.handler_set_origin(heliostats=self.helio_stats_id.text)
                 else:
-                    self.handler_set_origin(heliostats=self.helio_stats_id.text)
+                    self.handler_checking_connection(list_conn)
+                    if len(self.fail_url) > 0:
+                        self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
+                    else:
+                        self.handler_set_origin(heliostats=self.helio_stats_id.text)
             else:
-                self.handler_setup_without_loop_mode()
+                self.show_popup("Alert", "Not found any helio stats!")
         else:
             ip_helio_stats = CrudData.open_list_connection()
             for h_ip in ip_helio_stats:
                 if h_ip == self.helio_stats_id.text:
                     self.handler_set_origin(heliostats=h_ip)
-        
-
-    def handler_setup_without_loop_mode(self):
-        # if self.is_loop_mode == True:
-            list_conn = CrudData.open_list_connection()
-            if len(list_conn) > 0:
-                self.handler_checking_connection(list_conn)
-                # self.handler_reconn_pending()
-                if len(self.fail_url) > 0:
-                    self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
-                else:
-                    self.handler_set_origin(heliostats=self.helio_stats_id.text)
-            else:
-                self.show_popup("Alert", "Not found any helio stats!")
-        # else:
-        #     pass
 
     def handler_checking_light_in_target(self):
         # print("camera_url_id => ", self.camera_url_id.text)
         # print("helio_stats_id => ", self.helio_stats_id.text)
         if self.checking_light_target_first_time == False:
             list_data = CrudData.open_previous_data(self.camera_selection.text, self.helio_stats_id.text) 
+            if list_data['found'] == True:
+                pass
+            else:
+                self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
         else:
             pass
 
@@ -669,254 +574,3 @@ class ControllerAuto(BoxLayout):
         popup.open()
 
 
-
-
-
-
-
-
-class CrudData:
-    def __init__(
-            self,
-            path_standby_json="./data/setting/standby.json",
-            path_pending_json="./data/setting/pending.json",
-            path_fail_json="./data/setting/failconn.json",
-            path_setting_json="./data/setting/setting.json",
-            path_connection_json="./data/setting/connection.json",
-            path_origin_json="./data/standby_conn/origin_fail.json",
-            path_receiver="./data/receiver/result",
-            path_calibrate="./data/calibrate/result"
-    ):
-        self.path_standby_json = path_standby_json
-        self.path_pending_json = path_pending_json
-        self.path_fail_json = path_fail_json
-        self.path_setting_json = path_setting_json
-        self.path_connection_json = path_connection_json
-        self.path_origin_json = path_origin_json
-        self.path_receiver = path_receiver
-        self.path_calibrate = path_calibrate
-        self.previous_date_lookback = 7
-
-    def open_list_connection(self):
-        print("open list helio stats conn...")
-        try:
-            with open('./data/setting/connection.json', 'r') as file:
-                storage = json.load(file)
-                list_conn = storage['helio_stats_ip']
-                return list_conn
-        except Exception as e:
-            print("Error ")
-
-    def read_pending(self):
-        print("open read pending...")
-        try:
-            with open('./data/standby_conn/pending.json', 'r') as file:
-                data = json.load(file)
-            return data
-        except Exception as e:
-            print("Error read pending.json " + f"{e}")
-        print("done read pending.")
-
-    def read_fail_conn(self):
-        print("open read fail_conn...")
-        try:
-            with open('./data/standby_conn/failconn.json', 'r') as file:
-                data = json.load(file)
-            return data
-        except Exception as e:
-            print("Error read failconn.json " + f"{e}")
-        print("done read fail_conn.")
-
-    def read_standby(self):
-        print("open read standby...")
-        try:
-            with open('./data/standby_conn/standby.json', 'r') as file:
-                data = json.load(file)
-            return data
-        except Exception as e:
-            print("Error read standby.json " + f"{e}")
-        print("done read standby.")
-
-    def save_pending(self, url):
-        
-        print("save pending ip helio stats....")
-        try:
-            with open('./data/standby_conn/pending.json', 'r') as file:
-                list_pending = json.load(file)
-                list_pending.append(url)
-            with open('./data/standby_conn/pending.json', 'w') as file_save:
-                json.dump(list_pending, file_save)
-        except Exception as e:
-            self.show_popup("Error", f"Failed to save pending: {e}")
-        print("done save pending ip helio stats.")
-
-    def save_standby(self, url):
-        print("save ip helio stats....")
-        try:
-            with open('./data/standby_conn/standby.json', 'r') as file:
-                list_standby = json.load(file)
-                list_standby.append(url)
-            with open('./data/standby_conn/standby.json', 'w') as file_save:
-                json.dump(list_standby, file_save)
-        except Exception as e:
-            self.show_popup("Error", f"Failed to save standby: {e}")
-        print("done save ip helio stats.")
-
-    def save_fail_conn(self, url):
-        print("save ip helio stats....")
-        try:
-            with open('./data/standby_conn/failconn.json', 'r') as file:
-                list_failconn = json.load(file)
-                list_failconn.append(url)
-            with open('./data/standby_conn/failconn.json', 'w') as file_save:
-                json.dump(list_failconn, file_save)
-        except Exception as e:
-            self.show_popup("Error", f"Failed to save failconn: {e}")
-        print("done save ip helio stats.")
-
-    def remove_by_id_pending(self, url):
-        print("remove pending...")
-        try:
-            with open('./data/standby_conn/pending.json', 'r') as file:
-                data=json.load(file)
-            data = [item for item in data if item.get("url") != url['url']]
-
-            with open('./data/standby_conn/pending.json', 'w') as file:
-                json.dump(data, file, indent=4)
-        except Exception as e:
-            print("error read pending.json file" + f"{e}")
-
-    def remove_by_id_standby(self, url):
-        print("remove standby.json...")
-        try:
-            with open('./data/standby_conn/standby.json', 'r') as file:
-                data=json.load(file)
-            data = [item for item in data if item.get("url") != url['url']]
-
-            with open('./data/standby_conn/standby.json', 'w') as file:
-                json.dump(data, file, indent=4)
-        except Exception as e:
-            print("error read standby.json file" + f"{e}")
-
-    def remove_by_id_fail_conn(self, url):
-        print("remove failconn.json...")
-        try:
-            with open('./data/standby_conn/failconn.json', 'r') as file:
-                data=json.load(file)
-            data = [item for item in data if item.get("url") != url['url']]
-
-            with open('./data/standby_conn/failconn.json', 'w') as file:
-                json.dump(data, file, indent=4)
-        except Exception as e:
-            print("error read failconn.json file" + f"{e}")
-
-    def update_standby(self, payload):
-        print("update stanby...")
-        try:
-            with open("./data/standby_conn/standby.json", 'w') as file:
-                json.dump(payload, file, indent=4)
-        except Exception as e:
-            print("Error open file update_standby " + f"{e}")
-        print("update finish.") 
-
-    def update_pending(self, payload):
-        print("update pending...")
-        try:
-            with open("./data/standby_conn/pending.json", 'w') as file:
-                json.dump(payload, file, indent=4)
-        except Exception as e:
-            print("Error open file pending " + f"{e}")
-        print("update finish.")
-
-    def update_failconn(self, payload):
-        print("update failconn...")
-        try:
-            with open("./data/standby_conn/failconn.json", 'w') as file:
-                json.dump(payload, file, indent=4)
-        except Exception as e:
-            print("Error open file failconn " + f"{e}")
-        print("update finish.")
-
-    def read_fail_origin(self):
-        print("read origin...")
-        try:
-            with open(self.path_origin_json, 'r') as file:
-                data = json.load(file)
-            return data
-        except Exception as e:
-            print("Error read_fail_origin " + f"{e}")
-        print("read finish.")
-
-    def save_origin(self, payload):
-        print("Save origin is fail.")
-        try:
-            with open(self.path_origin_json, 'w') as file:
-                json.dump(payload, file)
-        except Exception as e:
-            print("Error save_origin" + f"{e}")
-        print("Finish origin is fail.")
-
-    def update_origin(self, payload):
-        print("update origin...")
-        try:
-            with open(self.path_origin_json, 'w') as file:
-                json.dump(payload, file, indent=4)
-        except Exception as e:
-            print("Error open file failconn " + f"{e}")
-        print("update finish")
-
-    def remove_by_id_origin(self, payload):
-        print("remove origin by id...")
-        try:
-            with open(self.path_origin_json, 'r') as file:
-                data=json.load(file)
-            data = [item for item in data if item.get("url") != payload['url']]
-
-            with open(self.path_origin_json, 'w') as file:
-                json.dump(data, file, indent=4)
-        except Exception as e:
-            print("error read failconn.json file" + f"{e}") 
-        print("remove finish.")
-
-    def open_previous_data(self, target, heliostats_id):
-        data_list = []
-        counting_date = 0
-        now = datetime.now()
-        if target == "camera-bottom": ## calibrate
-            for is_date in range(self.previous_date_lookback):
-                counting_date += 1
-                previous_date = now - timedelta(days=is_date + 1)
-                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
-                try:
-                    with open(self.path_calibrate+"/"+path_time_stamp+"/data.txt" , 'r') as file:
-                        for line in file:
-                            clean_line = line.lstrip('*').strip()
-                            data_list.append(json.loads(clean_line))
-                    break
-                except Exception as e:
-                    print("cannot find " + self.path_calibrate+"/"+path_time_stamp+"/data.txt" + "find previous date...")
-            
-            if  counting_date >= self.previous_date_lookback:
-                print("cannot find date")
-                return {'found': False, 'data':[]}
-            else:
-                return {'found': True ,'data':data_list}
-        else: ## receiver
-            for is_date in range(self.previous_date_lookback):
-                counting_date += 1
-                previous_date = now - timedelta(days=is_date + 1)
-                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
-                try:
-                    with open(self.path_receiver+"/"+path_time_stamp+"/data.txt" , 'r') as file:
-                        for line in file:
-                            clean_line = line.lstrip('*').strip()
-                            data_list.append(json.loads(clean_line))
-                    break
-                except Exception as e:
-                    print("cannot find " + self.path_receiver+"/"+path_time_stamp+"/data.txt" + "find previous date...")
-            
-            if  counting_date >= self.previous_date_lookback:
-                print("cannot find date")
-                return {'found': False, 'data':[]}
-            else:
-                return {'found': True ,'data':data_list}
