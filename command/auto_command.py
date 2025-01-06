@@ -15,6 +15,7 @@ from controller.crud_data import CrudData
 from controller.control_origin import ControlOrigin
 from controller.control_get_current_pos import ControlGetCurrentPOS
 from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
+from controller.control_heliostats import ControlHelioStats
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -30,6 +31,7 @@ class ControllerAuto(BoxLayout):
         self.standby_url = []
         self.fail_url = [] # "192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"
         self.list_fail_set_origin = [] # {"url": "102", "origin": "x"},{"url": "102", "origin": "x"}
+        self.list_success_set_origin = []
 
         self.speed_screw = 1
         self.distance_mm = 1 
@@ -85,7 +87,6 @@ class ControllerAuto(BoxLayout):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 storage = json.load(file)
-
             self.helio_stats_id_endpoint = storage['storage_endpoint']['helio_stats_ip']['ip']
             self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
             h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
@@ -98,30 +99,41 @@ class ControllerAuto(BoxLayout):
     def handler_set_origin(self, heliostats):
         if heliostats == "all":
             try:
-                for url in self.standby_url:
-                    payload_x = ControlOrigin.send_set_origin_x(url['url'])
+                for data in self.standby_url:
+                    payload_x = ControlOrigin.send_set_origin_x(ip=data['ip'], id=data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
-                    payload_y = ControlOrigin.send_set_origin_y(url['url'])
+                    else:
+                        self.list_success_set_origin.append(data)
+                    payload_y = ControlOrigin.send_set_origin_y(data['ip'], id=data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
+                    else:
+                        self.list_success_set_origin.append(data)
 
                 if len(self.list_fail_set_origin) > 0:
-                    CrudData.save_origin(self.list_fail_set_origin)
+                    CrudData.save_fail_origin(self.list_fail_set_origin)
                     self.show_popup("warning", "Number of origin fail " +f"{len(self.list_fail_set_origin)}")
+                else:
+                    CrudData.save_origin(self.list_success_set_origin)
+
             except Exception as e:
                 print("error handler_set_origin func " + f"{e}")
                 self.show_popup("Error connection",f"connection timeout {e}")
         else:
             ip_helio_stats = CrudData.open_list_connection()
-            for h_ip in ip_helio_stats:
-                if h_ip == heliostats:
-                    payload_x = ControlOrigin.send_set_origin_x(h_ip)
+            for h_data in ip_helio_stats:
+                if h_data['id'] == heliostats:
+                    payload_x = ControlOrigin.send_set_origin_x(ip=h_data['ip'],id=h_data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
-                    payload_y = ControlOrigin.send_set_origin_y(h_ip)
+                    else:
+                        self.list_success_set_origin.append(h_data)
+                    payload_y = ControlOrigin.send_set_origin_y(ip=h_data['ip'],id=h_data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
+                    else:
+                        self.list_success_set_origin.append(h_data)
             
 
     def handler_loop_checking(self):
@@ -153,9 +165,9 @@ class ControllerAuto(BoxLayout):
 
     def handler_checking_light_in_target(self):
         if self.checking_light_target_first_time == False:
-            list_data = CrudData.open_previous_data(self.camera_selection.text, self.helio_stats_id.text) 
+            list_data = CrudData.open_previous_data(self.camera_selection.text, self.list_success_set_origin) 
             if list_data['found'] == True:
-                pass
+                result=ControlHelioStats.consume_path_data(list_path_data=list_data['data'])
             else:
                 self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
         else:

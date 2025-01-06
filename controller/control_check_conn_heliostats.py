@@ -16,7 +16,8 @@ class ControlCheckConnHelioStats():
             while i < self.time_loop_update:
                 result = requests.get(url="http://"+el['ip'], timeout=3)
                 payload = {
-                    "url": el['ip']
+                    "id": el['id'],
+                    "ip": el['ip']
                 }
                 if result.status_code == 200:
                     CrudData.save_standby(payload)
@@ -37,10 +38,11 @@ class ControlCheckConnHelioStats():
 
     def handler_reconn_pending(self):
         print("checking reconnect pending...")
-        for url in self.pending_url:
-            result = requests.get(url="http://"+url['url'], timeout=3)
+        for data in self.pending_url:
+            result = requests.get(url="http://"+data['ip'], timeout=3)
             payload = {
-                "url": url['url']
+                "id": data['id'],
+                "ip": data['ip']
             }
             if result.status_code == 200:
                 self.standby_url.append(payload)

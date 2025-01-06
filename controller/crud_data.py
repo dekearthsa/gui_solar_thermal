@@ -10,11 +10,14 @@ class CrudData:
         self.path_fail_json = "./data/setting/failconn.json"
         self.path_setting_json = "./data/setting/setting.json"
         self.path_connection_json = "./data/setting/connection.json"
-        self.path_origin_json = "./data/standby_conn/origin_fail.json"
+        self.path_origin_fail_json = "./data/standby_conn/origin_fail.json"
+        self.path_origin_json = "./data/standby_conn/origin_standby.json"
         self.path_receiver = "./data/receiver/result"
         self.path_calibrate = "./data/calibrate/result"
         self.previous_date_lookback = 7
 
+
+            
     def open_list_connection(self):
         print("open list helio stats conn...")
         try:
@@ -155,20 +158,30 @@ class CrudData:
             print("Error open file failconn " + f"{e}")
         print("update finish.")
 
+    def save_origin(self, payload):
+        print("save success set origin...")
+        try:
+            with open(self.path_origin_fail_json, 'w') as file:
+                json.dump(payload, file)
+        except Exception as e:
+            print("Error save_origin" + f"{e}")
+        print("save origin successed.")
+
     def read_fail_origin(self):
+        
         print("read origin...")
         try:
-            with open(self.path_origin_json, 'r') as file:
+            with open(self.path_origin_fail_json, 'r') as file:
                 data = json.load(file)
             return data
         except Exception as e:
             print("Error read_fail_origin " + f"{e}")
         print("read finish.")
 
-    def save_origin(self, payload):
+    def save_fail_origin(self, payload):
         print("Save origin is fail.")
         try:
-            with open(self.path_origin_json, 'w') as file:
+            with open(self.path_origin_fail_json, 'w') as file:
                 json.dump(payload, file)
         except Exception as e:
             print("Error save_origin" + f"{e}")
@@ -177,7 +190,7 @@ class CrudData:
     def update_origin(self, payload):
         print("update origin...")
         try:
-            with open(self.path_origin_json, 'w') as file:
+            with open(self.path_origin_fail_json, 'w') as file:
                 json.dump(payload, file, indent=4)
         except Exception as e:
             print("Error open file failconn " + f"{e}")
@@ -186,55 +199,67 @@ class CrudData:
     def remove_by_id_origin(self, payload):
         print("remove origin by id...")
         try:
-            with open(self.path_origin_json, 'r') as file:
+            with open(self.path_origin_fail_json, 'r') as file:
                 data=json.load(file)
             data = [item for item in data if item.get("url") != payload['url']]
 
-            with open(self.path_origin_json, 'w') as file:
+            with open(self.path_origin_fail_json, 'w') as file:
                 json.dump(data, file, indent=4)
         except Exception as e:
             print("error read failconn.json file" + f"{e}") 
         print("remove finish.")
 
+    def convert_id_to_ip(self, id):
+        list_ip = self.open_list_connection()
+        for data_id in list_ip:
+            if id == data_id['id']:
+                return data_id['ip']
+            
+    def convert_ip_to_id(self, ip):
+        list_id = self.open_list_connection()
+        for data_id in list_id:
+            if ip == data_id['ip']:
+                return data_id['id']
+
     def open_previous_data(self, target, heliostats_id):
-        data_list = []
-        counting_date = 0
-        now = datetime.now()
-        if target == "camera-bottom": ## calibrate
-            for is_date in range(self.previous_date_lookback):
-                counting_date += 1
-                previous_date = now - timedelta(days=is_date + 1)
-                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
-                try:
-                    with open(self.path_calibrate+"/"+path_time_stamp+"/data.txt" , 'r') as file:
-                        for line in file:
-                            clean_line = line.lstrip('*').strip()
-                            data_list.append(json.loads(clean_line))
-                    break
-                except Exception as e:
-                    print("cannot find " + self.path_calibrate+"/"+path_time_stamp+"/data.txt" + "find previous date...")
-            
-            if  counting_date >= self.previous_date_lookback:
-                print("cannot find date")
-                return {'found': False, 'data':[]}
-            else:
-                return {'found': True ,'data':data_list}
-        else: ## receiver
-            for is_date in range(self.previous_date_lookback):
-                counting_date += 1
-                previous_date = now - timedelta(days=is_date + 1)
-                path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
-                try:
-                    with open(self.path_receiver+"/"+path_time_stamp+"/data.txt" , 'r') as file:
-                        for line in file:
-                            clean_line = line.lstrip('*').strip()
-                            data_list.append(json.loads(clean_line))
-                    break
-                except Exception as e:
-                    print("cannot find " + self.path_receiver+"/"+path_time_stamp+"/data.txt" + "find previous date...")
-            
-            if  counting_date >= self.previous_date_lookback:
-                print("cannot find date")
-                return {'found': False, 'data':[]}
-            else:
-                return {'found': True ,'data':data_list}
+            data_list = []
+            counting_date = 0
+            now = datetime.now()
+            if target == "camera-bottom": ## calibrate
+                for is_date in range(self.previous_date_lookback):
+                    counting_date += 1
+                    previous_date = now - timedelta(days=is_date + 1)
+                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                    try:
+                        with open(self.path_calibrate+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                            for line in file:
+                                clean_line = line.lstrip('*').strip()
+                                data_list.append(json.loads(clean_line))
+                        break
+                    except Exception as e:
+                        print("cannot find " + self.path_calibrate+"/"+path_time_stamp+"/data.txt" + "find previous date...")
+                
+                if  counting_date >= self.previous_date_lookback:
+                    print("cannot find date")
+                    return {'found': False, 'data':[]}
+                else:
+                    return {'found': True ,'data':data_list}
+            else: ## receiver
+                for is_date in range(self.previous_date_lookback):
+                    counting_date += 1
+                    previous_date = now - timedelta(days=is_date + 1)
+                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                    try:
+                        with open(self.path_receiver+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                            for line in file:
+                                clean_line = line.lstrip('*').strip()
+                                data_list.append(json.loads(clean_line))
+                        break
+                    except Exception as e:
+                        print("cannot find " + self.path_receiver+"/"+path_time_stamp+"/data.txt" + "find previous date...")
+                
+                if  counting_date >= self.previous_date_lookback:
+                    print("cannot find date")
+                    return {'found': False, 'data':[]}
+                else:
+                    return {'found': True ,'data':data_list}
