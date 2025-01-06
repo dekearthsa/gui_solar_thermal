@@ -12,37 +12,21 @@ class ControlOrigin():
             result_x = requests.post("http://"+ip+"/update-data", json=self.default_origin_x, timeout= self.set_timeout)
             if result_x.status_code != 200:
                 print("Cannot set origin x"+ ip + " check connection" + e)
-                return {
-                    "is_fail": True,
-                    "url": ip,
-                    "origin": "x"
-                }
+                return {"is_fail": True,"url": ip,"origin": "x"}
             else: 
                 return {"is_fail": False,}
         except Exception as e:
             print("Cannot set origin x"+ ip + " check connection" + e)
-            return  {
-                    "is_fail": True,
-                    "url": ip,
-                    "origin": "x"
-                }
+            return  {"is_fail": True,"url": ip,"origin": "x"}
 
     def send_set_origin_y(self, ip):
         try:
             result_x = requests.post("http://"+ip+"/update-data", json=self.default_origin_y, timeout= self.set_timeout)
             if result_x.status_code != 200:
                 print("Cannot set origin x"+ ip + " check connection" + e)
-                return  {
-                    "is_fail": True,
-                    "url": ip,
-                    "origin": "y"
-                }
+                return  {"is_fail": True,"url": ip,"origin": "y"}
             else: 
                 return {"is_fail": False,}
         except Exception as e:
             print("Cannot set origin x"+ ip + " check connection" + e)
-            return {
-                    "is_fail": True,
-                    "url": ip,
-                    "origin": "y"
-                }
+            return {"is_fail": True,"url": ip,"origin": "y"}

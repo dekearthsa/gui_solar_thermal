@@ -14,7 +14,7 @@ from functools import partial
 from controller.crud_data import CrudData
 from controller.control_origin import ControlOrigin
 from controller.control_get_current_pos import ControlGetCurrentPOS
-
+from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -95,41 +95,6 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
-    def handler_checking_connection(self, list_conn):  ## data from connection.json {}
-        print("checking connection helio stats....")
-        for el in list_conn['helio_stats_ip']:
-            while i < self.time_loop_update:
-                result = requests.get(url="http://"+el['ip'], timeout=3)
-                payload = {
-                    "url": el['ip']
-                }
-                if result.status_code == 200:
-                    CrudData.save_standby(payload)
-                    self.standby_url.append(payload)
-                    break
-                else:
-                    i += 1
-                    if i >= self.time_loop_update:
-                        CrudData.save_pending(payload)
-                        self.pending_url.append(payload)
-        if len(self.pending_url) > 0:
-            self.handler_reconn_pending()
-        print("checking connection helio stats done!")
-
-    def handler_reconn_pending(self):
-        print("checking reconnect pending...")
-        for url in self.pending_url:
-            result = requests.get(url="http://"+url['url'], timeout=3)
-            payload = {
-                "url": url['url']
-            }
-            if result.status_code == 200:
-                self.standby_url.append(payload)
-            else:
-                self.fail_url.append(payload)
-        self.pending_url = []
-        print("done checking reconnect pending.")
-
     def handler_set_origin(self, heliostats):
         if heliostats == "all":
             try:
@@ -148,12 +113,16 @@ class ControllerAuto(BoxLayout):
                 print("error handler_set_origin func " + f"{e}")
                 self.show_popup("Error connection",f"connection timeout {e}")
         else:
-            payload_x = ControlOrigin.send_set_origin_x(heliostats)
-            if payload_x['is_fail'] == True:
-                self.list_fail_set_origin.append(payload_x)
-            payload_y = ControlOrigin.send_set_origin_y(heliostats)
-            if payload_y['is_fail'] == True:
-                self.list_fail_set_origin.append(payload_y)
+            ip_helio_stats = CrudData.open_list_connection()
+            for h_ip in ip_helio_stats:
+                if h_ip == heliostats:
+                    payload_x = ControlOrigin.send_set_origin_x(h_ip)
+                    if payload_x['is_fail'] == True:
+                        self.list_fail_set_origin.append(payload_x)
+                    payload_y = ControlOrigin.send_set_origin_y(h_ip)
+                    if payload_y['is_fail'] == True:
+                        self.list_fail_set_origin.append(payload_y)
+            
 
     def handler_loop_checking(self):
         if self.helio_stats_id.text == "all":
@@ -169,7 +138,10 @@ class ControllerAuto(BoxLayout):
                     else:
                         self.handler_set_origin(heliostats=self.helio_stats_id.text)
                 else:
-                    self.handler_checking_connection(list_conn)
+                    list_standby, list_pending, list_fail = ControlCheckConnHelioStats.handler_checking_connection(list_conn)
+                    self.standby_url = list_standby
+                    self.pending_url = list_pending
+                    self.fail_url = list_fail
                     if len(self.fail_url) > 0:
                         self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
                     else:
@@ -177,14 +149,9 @@ class ControllerAuto(BoxLayout):
             else:
                 self.show_popup("Alert", "Not found any helio stats!")
         else:
-            ip_helio_stats = CrudData.open_list_connection()
-            for h_ip in ip_helio_stats:
-                if h_ip == self.helio_stats_id.text:
-                    self.handler_set_origin(heliostats=h_ip)
+            self.handler_set_origin(heliostats=self.helio_stats_id.text)
 
     def handler_checking_light_in_target(self):
-        # print("camera_url_id => ", self.camera_url_id.text)
-        # print("helio_stats_id => ", self.helio_stats_id.text)
         if self.checking_light_target_first_time == False:
             list_data = CrudData.open_previous_data(self.camera_selection.text, self.helio_stats_id.text) 
             if list_data['found'] == True:
@@ -193,7 +160,6 @@ class ControllerAuto(BoxLayout):
                 self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
         else:
             pass
-
 
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()

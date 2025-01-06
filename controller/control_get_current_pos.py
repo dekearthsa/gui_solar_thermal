@@ -1,5 +1,5 @@
 import requests
-from crud_data import CrudData
+from controller.crud_data import CrudData
 import json
 class ControlGetCurrentPOS():
     def __init__(self, **kwargs):
