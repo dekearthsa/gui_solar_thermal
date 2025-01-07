@@ -16,6 +16,7 @@ from controller.control_origin import ControlOrigin
 from controller.control_get_current_pos import ControlGetCurrentPOS
 from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
 from controller.control_heliostats import ControlHelioStats
+from command.manual_command import ControllerManual
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -39,6 +40,7 @@ class ControllerAuto(BoxLayout):
         self.static_title_mode = "Auto menu || Camera status:On"
         self.array_helio_stats = []
         self.time_loop_update = 5 ## 2 sec test update frame
+        self.time_check_light_update = 1
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
 
@@ -51,6 +53,8 @@ class ControllerAuto(BoxLayout):
         self.set_status ="1"
         self.checking_light_target=False
         self.checking_light_target_first_time=False
+        self._light_check_result = None
+        self.current_ip_helio = ""
         
     def show_popup_continued(self, title, message, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -66,9 +70,18 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         size_hint=(None, None), size=(400, 200))
             popup.open()
-        if action == "to-auto":
+        elif action == "to-auto":
             button_con = Button(text="continue auto start")
             button_con.bind(on_release=partial(self.handler_set_origin,self.helio_stats_id.text))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(400, 200))
+            popup.open()
+        elif action == "to-path":
+            button_con = Button(text="continue using path")
+            button_con.bind(on_release=partial(self.handle_checking_light))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup = Popup(title=title,
@@ -96,6 +109,41 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             self.show_popup("Error", f"{e}")
 
+    def checking_light_in_target(self, ip,dt=None):
+        if int(self.number_center_light.text) >= 1:
+            ControlHelioStats.stop_move(ip=ip)
+            self._light_check_result = True
+            self.__off_loop_checking_light()
+
+    def __on_loop_checking_light(self, ip):
+        self._light_check_result = None
+        Clock.schedule_interval(self.checking_light_in_target(ip=ip), self.time_check_light_update)
+        Clock.schedule_once(self.__on_timeout, 30)
+    def __off_loop_checking_light(self, dt=None):
+        Clock.unschedule(self.checking_light_in_target)
+
+    def __on_timeout(self, dt=None):
+        if self._light_check_result is None:
+            self._light_check_result = False
+            self.__off_loop_checking_light()
+
+    def handle_checking_light(self):
+        if self.checking_light_target_first_time == False:
+            for h_data in self.list_success_set_origin:
+                list_path_data = CrudData.open_previous_data(self.camera_selection.text, h_data['id']) 
+                if list_path_data['found'] == True:
+                    result = ControlHelioStats.find_nearest_time_and_send(list_path_data=list_path_data['data'])
+                    if (result['is_fail']):
+                        self.show_popup("Error", "cannot send nearest position by using path data at handle_checking_light function")
+                    else:
+                        self.__on_loop_checking_light(ip=h_data['ip'])
+                        if self._light_check_result == True:
+                            self.active_auto_mode()
+                else:
+                    self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
+        else:
+            pass
+
     def handler_set_origin(self, heliostats):
         if heliostats == "all":
             try:
@@ -113,28 +161,37 @@ class ControllerAuto(BoxLayout):
 
                 if len(self.list_fail_set_origin) > 0:
                     CrudData.save_fail_origin(self.list_fail_set_origin)
-                    self.show_popup("warning", "Number of origin fail " +f"{len(self.list_fail_set_origin)}")
+                    self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-path")
                 else:
                     CrudData.save_origin(self.list_success_set_origin)
+                    self.handle_checking_light()
 
             except Exception as e:
                 print("error handler_set_origin func " + f"{e}")
-                self.show_popup("Error connection",f"connection timeout {e}")
+                self.show_popup("Error",f"error in handler_set_origin function {e}")
         else:
             ip_helio_stats = CrudData.open_list_connection()
             for h_data in ip_helio_stats:
                 if h_data['id'] == heliostats:
+                    
                     payload_x = ControlOrigin.send_set_origin_x(ip=h_data['ip'],id=h_data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
                     else:
                         self.list_success_set_origin.append(h_data)
+                    
                     payload_y = ControlOrigin.send_set_origin_y(ip=h_data['ip'],id=h_data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
                     else:
                         self.list_success_set_origin.append(h_data)
             
+                    if len(self.list_fail_set_origin) > 0:
+                        CrudData.save_fail_origin(self.list_fail_set_origin)
+                        self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-path")
+                    else:
+                        CrudData.save_origin(self.list_success_set_origin)
+                        self.handle_checking_light() 
 
     def handler_loop_checking(self):
         if self.helio_stats_id.text == "all":
@@ -163,16 +220,8 @@ class ControllerAuto(BoxLayout):
         else:
             self.handler_set_origin(heliostats=self.helio_stats_id.text)
 
-    def handler_checking_light_in_target(self):
-        if self.checking_light_target_first_time == False:
-            list_data = CrudData.open_previous_data(self.camera_selection.text, self.list_success_set_origin) 
-            if list_data['found'] == True:
-                result=ControlHelioStats.consume_path_data(list_path_data=list_data['data'])
-            else:
-                self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
-        else:
-            pass
-
+    
+    
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
         if self.camera_endpoint != "" and self.helio_stats_id_endpoint != "":

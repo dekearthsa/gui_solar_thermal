@@ -9,7 +9,7 @@ class ControlHelioStats():
     def haddle_check_ip(self):
         pass
     ### handle path heliostats ### 
-    def consume_path_data(self, list_path_data, ip):
+    def find_nearest_time_and_send(self, list_path_data, ip):
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
         headers = {
@@ -38,5 +38,13 @@ class ControlHelioStats():
     def move_up(self):
         pass
 
-    def stop_move(self):
-        pass
+    def stop_move(self, id, ip):
+        payload_set = {"topic":"stop"}
+        try:
+            response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=5)
+            if response.status_code == 200:
+                pass
+            else:
+                self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+        except Exception as e:
+            self.show_popup("Error", f"Connecton error {str(e)}")

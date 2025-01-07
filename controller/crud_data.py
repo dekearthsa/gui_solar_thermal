@@ -229,7 +229,7 @@ class CrudData:
                 for is_date in range(self.previous_date_lookback):
                     counting_date += 1
                     previous_date = now - timedelta(days=is_date + 1)
-                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id['id'])
                     try:
                         with open(self.path_calibrate+"/"+path_time_stamp+"/data.txt" , 'r') as file:
                             for line in file:
@@ -248,7 +248,7 @@ class CrudData:
                 for is_date in range(self.previous_date_lookback):
                     counting_date += 1
                     previous_date = now - timedelta(days=is_date + 1)
-                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                    path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id['id'])
                     try:
                         with open(self.path_receiver+"/"+path_time_stamp+"/data.txt" , 'r') as file:
                             for line in file:

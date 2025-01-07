@@ -20,7 +20,7 @@ class CameraSettingWidget(Screen):
         self.dragging = False          # Initialize dragging
         self.rect = None               # Initialize rectangle
         self.status_text = 'Ready'     # Initialize status text
-        self.camera_connection = "vid.avi"
+        self.camera_connection = "test_video.avi"
         self.counting_number_crop = 0
         self.perspective_transform_top = []
         self.max_width_top = 0
