@@ -16,7 +16,8 @@ from controller.control_origin import ControlOrigin
 from controller.control_get_current_pos import ControlGetCurrentPOS
 from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
 from controller.control_heliostats import ControlHelioStats
-from command.manual_command import ControllerManual
+# from command.manual_command import ControllerManual
+
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -73,6 +74,7 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         size_hint=(None, None), size=(1000, 500))
             popup.open()
+
         elif action == "to-auto":
             button_con = Button(text="continue auto start")
             button_con.bind(on_release=partial(self.handler_set_origin,self.helio_stats_id.text))
@@ -82,6 +84,7 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         size_hint=(None, None), size=(1000, 500))
             popup.open()
+
         elif action == "to-path":
             button_con = Button(text="continue auto start")
             button_con.bind(on_release=partial(self.handle_checking_light))
@@ -91,6 +94,7 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         size_hint=(None, None), size=(1000, 500))
             popup.open()
+
         elif action == "try-again":
             button_con = Button(text="try again")
             button_con.bind(on_release=partial(self.handle_checking_light))
@@ -138,7 +142,7 @@ class ControllerAuto(BoxLayout):
             grid.add_widget(button_ignore)
 
             button_con = Button(text="try again")
-            button_con.bind(on_release=partial(self.handle_checking_light))
+            button_con.bind(on_release=partial(self.handle_re_all_loop_get_standby))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             
@@ -231,13 +235,13 @@ class ControllerAuto(BoxLayout):
     def debug_mode_data(self):
         is_data = {"ip": "102.124.12.12" ,"id": "h1"}
         # self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
-        self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data,action="try-again")
+        self.show_popup_with_ignore_con(title="Warning move helio out", message="Fail to move heliostats out of target.", h_data=is_data,action="try-again")
         # self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data ,action="try-again")
 
     def __ignore_failure_handle_re_all_loop_get_standby(self, h_data):
         self.list_success_set_origin.remove(h_data)
         self.handle_checking_light()
-        
+
     def handle_re_all_loop_get_standby(self):
         self.fail_checking_light_desc = {}
         self.fail_checking_light = False
@@ -252,8 +256,8 @@ class ControllerAuto(BoxLayout):
                         if self._light_check_result:
                             self.list_success_set_origin.remove(h_data)
                         else:
-                            ### unfinish ###
-                            pass 
+                            self.show_popup_with_ignore_con(title="Warning", message="Not found light in target", h_data=h_data, action="try-again-handle_re_all_loop_get_standby")
+                            break
                     else:
                         self.fail_checking_light_desc = {"title": "Error checking light", "message": "Error connection from address " + f"{h_data['ip']}"}
                         self.fail_checking_light = True
@@ -267,6 +271,7 @@ class ControllerAuto(BoxLayout):
         else: 
             self.show_popup("Finish", "Finish loop auto mode")
 
+    ### next checking ###
     def handler_set_origin(self, heliostats):
         print("Start set origin handler_set_origin...")
         if heliostats == "all":
@@ -321,6 +326,7 @@ class ControllerAuto(BoxLayout):
                         self.list_origin_standby= self.list_success_set_origin
                         self.handle_checking_light() 
 
+    ### finish checking ###
     def handler_loop_checking(self):
         print("self.helio_stats_id.text => ", self.helio_stats_id.text.strip())
         if self.helio_stats_id.text.strip() == "all":
@@ -433,7 +439,6 @@ class ControllerAuto(BoxLayout):
 
     def __on_loop_auto_calculate_diff(self):
         # if self.is_frist_time_open == True:
-        
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
 
     def __off_loop_auto_calculate_diff(self):
