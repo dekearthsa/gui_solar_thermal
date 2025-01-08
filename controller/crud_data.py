@@ -12,12 +12,11 @@ class CrudData:
         self.path_connection_json = "./data/setting/connection.json"
         self.path_origin_fail_json = "./data/standby_conn/origin_fail.json"
         self.path_origin_json = "./data/standby_conn/origin_standby.json"
+        self.path_current_pos = "./data/standby_conn/current_pos.json"
         self.path_receiver = "./data/receiver/result"
         self.path_calibrate = "./data/calibrate/result"
         self.previous_date_lookback = 7
 
-
-            
     def open_list_connection(self):
         print("open list helio stats conn...")
         try:
@@ -27,6 +26,16 @@ class CrudData:
                 return list_conn
         except Exception as e:
             print("Error ")
+
+    def read_curre(self):
+        print("open read pending...")
+        try:
+            with open('./data/standby_conn/pending.json', 'r') as file:
+                data = json.load(file)
+            return data
+        except Exception as e:
+            print("Error read pending.json " + f"{e}")
+        print("done read pending.")
 
     def read_pending(self):
         print("open read pending...")
@@ -71,36 +80,36 @@ class CrudData:
             self.show_popup("Error", f"Failed to save pending: {e}")
         print("done save pending ip helio stats.")
 
-    def save_standby(self, url):
+    def save_standby(self, payload):
         print("save ip helio stats....")
         try:
             with open('./data/standby_conn/standby.json', 'r') as file:
                 list_standby = json.load(file)
-                list_standby.append(url)
+                list_standby.append(payload)
             with open('./data/standby_conn/standby.json', 'w') as file_save:
                 json.dump(list_standby, file_save)
         except Exception as e:
-            self.show_popup("Error", f"Failed to save standby: {e}")
+            print("Error" + f"Failed to save standby: {e}")
         print("done save ip helio stats.")
 
-    def save_fail_conn(self, url):
+    def save_fail_conn(self, payload):
         print("save ip helio stats....")
         try:
             with open('./data/standby_conn/failconn.json', 'r') as file:
                 list_failconn = json.load(file)
-                list_failconn.append(url)
+                list_failconn.append(payload)
             with open('./data/standby_conn/failconn.json', 'w') as file_save:
                 json.dump(list_failconn, file_save)
         except Exception as e:
             self.show_popup("Error", f"Failed to save failconn: {e}")
         print("done save ip helio stats.")
 
-    def remove_by_id_pending(self, url):
+    def remove_by_id_pending(self, payload):
         print("remove pending...")
         try:
             with open('./data/standby_conn/pending.json', 'r') as file:
                 data=json.load(file)
-            data = [item for item in data if item.get("url") != url['url']]
+            data = [item for item in data if item.get("url") != payload['url']]
 
             with open('./data/standby_conn/pending.json', 'w') as file:
                 json.dump(data, file, indent=4)
@@ -130,6 +139,15 @@ class CrudData:
                 json.dump(data, file, indent=4)
         except Exception as e:
             print("error read failconn.json file" + f"{e}")
+
+    def update_current_pos(self,payload):
+        print("update_current_pos...")
+        try:
+            with open("./data/standby_conn/current_pos.json", 'w') as file:
+                json.dump(payload, file, indent=4)
+        except Exception as e:
+            print("Error open file update_standby " + f"{e}")
+        print("update_current_pos finish.") 
 
     def update_standby(self, payload):
         print("update stanby...")

@@ -12,22 +12,25 @@ class ControlCheckConnHelioStats():
 
     def handler_checking_connection(self, list_conn):  ## data from connection.json {}
         print("checking connection helio stats....")
-        for el in list_conn['helio_stats_ip']:
-            while i < self.time_loop_update:
-                result = requests.get(url="http://"+el['ip'], timeout=3)
-                payload = {
-                    "id": el['id'],
-                    "ip": el['ip']
-                }
-                if result.status_code == 200:
-                    CrudData.save_standby(payload)
-                    self.standby_url.append(payload)
-                    break
-                else:
-                    i += 1
-                    if i >= self.time_loop_update:
-                        CrudData.save_pending(payload)
-                        self.pending_url.append(payload)
+        print("list_conn => ", list_conn)
+        i=0
+        for el in list_conn:
+            if el['ip'] != 'all':
+                while i < self.time_loop_update:
+                    result = requests.get(url="http://"+el['ip'], timeout=3)
+                    payload = {
+                        "id": el['id'],
+                        "ip": el['ip']
+                    }
+                    if result.status_code == 200:
+                        CrudData.save_standby(self,payload=payload)
+                        self.standby_url.append(payload)
+                        break
+                    else:
+                        i += 1
+                        if i >= self.time_loop_update:
+                            CrudData.save_pending(self,payload=payload)
+                            self.pending_url.append(payload)
         if len(self.pending_url) > 0:
             self.handler_reconn_pending()
             print("checking connection helio stats done!")

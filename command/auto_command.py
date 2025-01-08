@@ -169,9 +169,12 @@ class ControllerAuto(BoxLayout):
 
     def checking_light_in_target(self, ip,dt=None):
         if int(self.number_center_light.text) >= 1:
-            ControlHelioStats.stop_move(ip=ip)
-            self._light_check_result = True
-            self.__off_loop_checking_light()
+            status = ControlHelioStats.stop_move(ip=ip)
+            if status:
+                self._light_check_result = True
+                self.__off_loop_checking_light()
+            else:
+                self.show_popup("Error connection", "Error connection ip" + f"{ip}")
 
     def __on_loop_checking_light(self, ip):
         self._light_check_result = None
@@ -319,30 +322,35 @@ class ControllerAuto(BoxLayout):
                         self.handle_checking_light() 
 
     def handler_loop_checking(self):
-        if self.helio_stats_id.text == "all":
-            list_conn = CrudData.open_list_connection()
+        print("self.helio_stats_id.text => ", self.helio_stats_id.text.strip())
+        if self.helio_stats_id.text.strip() == "all":
+            list_conn = CrudData.open_list_connection(self)
+            # print("list_conn => ",list_conn)
             if len(list_conn) > 0:
                 if self.is_loop_mode == True:
-                    list_standby, list_pending, list_fail = ControlGetCurrentPOS.handler_get_current_pos(list_url=list_conn)
+                    list_standby, list_pending, list_fail = ControlGetCurrentPOS.handler_get_current_pos(self,list_url=list_conn)
                     self.standby_url = list_standby
                     self.pending_url = list_pending
                     self.fail_url = list_fail
                     if len(self.fail_url) > 0:
                         self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
                     else:
+                        # print("ok 1")
                         self.handler_set_origin(heliostats=self.helio_stats_id.text)
                 else:
-                    list_standby, list_pending, list_fail = ControlCheckConnHelioStats.handler_checking_connection(list_conn)
+                    list_standby, list_pending, list_fail = ControlCheckConnHelioStats.handler_checking_connection(self,list_conn=list_conn)
                     self.standby_url = list_standby
                     self.pending_url = list_pending
                     self.fail_url = list_fail
                     if len(self.fail_url) > 0:
                         self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected {len(self.fail_url)}", action="to-origin")
                     else:
+                        # print("ok 2")
                         self.handler_set_origin(heliostats=self.helio_stats_id.text)
             else:
                 self.show_popup("Alert", "Not found any helio stats!")
         else:
+            # print("ok 3")
             self.handler_set_origin(heliostats=self.helio_stats_id.text)
     
     def active_auto_mode(self):
@@ -647,10 +655,13 @@ class ControllerAuto(BoxLayout):
     def active_loop_mode(self):
         if self.is_loop_mode == False:
             self.is_loop_mode = True
+            self.ids.label_loop_mode.text = "Loop on"
         else:
+            self.ids.label_loop_mode.text = "Loop off"
             self.is_loop_mode = False
 
     def list_fail_connection(self):
+        
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
         for url in self.fail_url:

@@ -74,13 +74,14 @@ class ControlHelioStats():
             print("Error move_helio_out => " + f"{e}")
             return False
 
-    def stop_move(self, id, ip):
+    def stop_move(self, ip):
         payload_set = {"topic":"stop"}
         try:
             response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=5)
             if response.status_code == 200:
-                pass
+                return True
             else:
-                self.show_popup("Error", f"Connecton error status code {str(response.status_code)}")
+                return False
         except Exception as e:
-            self.show_popup("Error", f"Connecton error {str(e)}")
+            print("Error connection " + f"{e}")
+            return False
