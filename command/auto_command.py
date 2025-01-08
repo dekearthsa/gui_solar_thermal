@@ -21,14 +21,14 @@ from controller.control_heliostats import ControlHelioStats
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.demo_timeout_reply = 2
+        # self.demo_timeout_reply = 2
         self.is_loop_mode = False
         self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
-        self.is_frist_time_open = True
+        # self.is_frist_time_open = True
         self.pending_url = []
         self.standby_url = []
         self.fail_url = [] # "192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"
@@ -36,11 +36,11 @@ class ControllerAuto(BoxLayout):
         self.list_success_set_origin = []
         self.list_origin_standby = []
 
-        self.speed_screw = 1
-        self.distance_mm = 1 
-        self.is_auto_on = False
+        # self.speed_screw = 1
+        # self.distance_mm = 1 
+        # self.is_auto_on = False
         self.static_title_mode = "Auto menu || Camera status:On"
-        self.array_helio_stats = []
+        # self.array_helio_stats = []
         self.time_loop_update = 5 ## 2 sec test update frame
         self.time_check_light_update = 1
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
@@ -53,10 +53,8 @@ class ControllerAuto(BoxLayout):
         self.set_max_speed = 100
         self.set_off_set = 1
         self.set_status ="1"
-        # self.checking_light_target=False
-        # self.checking_light_target_first_time_finish=False
         self._light_check_result = None
-        self.current_ip_helio = ""
+        # self.current_ip_helio = ""
         self.fail_checking_light_desc = {}
         self.fail_checking_light = False
         
