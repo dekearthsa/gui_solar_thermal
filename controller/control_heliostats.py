@@ -36,7 +36,42 @@ class ControlHelioStats():
         pass
 
     def move_up(self):
+        
         pass
+
+    ## function move back (pos right) ##
+    def move_helio_in(self, ip):
+        payload_set = {
+            "topic":"forward",
+            "step": 100,
+            "speed": 500,
+        }
+        try:
+            response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print("Error move_helio_in => " + f"{e}")
+            return False
+    
+    ## function move out (pos left) ##
+    def move_helio_out(self, ip):
+        payload_set = {
+            "topic":"reverse",
+            "step": 100,
+            "speed": 500,
+        }
+        try:
+            response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print("Error move_helio_out => " + f"{e}")
+            return False
 
     def stop_move(self, id, ip):
         payload_set = {"topic":"stop"}

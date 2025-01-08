@@ -33,6 +33,7 @@ class ControllerAuto(BoxLayout):
         self.fail_url = [] # "192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"
         self.list_fail_set_origin = [] # {"url": "102", "origin": "x"},{"url": "102", "origin": "x"}
         self.list_success_set_origin = []
+        self.list_origin_standby = []
 
         self.speed_screw = 1
         self.distance_mm = 1 
@@ -51,12 +52,14 @@ class ControllerAuto(BoxLayout):
         self.set_max_speed = 100
         self.set_off_set = 1
         self.set_status ="1"
-        self.checking_light_target=False
-        self.checking_light_target_first_time=False
+        # self.checking_light_target=False
+        # self.checking_light_target_first_time_finish=False
         self._light_check_result = None
         self.current_ip_helio = ""
+        self.fail_checking_light_desc = {}
+        self.fail_checking_light = False
         
-    def show_popup_continued(self, title, message, action):
+    def show_popup_continued(self, title, message ,action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         label = Label(text=message)
         layout.add_widget(label)
@@ -68,7 +71,7 @@ class ControllerAuto(BoxLayout):
             layout.add_widget(grid)
             popup = Popup(title=title,
                         content=layout,
-                        size_hint=(None, None), size=(400, 200))
+                        size_hint=(None, None), size=(1000, 500))
             popup.open()
         elif action == "to-auto":
             button_con = Button(text="continue auto start")
@@ -77,16 +80,71 @@ class ControllerAuto(BoxLayout):
             layout.add_widget(grid)
             popup = Popup(title=title,
                         content=layout,
-                        size_hint=(None, None), size=(400, 200))
+                        size_hint=(None, None), size=(1000, 500))
             popup.open()
         elif action == "to-path":
-            button_con = Button(text="continue using path")
+            button_con = Button(text="continue auto start")
             button_con.bind(on_release=partial(self.handle_checking_light))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup = Popup(title=title,
                         content=layout,
-                        size_hint=(None, None), size=(400, 200))
+                        size_hint=(None, None), size=(1000, 500))
+            popup.open()
+        elif action == "try-again":
+            button_con = Button(text="try again")
+            button_con.bind(on_release=partial(self.handle_checking_light))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(1000, 500))
+            popup.open()
+
+        elif action == "try-again-handle_re_all_loop_get_standby":
+            button_con = Button(text="try again")
+            button_con.bind(on_release=partial(self.handle_re_all_loop_get_standby))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(1000, 500))
+            popup.open()
+    
+    def show_popup_with_ignore_con(self, title, message, h_data, action):
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        label = Label(text=message)
+        layout.add_widget(label)
+        grid = GridLayout(cols=2, size_hint=(1,1) ,height=30)
+
+        if action == "try-again":
+            button_ignore = Button(text="Ignore and continue")
+            button_ignore.bind(on_release=partial(self.__ignore_failure_checking_light_function, h_data))
+            grid.add_widget(button_ignore)
+
+            button_con = Button(text="try again")
+            button_con.bind(on_release=partial(self.handle_checking_light))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(1000, 500))
+            popup.open()
+
+        elif action == "try-again-handle_re_all_loop_get_standby":
+            button_ignore = Button(text="Ignore and continue")
+            button_ignore.bind(on_release=partial(self.__ignore_failure_handle_re_all_loop_get_standby, h_data))
+            grid.add_widget(button_ignore)
+
+            button_con = Button(text="try again")
+            button_con.bind(on_release=partial(self.handle_checking_light))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            
+            popup = Popup(title=title,
+                        content=layout,
+                        size_hint=(None, None), size=(1000, 500))
             popup.open()
 
     def show_popup(self, title, message):
@@ -127,24 +185,86 @@ class ControllerAuto(BoxLayout):
             self._light_check_result = False
             self.__off_loop_checking_light()
 
+    def __ignore_failure_checking_light_function(self, h_data ):
+        self.list_success_set_origin.remove(h_data)
+        self.handle_checking_light()
+
     def handle_checking_light(self):
-        if self.checking_light_target_first_time == False:
-            for h_data in self.list_success_set_origin:
-                list_path_data = CrudData.open_previous_data(self.camera_selection.text, h_data['id']) 
-                if list_path_data['found'] == True:
-                    result = ControlHelioStats.find_nearest_time_and_send(list_path_data=list_path_data['data'])
-                    if (result['is_fail']):
-                        self.show_popup("Error", "cannot send nearest position by using path data at handle_checking_light function")
-                    else:
-                        self.__on_loop_checking_light(ip=h_data['ip'])
-                        if self._light_check_result == True:
-                            self.active_auto_mode()
+        self.fail_checking_light_desc = {}
+        self.fail_checking_light = False
+        is_data
+        for h_data in self.list_success_set_origin:
+            is_data = h_data
+            list_path_data = CrudData.open_previous_data(self.camera_selection.text, h_data['id']) 
+            if list_path_data['found'] == True:
+                result = ControlHelioStats.find_nearest_time_and_send(list_path_data=list_path_data['data'])
+                if (result['is_fail']):
+                    self.fail_checking_light_desc = {"title": "Error send path", "message":"Fail to nearest path time to heliostats"}
+                    self.fail_checking_light = True
+                    break
                 else:
-                    self.show_popup("File path not found", "File path heliostats id" + f"{self.helio_stats_id.text}" + " not found!")
+                    self.__on_loop_checking_light(ip=h_data['ip'])
+                    if self._light_check_result == True:
+                        self.active_auto_mode()
+                        ### move helio out ###
+                        status = ControlHelioStats.move_helio_out(ip=h_data['ip'])
+                        if status == False:
+                            self.fail_checking_light_desc = {"title": "Error move helio out", "message":"Fail to move heliostats out of target."}
+                            self.fail_checking_light = True
+                            break
+                        else:
+                            self.list_success_set_origin.remove(h_data)
+                    else:
+                        self.show_popup("File path not found", "File path heliostats id" + f"{h_data['id']}" + " not found!")
+
+        if self.fail_checking_light == True:
+            self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data ,action="try-again")
+        elif self.active_auto_mode == True:
+            self.list_success_set_origin = self.list_origin_standby 
+            self.handle_re_all_loop_get_standby()
         else:
-            pass
+            self.show_popup("Finish", "Finish auto mode all helio stats.")
+
+    def debug_mode_data(self):
+        is_data = {"ip": "102.124.12.12" ,"id": "h1"}
+        self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
+        # self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data ,action="try-again")
+
+    def __ignore_failure_handle_re_all_loop_get_standby(self, h_data):
+        self.list_success_set_origin.remove(h_data)
+        self.handle_checking_light()
+        
+    def handle_re_all_loop_get_standby(self):
+        self.fail_checking_light_desc = {}
+        self.fail_checking_light = False
+        is_data
+        while self.is_loop_mode:
+            if self.is_loop_mode:
+                for h_data in self.list_success_set_origin:
+                    is_data = h_data
+                    status = ControlHelioStats.move_helio_in(h_data['ip'])
+                    if status:
+                        self.__on_loop_checking_light(ip=h_data['ip'])
+                        if self._light_check_result:
+                            self.list_success_set_origin.remove(h_data)
+                        else:
+                            ### unfinish ###
+                            pass 
+                    else:
+                        self.fail_checking_light_desc = {"title": "Error checking light", "message": "Error connection from address " + f"{h_data['ip']}"}
+                        self.fail_checking_light = True
+                        break
+                self.list_success_set_origin = self.list_origin_standby 
+            else:
+                break 
+
+        if self.fail_checking_light == True:
+            self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
+        else: 
+            self.show_popup("Finish", "Finish loop auto mode")
 
     def handler_set_origin(self, heliostats):
+        print("Start set origin handler_set_origin...")
         if heliostats == "all":
             try:
                 for data in self.standby_url:
@@ -161,9 +281,11 @@ class ControllerAuto(BoxLayout):
 
                 if len(self.list_fail_set_origin) > 0:
                     CrudData.save_fail_origin(self.list_fail_set_origin)
+                    self.list_origin_standby= self.list_success_set_origin
                     self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-path")
                 else:
                     CrudData.save_origin(self.list_success_set_origin)
+                    self.list_origin_standby= self.list_success_set_origin
                     self.handle_checking_light()
 
             except Exception as e:
@@ -188,9 +310,11 @@ class ControllerAuto(BoxLayout):
             
                     if len(self.list_fail_set_origin) > 0:
                         CrudData.save_fail_origin(self.list_fail_set_origin)
+                        self.list_origin_standby= self.list_success_set_origin
                         self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-path")
                     else:
                         CrudData.save_origin(self.list_success_set_origin)
+                        self.list_origin_standby= self.list_success_set_origin
                         self.handle_checking_light() 
 
     def handler_loop_checking(self):
@@ -219,8 +343,6 @@ class ControllerAuto(BoxLayout):
                 self.show_popup("Alert", "Not found any helio stats!")
         else:
             self.handler_set_origin(heliostats=self.helio_stats_id.text)
-
-    
     
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
@@ -298,7 +420,7 @@ class ControllerAuto(BoxLayout):
             self.__off_loop_auto_calculate_diff()
             self.turn_on_auto_mode = False
             self.ids.label_auto_mode.text = "Auto off"
-            self.show_popup("Alert", "Camera is offline.")
+            # self.show_popup("Alert", "Camera is offline.")
 
     def __on_loop_auto_calculate_diff(self):
         # if self.is_frist_time_open == True:
