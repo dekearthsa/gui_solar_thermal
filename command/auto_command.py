@@ -227,7 +227,8 @@ class ControllerAuto(BoxLayout):
 
     def debug_mode_data(self):
         is_data = {"ip": "102.124.12.12" ,"id": "h1"}
-        self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
+        # self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
+        self.show_popup_with_ignore_con(title="Error move helio out", message="Fail to move heliostats out of target.", h_data=is_data,action="try-again")
         # self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data ,action="try-again")
 
     def __ignore_failure_handle_re_all_loop_get_standby(self, h_data):

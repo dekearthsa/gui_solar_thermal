@@ -8,6 +8,7 @@ class ControlHelioStats():
 
     def haddle_check_ip(self):
         pass
+    
     ### handle path heliostats ### 
     def find_nearest_time_and_send(self, list_path_data, ip):
         now = datetime.now()
