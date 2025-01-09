@@ -15,6 +15,10 @@
         {
             "id": "h3",
             "ip": "localhost:9000"
+        },
+        {
+            "id": "h4",
+            "ip": "localhost:9101"
         }
     ],
     "camera_url": [

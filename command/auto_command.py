@@ -273,31 +273,34 @@ class ControllerAuto(BoxLayout):
     def handler_set_origin(self, heliostats):
         print("Start set origin handler_set_origin...")
         if heliostats == "all":
-            try:
+            # try:
                 for data in self.standby_url:
-                    payload_x = ControlOrigin.send_set_origin_x(ip=data['ip'], id=data['id'])
+                    payload_x = ControlOrigin.send_set_origin_x(self,ip=data['ip'], id=data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
-                    else:
-                        self.list_success_set_origin.append(data)
-                    payload_y = ControlOrigin.send_set_origin_y(data['ip'], id=data['id'])
+                    # else:
+                    #     self.list_success_set_origin.append(data)
+                    payload_y = ControlOrigin.send_set_origin_y(self,data['ip'], id=data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
-                    else:
+                    # else:
+                    #     self.list_success_set_origin.append(data)
+                    if payload_x['is_fail'] == False and payload_y['is_fail'] == False:
                         self.list_success_set_origin.append(data)
 
                 if len(self.list_fail_set_origin) > 0:
-                    CrudData.save_fail_origin(self.list_fail_set_origin)
+                    CrudData.save_fail_origin(self,self.list_fail_set_origin)
                     self.list_origin_standby= self.list_success_set_origin
                     self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-path")
                 else:
-                    CrudData.save_origin(self.list_success_set_origin)
+                    CrudData.save_origin(self,self.list_success_set_origin)
                     self.list_origin_standby= self.list_success_set_origin
-                    self.handle_checking_light()
+                    print("ok 1")
+                    # self.handle_checking_light()
 
-            except Exception as e:
-                print("error handler_set_origin func " + f"{e}")
-                self.show_popup("Error",f"error in handler_set_origin function {e}")
+            # except Exception as e:
+            #     print("error handler_set_origin func " + f"{e}")
+            #     self.show_popup("Error",f"error in handler_set_origin function {e}")
         else:
             ip_helio_stats = CrudData.open_list_connection()
             for h_data in ip_helio_stats:
@@ -306,13 +309,16 @@ class ControllerAuto(BoxLayout):
                     payload_x = ControlOrigin.send_set_origin_x(ip=h_data['ip'],id=h_data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
-                    else:
-                        self.list_success_set_origin.append(h_data)
+                    # else:
+                    #     self.list_success_set_origin.append(h_data)
                     
                     payload_y = ControlOrigin.send_set_origin_y(ip=h_data['ip'],id=h_data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
-                    else:
+                    # else:
+                    #     self.list_success_set_origin.append(h_data)
+
+                    if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
                         self.list_success_set_origin.append(h_data)
             
                     if len(self.list_fail_set_origin) > 0:
@@ -322,7 +328,8 @@ class ControllerAuto(BoxLayout):
                     else:
                         CrudData.save_origin(self.list_success_set_origin)
                         self.list_origin_standby= self.list_success_set_origin
-                        self.handle_checking_light() 
+                        # self.handle_checking_light() 
+                        print("ok 2")
 
     ### finish checking ###
     def handler_loop_checking(self):

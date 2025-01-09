@@ -179,7 +179,7 @@ class CrudData:
     def save_origin(self, payload):
         print("save success set origin...")
         try:
-            with open(self.path_origin_fail_json, 'w') as file:
+            with open("./data/standby_conn/origin_standby.json", 'w') as file:
                 json.dump(payload, file)
         except Exception as e:
             print("Error save_origin" + f"{e}")

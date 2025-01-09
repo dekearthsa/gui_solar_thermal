@@ -40,7 +40,8 @@ class ControlGetCurrentPOS():
                             self.pending_url.append(payload)
                     except Exception as req_error:
                         print(f"Error connecting to {data}: {req_error}")
-                        pending_json.append({"url": data})
+                        pending_json.append(data)
+                        self.pending_url.append(data)
                 
             if len(self.pending_url) > 0:
                 for data in self.pending_url:
@@ -78,7 +79,9 @@ class ControlGetCurrentPOS():
             CrudData.update_standby(self,payload=standby_json)
             CrudData.update_pending(self,payload=pending_json)
             CrudData.update_failconn(self,payload=fail_conn_json)
-
+            print("self.standby_url => ", self.standby_url)
+            print("self.pending_url => ", self.pending_url)
+            print("self.fail_url => ",self.fail_url)
             return self.standby_url, self.pending_url, self.fail_url
         
         except Exception as e:
