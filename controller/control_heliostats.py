@@ -11,14 +11,19 @@ class ControlHelioStats():
     
     ### handle path heliostats ### 
     def find_nearest_time_and_send(self, list_path_data, ip):
+        # print("find_nearest_time_and_send => " + ip)
+        # print(list_path_data)
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
+        # print("current_time => ", current_time)
         headers = {
             'Content-Type': 'application/json'  
         }
-        nearest = min(list_path_data, key=lambda entry: abs(datetime.strptime(entry["timestamp"], "%H:%M:%S") - current_time))
+        current_time_as_datetime = datetime.strptime(current_time, "%H:%M:%S")
+        nearest = min(list_path_data, key=lambda entry: abs(datetime.strptime(entry["timestamp"], "%H:%M:%S") - current_time_as_datetime))
         try:
-            result =  requests.post("http://"+ip, data=json.dumps(nearest), headers=headers, timeout=5)
+            ### Endpoint for send path data?? ### 
+            result =  requests.post("http://"+ip+"/update-data", data=json.dumps(nearest), headers=headers, timeout=5)
             if result.status_code != 200:
                 return {"is_fail":True}
             else:
@@ -75,6 +80,7 @@ class ControlHelioStats():
             return False
 
     def stop_move(self, ip):
+        
         payload_set = {"topic":"stop"}
         try:
             response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=5)
