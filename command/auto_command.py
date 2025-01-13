@@ -21,31 +21,24 @@ from controller.control_heliostats import ControlHelioStats
 class ControllerAuto(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.demo_timeout_reply = 2
         self.is_loop_mode = False
         self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
-        # self.is_frist_time_open = True
         self.pending_url = []
         self.standby_url = []
         self.fail_url = [] # "192.168.0.1","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2","192.168.0.2"
         self.list_fail_set_origin = [] # {"url": "102", "origin": "x"},{"url": "102", "origin": "x"}
         self.list_success_set_origin = []
+        self.list_success_set_origin_store = []
         self.list_origin_standby = []
-
-        # self.speed_screw = 1
-        # self.distance_mm = 1 
-        # self.is_auto_on = False
         self.static_title_mode = "Auto menu || Camera status:On"
-        # self.array_helio_stats = []
         self.time_loop_update = 5 ## 2 sec test update frame
         self.time_check_light_update = 1
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
-
         self.set_axis = "x"
         self.set_kp = 1
         self.set_ki = 1
@@ -54,7 +47,6 @@ class ControllerAuto(BoxLayout):
         self.set_off_set = 1
         self.set_status ="1"
         self._light_check_result = False
-        # self.current_ip_helio = ""
         self.fail_checking_light_desc = {}
         self.fail_checking_light = False
         self.helio_stats_fail_light_checking = ""
@@ -107,16 +99,6 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         size_hint=(None, None), size=(1000, 500))
             popup.open()
-
-        elif action == "try-again-handle_re_all_loop_get_standby":
-            button_con = Button(text="try again")
-            button_con.bind(on_release=partial(self.handle_re_all_loop_get_standby))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup = Popup(title=title,
-                        content=layout,
-                        size_hint=(None, None), size=(1000, 500))
-            popup.open()
     
     def show_popup_with_ignore_con(self, title, message, h_data, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -139,27 +121,13 @@ class ControllerAuto(BoxLayout):
                         size_hint=(None, None), size=(1000, 500))
             popup.open()
 
-        elif action == "try-again-handle_re_all_loop_get_standby":
-            button_ignore = Button(text="Ignore and continue")
-            button_ignore.bind(on_release=partial(self.__ignore_failure_handle_re_all_loop_get_standby, h_data))
-            grid.add_widget(button_ignore)
-
-            button_con = Button(text="try again")
-            button_con.bind(on_release=partial(self.handle_re_all_loop_get_standby))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            
-            popup = Popup(title=title,
-                        content=layout,
-                        size_hint=(None, None), size=(1000, 500))
-            popup.open()
-
     def show_popup(self, title, message):
         ###Display a popup with a given title and message.###
         popup = Popup(title=title,
                     content=Label(text=message),
                     size_hint=(None, None), size=(400, 200))
         popup.open()
+
     ### camera endpoint debug ###
     def selection_url_by_id(self):
         try:
@@ -194,8 +162,12 @@ class ControllerAuto(BoxLayout):
         # Check if we are done with all heliostats
         if self.current_helio_index >= len(self.list_success_set_origin):
             # All done
-            self._finish_auto_mode()
-            return
+            if self.is_loop_mode:
+                self.current_helio_index = 0
+                self.list_fail_set_origin = self.list_success_set_origin
+            else:
+                self._finish_auto_mode()
+                return
         
         h_data = self.list_success_set_origin[self.current_helio_index]
         
@@ -203,8 +175,7 @@ class ControllerAuto(BoxLayout):
         list_path_data = CrudData.open_previous_data(self, self.camera_url_id.text, h_data['id'])
         if not list_path_data['found']:
             # No path found => show popup and skip to next
-            self.show_popup("File path not found", 
-                            f"Heliostat id {h_data['id']} ip {h_data['ip']} not found!")
+            self.show_popup("File path not found", f"Heliostat id {h_data['id']} ip {h_data['ip']} not found!")
             # Move to next item after short delay
             Clock.schedule_once(self._increment_and_process, 0)
             return
@@ -235,35 +206,17 @@ class ControllerAuto(BoxLayout):
         # Schedule a timeout in 30 seconds to evaluate the result
         self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 30)
 
-
     def active_auto_mode_debug(self):
         print("start auto")
         self.debug_counting += 1
-        print(self.debug_counting)
-        print("finish auto mode ")
+        print("counting = >" + str(self.debug_counting))
+        print("end auto mode")
         Clock.schedule_once(self._increment_and_process, 0)
-        # Clock.schedule_once(self.delayed_function, 10)
         
-
-    # def delayed_function(self,dt):
-    #     print("This runs after a delay!")
 
     def _on_check_light_timeout(self, dt=None):
         print("30 seconds have passed, checking light result...")
-        
-        # Stop the periodic checks
         Clock.unschedule(self.checking_light_in_target)
-        
-        if self._light_check_result:
-            pass
-        else:
-            # If False, that means no light was detected within 30 seconds
-            # or an error
-            self.show_popup("File path not found", 
-                            f"Heliostat ip {self.__light_checling_ip_operate} no light found!")
-            # Or handle any other fail scenario
-
-        # Either way, move on to the next heliostat
         Clock.schedule_once(self._increment_and_process, 0)
 
     def _increment_and_process(self, dt=None):
@@ -274,7 +227,6 @@ class ControllerAuto(BoxLayout):
 
     def _finish_auto_mode(self):
         print("Finish auto mode for all heliostats.")
-        # If fail_checking_light is still False, you can show a success message
         if not self.fail_checking_light:
             self.show_popup("Finish", "Finish auto mode for all heliostats.")
 
@@ -287,7 +239,6 @@ class ControllerAuto(BoxLayout):
             action="try-again"
         )
 
-
     def __ignore_failure_checking_light_function(self, h_data ):
         self.list_success_set_origin.remove(h_data)
         self.handle_checking_light()
@@ -295,47 +246,11 @@ class ControllerAuto(BoxLayout):
     ### next checking 2 ###
     def handle_checking_light(self):
         print("Start handle_checking_light.")
+        self.list_success_set_origin_store = self.list_success_set_origin
         self.fail_checking_light_desc = {}
         self.fail_checking_light = False
-        
-        # We'll iterate over `self.list_success_set_origin` asynchronously
         self.current_helio_index = 0
-        
-        # Start the process for the first heliostat
         self._process_next_helio()
-
-    def __ignore_failure_handle_re_all_loop_get_standby(self, h_data):
-        self.list_success_set_origin.remove(h_data)
-        self.handle_checking_light()
-
-    def handle_re_all_loop_get_standby(self):
-        self.fail_checking_light_desc = {}
-        self.fail_checking_light = False
-        is_data
-        while self.is_loop_mode:
-            if self.is_loop_mode:
-                for h_data in self.list_success_set_origin:
-                    is_data = h_data
-                    status = ControlHelioStats.move_helio_in(h_data['ip'])
-                    if status:
-                        self.__on_loop_checking_light(ip=h_data['ip'])
-                        if self._light_check_result:
-                            self.list_success_set_origin.remove(h_data)
-                        else:
-                            self.show_popup_with_ignore_con(title="Warning", message="Not found light in target", h_data=h_data, action="try-again-handle_re_all_loop_get_standby")
-                            break
-                    else:
-                        self.fail_checking_light_desc = {"title": "Error checking light", "message": "Error connection from address " + f"{h_data['ip']}"}
-                        self.fail_checking_light = True
-                        break
-                self.list_success_set_origin = self.list_origin_standby 
-            else:
-                break 
-
-        if self.fail_checking_light == True:
-            self.show_popup_with_ignore_con(title=self.fail_checking_light_desc['title'], message=self.fail_checking_light_desc['message'], h_data=is_data, action="try-again-handle_re_all_loop_get_standby")
-        else: 
-            self.show_popup("Finish", "Finish loop auto mode")
 
     ### next checking 1 ###
     def handler_set_origin(self, heliostats):
@@ -377,14 +292,10 @@ class ControllerAuto(BoxLayout):
                     payload_x = ControlOrigin.send_set_origin_x(ip=h_data['ip'],id=h_data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
-                    # else:
-                    #     self.list_success_set_origin.append(h_data)
                     
                     payload_y = ControlOrigin.send_set_origin_y(ip=h_data['ip'],id=h_data['id'])
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
-                    # else:
-                    #     self.list_success_set_origin.append(h_data)
 
                     if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
                         self.list_success_set_origin.append(h_data)
@@ -467,8 +378,6 @@ class ControllerAuto(BoxLayout):
                         payload = requests.get(url="http://"+self.helio_stats_id_endpoint)
                         # print("payload => ", payload)
                         setJson = payload.json()
-                        # print(setJson)
-                        # setJson = json.dumps(payload)
                         self.__haddle_save_positon(
                             timestamp=timestamp,
                             pathTimestap=path_time_stamp,
@@ -506,13 +415,24 @@ class ControllerAuto(BoxLayout):
                         )
         else:
             self.__off_loop_auto_calculate_diff()
-            Clock.schedule_once(self._increment_and_process, 0)
-            # self.turn_on_auto_mode = False
-            # self.ids.label_auto_mode.text = "Auto off"
-            # self.show_popup("Alert", "Camera is offline.")
+            status = ControlHelioStats.move_helio_out(self, ip=self.__light_checling_ip_operate)
+            if status == False:
+                print("Helio stats error move out!")
+                self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="to-another-helio-stats")
+            else:
+                if len(self.list_success_set_origin) == 0:
+                    if self.is_loop_mode:
+                        self.current_helio_index = 0
+                        self.list_fail_set_origin = self.list_success_set_origin
+                        Clock.schedule_once(self._increment_and_process, 0)
+                    else:
+                        self.turn_on_auto_mode = False
+                        self.ids.label_auto_mode.text = "Auto off"
+                        self.show_popup("Alert", "Camera is offline.")
+                else:
+                    Clock.schedule_once(self._increment_and_process, 0)
 
     def __on_loop_auto_calculate_diff(self):
-        # if self.is_frist_time_open == True:
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
 
     def __off_loop_auto_calculate_diff(self):
@@ -575,10 +495,6 @@ class ControllerAuto(BoxLayout):
         payload = {
                 "topic":"auto",
                 "axis": axis,
-                # "cx": int(center_x_light/scaling_x),
-                # "cy": int(center_y_light/scaling_y),
-                # "target_x": int(center_x/scaling_x),
-                # "target_y": int(center_y/scaling_y),
                 "cx":int(center_x_light/scaling_x), # center x light
                 "cy":int((scaling_height-center_y_light)/scaling_y), # center y light
                 "target_x":int(center_x/scaling_x), #  center x frame
@@ -791,9 +707,6 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             print("error handler_reconn_helio func " + f"{e}")
             self.show_popup("Error", "Error in handler_reconn_helio\n" + f"{e}")
-
-        ### debug mode ###
-        # self.fail_url.remove(url)
 
     def re_set_origin(self,payload):
         try:
