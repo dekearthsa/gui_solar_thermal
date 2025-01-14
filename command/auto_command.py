@@ -34,6 +34,8 @@ class ControllerAuto(BoxLayout):
         self.list_success_set_origin = []
         self.list_success_set_origin_store = []
         self.list_origin_standby = []
+        self.list_pos_move_out = []
+        self.status_finish_loop_mode_first = False
         self.static_title_mode = "Auto menu || Camera status:On"
         self.time_loop_update = 5 ## 2 sec test update frame
         self.time_check_light_update = 1
@@ -56,7 +58,6 @@ class ControllerAuto(BoxLayout):
         self.path_data_heliostats = []
         self.path_data_not_found_list = []
         self.debug_counting = 0
-
     def show_popup_continued(self, title, message ,action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         label = Label(text=message)
@@ -167,54 +168,75 @@ class ControllerAuto(BoxLayout):
     def __off_loop_checking_light(self, dt=None):
         Clock.unschedule(self.checking_light_in_target)
         Clock.unschedule(self._on_check_light_timeout_event)
-        self.active_auto_mode_debug()
+        self.__debug_on_active_auto_mode_debug()
 
     def process_next_helio(self, dt=None):
         # Check if we are done with all heliostats
-        if self.current_helio_index >= len(self.path_data_heliostats):
-            # All done
-            if self.is_loop_mode:
-                self.current_helio_index = 0
-                self.list_fail_set_origin = self.path_data_heliostats
-            else:
-                self._finish_auto_mode()
+        if self.status_finish_loop_mode_first == False:
+            if self.current_helio_index >= len(self.path_data_heliostats):
+                # All done
+                if self.is_loop_mode:
+                    self.current_helio_index = 0
+                    self.list_fail_set_origin = self.path_data_heliostats
+                else:
+                    self._finish_auto_mode()
+                    return
+            
+            h_data = self.path_data_heliostats[self.current_helio_index]
+            
+            # 2. Send nearest time data
+            result = ControlHelioStats.find_nearest_time_and_send(
+                self, list_path_data=h_data['path'], ip=h_data['ip']
+            )
+            if result['is_fail']:
+                # Fail to send => show error, store fail, break the entire process
+                self.fail_checking_light_desc = {
+                    "title": "Error send path",
+                    "message": "Fail to nearest path time to heliostats",
+                }
+                self.fail_checking_light = True
+                self.helio_stats_fail_light_checking = h_data
+                self._handle_fail()
                 return
-        
-        h_data = self.path_data_heliostats[self.current_helio_index]
-        
-        # 2. Send nearest time data
-        result = ControlHelioStats.find_nearest_time_and_send(
-            self, list_path_data=h_data['path'], ip=h_data['ip']
-        )
-        if result['is_fail']:
-            # Fail to send => show error, store fail, break the entire process
-            self.fail_checking_light_desc = {
-                "title": "Error send path",
-                "message": "Fail to nearest path time to heliostats",
-            }
-            self.fail_checking_light = True
-            self.helio_stats_fail_light_checking = h_data
-            self._handle_fail()
-            return
-        
-        # 3. Start checking the light
-        print(f"Start auto mode. ip = {h_data['ip']}")
-        self._light_check_result = False
-        self.__light_checling_ip_operate = h_data['ip']
-        
-        # Schedule checking_light_in_target periodically
-        Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
-        
-        # Schedule a timeout in 30 seconds to evaluate the result
-        self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 30)
+            
+            # 3. Start checking the light
+            print(f"Start auto mode. ip = {h_data['ip']}")
+            self._light_check_result = False
+            self.__light_checling_ip_operate = h_data['ip']
+            
+            # Schedule checking_light_in_target periodically
+            Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
+            
+            # Schedule a timeout in 30 seconds to evaluate the result
+            self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 10)
+        else:
+            pass
 
-    def active_auto_mode_debug(self):
-        print("start auto")
+    def __debug_stop_active_auto_mode_debug(self):
+        print("end auto mode \n")
+        Clock.unschedule(self.active_auto_mode_debug)
+
+    def __debug_on_active_auto_mode_debug(self):
+        print("Start auto")
+        Clock.schedule_interval(self.active_auto_mode_debug, 1)
+
+    def active_auto_mode_debug(self,dt):
         self.debug_counting += 1
-        print("counting => " + str(self.debug_counting))
-        print("end auto mode")
-        Clock.schedule_once(self._increment_and_process, 0)
+        if self.debug_counting > 10:
+            self.debug_stop_auto_mode = False
+            self.debug_counting = 0
+            self.__debug_stop_active_auto_mode_debug()
+            Clock.schedule_once(self._increment_and_process, 0)
+        else:
+            status = ControlHelioStats.move_helio_out(self, ip=self.__light_checling_ip_operate)
+            print("status => ", status)
+            if status == False:
+                print("fail to move light out off target!")
+            else:
+                self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
+                print("counting => " + str(self.debug_counting))
         
+            
 
     def _on_check_light_timeout(self, dt=None):
         print("30 seconds have passed, checking light result...")
@@ -261,6 +283,8 @@ class ControllerAuto(BoxLayout):
         self.fail_checking_light = False
         self.current_helio_index = 0
         self.stanby_get_helio_stats_path()
+        print("self.path_data_not_found_list => ", self.path_data_not_found_list)
+        print("self.path_data_heliostats => ", self.path_data_heliostats)
         if len(self.path_data_not_found_list) > 0:
             self.show_popup_continued(title="Warning", message="There are missing path "+ f"{self.path_data_not_found_list}", action="to-process-next-helio")
         else:
@@ -453,24 +477,24 @@ class ControllerAuto(BoxLayout):
 
     def __off_loop_auto_calculate_diff(self):
         Clock.unschedule(self.update_loop_calulate_diff)
-        print(f"Light was detected => moving helio out for {self.__light_checling_ip_operate}")
-        # If True, move helio out, remove from the list, go to next
-        status = ControlHelioStats.move_helio_out(self, ip=self.__light_checling_ip_operate)
-        if not status:
-            print("status auto mode fail ControlHelioStats")
-            self.fail_checking_light_desc = {
-                "title": "Error move helio out", 
-                "message": "Fail to move heliostats out of target."
-            }
-            self.fail_checking_light = True
-            self.helio_stats_fail_light_checking = {
-                "ip": self.__light_checling_ip_operate
-            }
-            self._handle_fail()
-            return
+        # print(f"Light was detected => moving helio out for {self.__light_checling_ip_operate}")
+        # # If True, move helio out, remove from the list, go to next
+        # status = ControlHelioStats.move_helio_out(self, ip=self.__light_checling_ip_operate)
+        # if not status:
+        #     print("status auto mode fail ControlHelioStats")
+        #     self.fail_checking_light_desc = {
+        #         "title": "Error move helio out", 
+        #         "message": "Fail to move heliostats out of target."
+        #     }
+        #     self.fail_checking_light = True
+        #     self.helio_stats_fail_light_checking = {
+        #         "ip": self.__light_checling_ip_operate
+        #     }
+        #     self._handle_fail()
+        #     return
             
-            # Remove it from the success list
-        self.list_success_set_origin.pop(self.current_helio_index)
+        #     # Remove it from the success list
+        # self.list_success_set_origin.pop(self.current_helio_index)
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
         pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
