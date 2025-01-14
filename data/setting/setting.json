@@ -88,7 +88,7 @@
             "ip": "all"
         },
         "camera_ip": {
-            "id": "camera-top",
+            "id": "camera-bottom",
             "ip": "test_video.avi"
         }
     },

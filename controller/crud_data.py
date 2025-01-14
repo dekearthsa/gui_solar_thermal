@@ -244,6 +244,7 @@ class CrudData:
             # print("self.path_calibrate => ", self.path_calibrate)
             # print("self.previous_date_lookback => ", self.previous_date_lookback)
             data_list = []
+            # file_not_found = []
             counting_date = 0
             now = datetime.now()
             if target == "camera-bottom": ## calibrate
@@ -259,6 +260,7 @@ class CrudData:
                                 data_list.append(json.loads(clean_line))
                         break
                     except Exception as e:
+                        # file_not_found.append()
                         print("cannot find " + "../data/calibrate/result"+"/"+path_time_stamp+"/data.txt " + "find previous date..." + str(e))
                 
                 if  counting_date >= 7:
