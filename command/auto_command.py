@@ -212,14 +212,17 @@ class ControllerAuto(BoxLayout):
         else:
             pass
 
+    ### for debug mode ###
     def __debug_stop_active_auto_mode_debug(self):
         print("end auto mode \n")
         Clock.unschedule(self.active_auto_mode_debug)
 
+    ### for debug mode ###
     def __debug_on_active_auto_mode_debug(self):
         print("Start auto")
         Clock.schedule_interval(self.active_auto_mode_debug, 1)
 
+    ### for debug mode ###
     def active_auto_mode_debug(self,dt):
         self.debug_counting += 1
         if self.debug_counting > 10:
@@ -235,8 +238,6 @@ class ControllerAuto(BoxLayout):
             else:
                 self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
                 print("counting => " + str(self.debug_counting))
-        
-            
 
     def _on_check_light_timeout(self, dt=None):
         print("30 seconds have passed, checking light result...")
@@ -477,24 +478,6 @@ class ControllerAuto(BoxLayout):
 
     def __off_loop_auto_calculate_diff(self):
         Clock.unschedule(self.update_loop_calulate_diff)
-        # print(f"Light was detected => moving helio out for {self.__light_checling_ip_operate}")
-        # # If True, move helio out, remove from the list, go to next
-        # status = ControlHelioStats.move_helio_out(self, ip=self.__light_checling_ip_operate)
-        # if not status:
-        #     print("status auto mode fail ControlHelioStats")
-        #     self.fail_checking_light_desc = {
-        #         "title": "Error move helio out", 
-        #         "message": "Fail to move heliostats out of target."
-        #     }
-        #     self.fail_checking_light = True
-        #     self.helio_stats_fail_light_checking = {
-        #         "ip": self.__light_checling_ip_operate
-        #     }
-        #     self._handle_fail()
-        #     return
-            
-        #     # Remove it from the success list
-        # self.list_success_set_origin.pop(self.current_helio_index)
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
         pattern = r'X:\s*(\d+)px\s*Y:\s*(\d+)px'
