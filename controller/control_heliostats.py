@@ -55,12 +55,12 @@ class ControlHelioStats():
         try:
             response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
             if response.status_code == 200:
-                return True
+                return {"is_fail":False}
             else:
-                return False
+                return  {"is_fail":True}
         except Exception as e:
             print("Error move_helio_in => " + f"{e}")
-            return False
+            return  {"is_fail":True}
     
     ## function move out (pos left) ##
     def move_helio_out(self, ip):

@@ -701,9 +701,12 @@ class SetAutoScreen(Screen):
 
             with open('./data/setting/setting.json', 'r') as file:
                 storage = json.load(file)
-
+                
             storage['storage_endpoint']['helio_stats_ip']['ip'] = self.helio_stats_connection
             storage['storage_endpoint']['helio_stats_ip']['id'] = text
+
+            with open('./data/setting/setting.json', 'w') as file:
+                json.dump(storage, file)
             
         except Exception as e:
             self.show_popup("Error", f"{e}")

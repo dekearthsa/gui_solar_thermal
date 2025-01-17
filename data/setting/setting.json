@@ -84,8 +84,8 @@
     },
     "storage_endpoint": {
         "helio_stats_ip": {
-            "id": "all",
-            "ip": "all"
+            "id": "h1",
+            "ip": "localhost:8888"
         },
         "camera_ip": {
             "id": "camera-bottom",
