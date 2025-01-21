@@ -75,13 +75,13 @@ class ControlGetCurrentPOS():
                             # CrudData.save_fail_conn(payload)
                             self.fail_url.append(payload)
 
-            print("standby_json => ",standby_json)
+            # print("standby_json => ",standby_json)
             CrudData.update_standby(self,payload=standby_json)
             CrudData.update_pending(self,payload=pending_json)
             CrudData.update_failconn(self,payload=fail_conn_json)
-            print("self.standby_url => ", self.standby_url)
-            print("self.pending_url => ", self.pending_url)
-            print("self.fail_url => ",self.fail_url)
+            # print("self.standby_url => ", self.standby_url)
+            # print("self.pending_url => ", self.pending_url)
+            # print("self.fail_url => ",self.fail_url)
             return self.standby_url, self.pending_url, self.fail_url
         
         except Exception as e:

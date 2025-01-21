@@ -12,6 +12,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
+from kivy.properties import StringProperty
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
@@ -56,6 +57,8 @@ class SetAutoScreen(Screen):
         self.helio_stats_connection = ""
         self.menu_now="auto_mode"
         self.camera_perspective = ""
+
+        # self.logging_process_data = StringProperty("-")
         
     def get_image_display_size_and_pos(self):
         ### Calculate the actual displayed image size and position within the widget.
@@ -607,7 +610,6 @@ class SetAutoScreen(Screen):
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
-                        self.ids.number_of_center_light_detected.text = str(counting_light_center)
                         self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
                         self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
                         self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
@@ -615,9 +617,6 @@ class SetAutoScreen(Screen):
                         error_y = centers_frame[1] - centers_light[1][0]
                         self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-
-
-
                 # except Exception as e:
                 #     self.show_popup("Error", str(e))
                 #     return

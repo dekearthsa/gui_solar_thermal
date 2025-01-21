@@ -596,7 +596,6 @@ class ManualScreen(Screen):
 
                     # Update UI labels
                     if centers_light[0] and centers_frame[0]:
-                        self.ids.number_of_center_light_detected.text = str(counting_light_center)
                         self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
                         self.ids.manual_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
                         self.ids.manual_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"

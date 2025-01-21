@@ -773,12 +773,21 @@ MainFrameWidget:
                 bold: True
             Label:
                 id: number_of_center_light_detected
-                text: "0"
+                text: '0'
                 bold: True
+            
             Label:
                 id: description_of_center_light_count
                 text: 'Description:'
                 bold: True
+
+        GridLayout:
+            rows: 1
+            size_hint_y: .05
+            Label:
+                id: logging_process_data
+                text: ""
+
 
         GridLayout:
             cols:2
@@ -984,7 +993,10 @@ MainFrameWidget:
     orientation: 'vertical'
     size_hint_x: .5
     GridLayout:
-        rows: 3
+        rows: 4
+        Label:
+            id: logging_process
+            text: "-"
         Button:
             text: 'debug'
             # on_press: root.debug_mode_data()

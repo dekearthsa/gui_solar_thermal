@@ -2,6 +2,7 @@ from kivy.app import App
 # from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty
+
 class LabHeaderWidget(BoxLayout):
     def change_screen(self, screen_name, text):
         screen_manager = self.ids.screen_manager
