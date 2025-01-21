@@ -998,9 +998,11 @@ MainFrameWidget:
             id: logging_process
             text: "-"
         Button:
-            text: 'debug'
+            id: id_debug_mode
+            text: 'debug off'
             # on_press: root.debug_mode_data()
             on_press: root.handler_loop_checking()
+            # on_press: root.force_off_auto()
 
         Button:
             id: label_auto_mode

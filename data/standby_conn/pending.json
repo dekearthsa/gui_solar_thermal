@@ -38,5 +38,9 @@
     {
         "id": "h2",
         "ip": "localhost:8889"
+    },
+    {
+        "id": "h2",
+        "ip": "localhost:8889"
     }
 ]
