@@ -23,7 +23,7 @@ class ControllerAuto(BoxLayout):
         super().__init__(**kwargs)
 
         self.is_loop_mode = False
-        self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
+        # self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.camera_endpoint = ""
         self.camera_selection = ""
@@ -61,75 +61,132 @@ class ControllerAuto(BoxLayout):
         self.path_data_heliostats = []
         self.path_data_not_found_list = []
         self.operation_type_selection = ""
-        self.ignore_fail_connection_ip = ""
+        self.ignore_fail_connection_ip = False
+        self.is_popup_show_fail_status = False
+        self.is_move_helio_out_fail_status = False
         # self.current_heliostats_data = []
         self.debug_counting = 0
 
     def show_popup_continued(self, title, message ,action):
-        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
         label = Label(text=message)
         layout.add_widget(label)
-        grid = GridLayout(cols=1, size_hint=(1,1) ,height=30)
+        grid = GridLayout(cols=2, size_hint=(1,.3) ,height=30)
         popup = Popup(title=title,
                         content=layout,
-                        size_hint=(None, None), size=(1000, 500))
+                        auto_dismiss=False,
+                        size_hint=(None, None), size=(1000, 600))
         if action == "to-origin":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
             button_con = Button(text="continue set origin")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             
             popup.open()
 
         elif action == "to-auto":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
             button_con = Button(text="continue auto start")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
 
         elif action == "to-checking-light":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
             button_con = Button(text="continue auto start")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
 
         elif action == "try-again":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
             button_con = Button(text="try again")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
         elif action == "to-process-next-helio":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
             button_con = Button(text="continue")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
+        elif action == "reconnect-auto-mode":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
+            button_con = Button(text="Retry")
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup.open()
+        # elif action == "reconnect-auto-mode-cal-diff":
+        #     button_con = Button(text="Retry")
+        #     button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
+        #     grid.add_widget(button_con)
+        #     layout.add_widget(grid)
+        #     popup.open()
 
-    def close_popup_and_continue(self, popup, process):
+    def close_popup_and_continue(self, popup, process, terminate):
         popup.dismiss() 
         if process == "to-origin":
-            self.handler_set_origin() 
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.handler_set_origin() 
         elif process == "to-checking-light":
-            self.handle_checking_light()
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.handle_checking_light()
         elif process == "to-auto":
-            self.handler_set_origin()
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.handler_set_origin()
         elif process == "try-again":
-            self.handle_checking_light()
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.handle_checking_light()
+            
         elif process == "to-process-next-helio":
-            self.process_next_helio()
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.process_next_helio()
+        elif process == "reconnect-auto-mode":
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.__debug_on_active_auto_mode_debug()
+            # self.__on_loop_auto_calculate_diff() production mode 
+        # elif process == "reconnect-auto-mode-cal-diff":
+        #     self.update_loop_calulate_diff()
 
 
     def show_popup_with_ignore_con(self, title, message, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         label = Label(text=message)
         layout.add_widget(label)
-        grid = GridLayout(cols=2, size_hint=(1,1) ,height=30)
+        grid = GridLayout(cols=2, size_hint=(1,.3) ,height=30)
         popup = Popup(title=title,
                         content=layout,
-                        size_hint=(None, None), size=(1000, 500))
+                        size_hint=(None, None), size=(1000, 600))
         if action == "rety-ignore":
             button_ignore = Button(text="Ignore and continue")
             button_ignore.bind(on_release=lambda instance: self.close_popup_continued_with_ignore_con(popup=popup,process=action))
@@ -178,7 +235,7 @@ class ControllerAuto(BoxLayout):
         ###Display a popup with a given title and message.###
         popup = Popup(title=title,
                     content=Label(text=message),
-                    size_hint=(None, None), size=(400, 200))
+                    size_hint=(None, None), size=(1000, 600))
         popup.open()
 
     ### camera endpoint debug ###
@@ -186,7 +243,7 @@ class ControllerAuto(BoxLayout):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 storage = json.load(file)
-            self.helio_stats_id_endpoint = storage['storage_endpoint']['helio_stats_ip']['ip']
+            self.__light_checking_ip_operate = storage['storage_endpoint']['helio_stats_ip']['ip']
             self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
             h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
             c_id = storage['storage_endpoint']['camera_ip']['id']
@@ -222,7 +279,7 @@ class ControllerAuto(BoxLayout):
         if self.status_finish_loop_mode_first == False:
             print("Loop using function use path.")
             self.ids.logging_process.text = "Loop using function use path."
-            print("self.current_helio_index => ", self.current_helio_index)
+            # print("self.current_helio_index => ", self.current_helio_index)
             if self.ignore_fail_connection_ip == False:
                 if self.current_helio_index >= len(self.path_data_heliostats):
                         # All done
@@ -265,15 +322,16 @@ class ControllerAuto(BoxLayout):
         else:
             print("Debug loop using function move in heliostats.")
             self.ids.logging_process.text = "Debug loop using function move in heliostats."
-            if self.current_helio_index >= len(self.path_data_heliostats):
-                # All done
-                if self.is_loop_mode:
-                    self.current_helio_index = 0
-                    self.list_fail_set_origin = self.path_data_heliostats
-                else:
-                    self._finish_auto_mode()
-                    return
-            
+            if self.ignore_fail_connection_ip == False:
+                if self.current_helio_index >= len(self.path_data_heliostats):
+                    # All done
+                    if self.is_loop_mode:
+                        self.current_helio_index = 0
+                        self.list_fail_set_origin = self.path_data_heliostats
+                    else:
+                        self._finish_auto_mode()
+                        return
+            self.ignore_fail_connection_ip = False
             h_data = self.path_data_heliostats[self.current_helio_index]
             
             # 2. Send nearest time data
@@ -314,25 +372,48 @@ class ControllerAuto(BoxLayout):
 
     ### for debug mode ###
     def active_auto_mode_debug(self,dt):
-        self.debug_counting += 1
-        if self.debug_counting > 10:
-            self.debug_stop_auto_mode = False
-            self.debug_counting = 0
-            status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
-            if status == False:
-                print("fail to move light out off target!")
-                self.ids.logging_process.text = "Fail to move light out off target!"
-                self.show_popup("Critical error", "Cannot move heliostats out check connection!")
-            else:
-                print("Move heliostats out success.")
-                self.ids.logging_process.text = "Move heliostats out success."
-                self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
-                self.__debug_stop_active_auto_mode_debug()
-                Clock.schedule_once(self._increment_and_process, 0)
-        else:
-            ### process จำลองสมมุติระบบยังคำนวณหา diff อยู่
+        try:
             self.ids.logging_process.text = "Operating heliostats..."
+            payload = {
+                "status":"ok"
+            }
+            result = requests.post("http://"+self.__light_checking_ip_operate+"/update-data",payload)
+            self.debug_counting += 1
+            self.is_popup_show_fail_status = False
             print("counting => " + str(self.debug_counting))
+            if result.status_code == 200:
+                if self.debug_counting > 10:
+                    self.debug_stop_auto_mode = False
+                    self.debug_counting = 0
+                    status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
+                    if status == False:
+                        if self.is_move_helio_out_fail_status == False:
+                            self.is_move_helio_out_fail_status = True
+                            print("fail to move light out off target!")
+                            self.ids.logging_process.text = "Fail to move light out off target!"
+                            # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                            self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+                    else:
+                        self.is_move_helio_out_fail_status = False
+                        print("Move heliostats out success.")
+                        self.ids.logging_process.text = "Move heliostats out success."
+                        self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
+                        self.__debug_stop_active_auto_mode_debug()
+                        Clock.schedule_once(self._increment_and_process, 0)
+            else:
+                if self.is_popup_show_fail_status == False:
+                    self.is_popup_show_fail_status = True
+                    # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                    self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+                else:
+                    pass
+        except Exception as e:
+            if self.is_popup_show_fail_status == False:
+                self.is_popup_show_fail_status = True
+                # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+            else:
+                pass
 
     def _on_check_light_timeout(self, dt=None):
         print("30 seconds have passed, checking light result...")
@@ -380,8 +461,8 @@ class ControllerAuto(BoxLayout):
         self.path_data_heliostats.remove(self.helio_stats_fail_light_checking)
         self.list_success_set_origin = [item for item in self.list_success_set_origin if item['id'] != self.helio_stats_fail_light_checking['id']]
         # self.process_next_helio()
-        print(len(self.path_data_heliostats))
-        print(self.current_helio_index)
+        # print(len(self.path_data_heliostats))
+        # print(self.current_helio_index)
         if  self.current_helio_index >= len(self.path_data_heliostats):
             # self.current_helio_index = 0
             self.ignore_fail_connection_ip = True
@@ -551,7 +632,7 @@ class ControllerAuto(BoxLayout):
 
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
-        if self.camera_endpoint != "" and self.helio_stats_id_endpoint != "":
+        if self.camera_endpoint != "" and self.__light_checking_ip_operate != "":
             if self.status_auto.text == self.static_title_mode:
                 if self.turn_on_auto_mode == False:
                     if int(self.number_center_light.text) == 1:
@@ -578,10 +659,8 @@ class ControllerAuto(BoxLayout):
                 timestamp = now.strftime("%d/%m/%y %H:%M:%S")
                 path_time_stamp = now.strftime("%d_%m_%y")
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
-                    # try:
-                        # with open('./data/setting/setting.json', 'r') as file:
-                        #     setting_data = json.load(file)
-                        payload = requests.get(url="http://"+self.helio_stats_id_endpoint)
+                    try:
+                        payload = requests.get(url="http://"+self.__light_checking_ip_operate)
                         # print("payload => ", payload)
                         setJson = payload.json()
                         self.__haddle_save_positon(
@@ -604,7 +683,8 @@ class ControllerAuto(BoxLayout):
                             elevation=setJson['elevation'],
                             azimuth=setJson['azimuth'],
                         )
-
+                    except Exception as e:
+                        self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
                 else:
                     self.__send_payload(
                         axis=self.set_axis,
@@ -701,34 +781,37 @@ class ControllerAuto(BoxLayout):
         }
 
         try:
-            response = requests.post("http://"+self.helio_stats_id_endpoint+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
+            response = requests.post("http://"+self.__light_checking_ip_operate+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
             print("=== DEBUG AUTO ===")
-            print("End point => ","http://"+self.helio_stats_id_endpoint+"/auto-data")
+            print("End point => ","http://"+self.__light_checking_ip_operate+"/auto-data")
             print("payload => ",payload)
             print("reply status => ",response.status_code)
             print("\n")
             if response.status_code != 200:
-                try:
-                    error_info = response.json()
-                    self.show_popup("Connection Error", f"{str(error_info)} \n auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
-                except ValueError:
-                    self.show_popup("Connection Error", f"{str(response.text)} \n auto mode off")
-                    self.turn_on_auto_mode = False
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.__off_loop_auto_calculate_diff()
+                self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                # try:
+                #     error_info = response.json()
+                #     self.show_popup("Connection Error", f"{str(error_info)} \n auto mode off")
+                #     self.turn_on_auto_mode = False
+                #     self.ids.label_auto_mode.text = "Auto off"
+                #     self.__off_loop_auto_calculate_diff()
+                # except ValueError:
+                #     self.show_popup("Connection Error", f"{str(response.text)} \n auto mode off")
+                #     self.turn_on_auto_mode = False
+                #     self.ids.label_auto_mode.text = "Auto off"
+                #     self.__off_loop_auto_calculate_diff()
             else:
-                print("debug send success! ",response)
+                print("debug value post method = ",response)
 
         except Exception as e:
-            self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-            self.turn_on_auto_mode = False
-            self.ids.label_auto_mode.text = "Auto off"
-            self.__off_loop_auto_calculate_diff() 
+            self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+            # self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
+            # self.turn_on_auto_mode = False
+            # self.ids.label_auto_mode.text = "Auto off"
+            # self.__off_loop_auto_calculate_diff() 
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
+        
         with open('./data/setting/setting.json', 'r') as file:
             storage = json.load(file)
 

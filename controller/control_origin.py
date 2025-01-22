@@ -1,10 +1,10 @@
 import requests
 
-
 class ControlOrigin():
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    ###
     def send_set_origin_x(self, ip, id):
         print("send_set_origin_x => ", ip, id)
         payload = {"topic": "origin", "axis": "x", "speed":400}
