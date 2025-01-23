@@ -134,6 +134,25 @@ class ControllerAuto(BoxLayout):
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
+        elif action == "error-stop-heliostats":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
+            button_con = Button(text="Retry")
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup.open()
+        elif action == "reconnect-move-out":
+            button_exit = Button(text="Terminate")
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            grid.add_widget(button_exit)
+            button_con = Button(text="Retry")
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
+            grid.add_widget(button_con)
+            layout.add_widget(grid)
+            popup.open()
+
         # elif action == "reconnect-auto-mode-cal-diff":
         #     button_con = Button(text="Retry")
         #     button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action))
@@ -174,10 +193,17 @@ class ControllerAuto(BoxLayout):
                 self.force_off_auto()
             else:
                 self.__debug_on_active_auto_mode_debug()
-            # self.__on_loop_auto_calculate_diff() production mode 
-        # elif process == "reconnect-auto-mode-cal-diff":
-        #     self.update_loop_calulate_diff()
-
+                # self.__on_loop_auto_calculate_diff() ## for production mode
+        elif process == "error-stop-heliostats": ## at light checking 
+            if terminate:
+                self.force_off_auto()
+            else:
+                self.checking_light_in_target()
+        elif process == "reconnect-move-out": ## 
+            if terminate: 
+                self.force_off_auto()
+            else:
+                self.__on_loop_auto_calculate_diff()
 
     def show_popup_with_ignore_con(self, title, message, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -191,13 +217,10 @@ class ControllerAuto(BoxLayout):
             button_ignore = Button(text="Ignore and continue")
             button_ignore.bind(on_release=lambda instance: self.close_popup_continued_with_ignore_con(popup=popup,process=action))
             grid.add_widget(button_ignore)
-
             button_con = Button(text="try again")
             button_con.bind(on_release=lambda instance: self.close_popup_and_rety_connection_light_checking(popup=popup, process=action))
             grid.add_widget(button_con)
             layout.add_widget(grid)
-
-            
             popup.open()
 
     def close_popup_and_rety_connection_light_checking(self, popup, process):
@@ -264,7 +287,8 @@ class ControllerAuto(BoxLayout):
                 self.__off_loop_checking_light()
                 
             else:
-                self.show_popup("Error connection", "Error connection ip" + f"{self.__light_checking_ip_operate}")
+                self.show_popup_continued(title="Error connection", message="Error connection while try to stop move heliostats " + f"{self.__light_checking_ip_operate}", action="error-stop-heliostats")
+                # self.show_popup("Error connection", "Error connection ip" + f"{self.__light_checking_ip_operate}")
 
     def __off_loop_checking_light(self, dt=None):
         Clock.unschedule(self.checking_light_in_target)
@@ -550,10 +574,8 @@ class ControllerAuto(BoxLayout):
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
                         self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-
                     if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
                         self.list_success_set_origin.append(h_data)
-            
                     if len(self.list_fail_set_origin) > 0:
                         CrudData.save_fail_origin(self,payload=self.list_fail_set_origin)
                         self.list_origin_standby= self.list_success_set_origin
@@ -566,8 +588,7 @@ class ControllerAuto(BoxLayout):
                         self.handle_checking_light() 
         else:
             self.force_off_auto()
-
-                        # print("ok 2")
+            # print("ok 2")
 
     ### finish checking ###
     def handler_loop_checking(self):
@@ -684,6 +705,7 @@ class ControllerAuto(BoxLayout):
                             azimuth=setJson['azimuth'],
                         )
                     except Exception as e:
+                        self.__off_loop_auto_calculate_diff()
                         self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
                 else:
                     self.__send_payload(
@@ -705,7 +727,8 @@ class ControllerAuto(BoxLayout):
             status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
             if status == False:
                 print("Helio stats error move out!")
-                self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="to-another-helio-stats")
+                # self.__off_loop_auto_calculate_diff()
+                self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
             else:
                 self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
                 if len(self.list_success_set_origin) <= 0:
