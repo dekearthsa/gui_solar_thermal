@@ -311,7 +311,7 @@ class ControllerAuto(BoxLayout):
                         self.current_helio_index = 0
                         self.list_fail_set_origin = self.path_data_heliostats
                     else:
-                        self._finish_auto_mode()
+                        self.force_off_auto()
                         return
             self.ignore_fail_connection_ip = False
             h_data = self.path_data_heliostats[self.current_helio_index]
@@ -525,6 +525,9 @@ class ControllerAuto(BoxLayout):
             self.process_next_helio()
 
     ### next checking 1 ###
+    # def __send_origin_and_store(self, sdd):
+    #     pass
+
     def handler_set_origin(self, *args):
         print("Start set origin handler_set_origin...")
         self.ids.logging_process.text = "Start set origin handler_set_origin..."
@@ -562,9 +565,11 @@ class ControllerAuto(BoxLayout):
 
         elif self.ids.id_debug_mode.text == "debug on":
             ip_helio_stats = CrudData.open_list_connection(self)
+            print("ip_helio_stats => ", ip_helio_stats)
+            print("self.operation_type_selection =>", self.operation_type_selection)
             for h_data in ip_helio_stats:
                 if h_data['id'] == self.operation_type_selection:
-                    
+
                     payload_x = ControlOrigin.send_set_origin_x(self,ip=h_data['ip'],id=h_data['id'])
                     if payload_x['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_x)
@@ -574,8 +579,10 @@ class ControllerAuto(BoxLayout):
                     if payload_y['is_fail'] == True:
                         self.list_fail_set_origin.append(payload_y)
                         self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
+
                     if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
                         self.list_success_set_origin.append(h_data)
+
                     if len(self.list_fail_set_origin) > 0:
                         CrudData.save_fail_origin(self,payload=self.list_fail_set_origin)
                         self.list_origin_standby= self.list_success_set_origin
@@ -586,6 +593,34 @@ class ControllerAuto(BoxLayout):
                         print("finish set origin to all heliostats.\n")
                         self.ids.logging_process.text = "finish set origin to all heliostats."
                         self.handle_checking_light() 
+                        
+                else:
+                    if self.helio_stats_id.text == h_data['id']:
+
+                        payload_x = ControlOrigin.send_set_origin_x(self,ip=h_data['ip'],id=h_data['id'])
+                        if payload_x['is_fail'] == True:
+                            self.list_fail_set_origin.append(payload_x)
+                            self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
+                        
+                        payload_y = ControlOrigin.send_set_origin_y(self,ip=h_data['ip'],id=h_data['id'])
+                        if payload_y['is_fail'] == True:
+                            self.list_fail_set_origin.append(payload_y)
+                            self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
+                        
+                        if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
+                            self.list_success_set_origin.append(h_data)
+
+                        if len(self.list_fail_set_origin) > 0:
+                            CrudData.save_fail_origin(self,payload=self.list_fail_set_origin)
+                            self.list_origin_standby= self.list_success_set_origin
+                            self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
+                        else:
+                            CrudData.save_origin(self,payload=self.list_success_set_origin)
+                            self.list_origin_standby= self.list_success_set_origin
+                            print("finish set origin to all heliostats.\n")
+                            self.ids.logging_process.text = "finish set origin to all heliostats."
+                            self.handle_checking_light() 
+
         else:
             self.force_off_auto()
             # print("ok 2")
@@ -604,7 +639,7 @@ class ControllerAuto(BoxLayout):
                 print("self.operation_type_selection => ", self.operation_type_selection)
                 list_conn = CrudData.open_list_connection(self)
                 # print("list_conn => ",list_conn)
-                if len(list_conn) > 0 and self.ids.id_debug_mode.text == "debug on":
+                if len(list_conn) > 0 and self.ids.id_debug_mode.text == "debug on": ### production using self.ids.label_auto_mode.text == "Auto on"
                     if self.is_loop_mode == True:
                         list_standby, list_pending, list_fail = ControlGetCurrentPOS.handler_get_current_pos(self,list_url=list_conn)
                         self.standby_url = list_standby
@@ -634,9 +669,8 @@ class ControllerAuto(BoxLayout):
                     self.ids.logging_process.text = "Not found heliostats"
                     self.show_popup("Alert", "Not found any helio stats!")
             else:
-                # print("ok 3")
-                self.ids.id_debug_mode.text = "debug off"
-                self.ids.label_auto_mode.text = "Auto off"
+                ### init heliostats one by one ### 
+                # print("On impre")
                 print("Finish checking connection heliostats.\n")
                 self.ids.logging_process.text = "Finish checking connection heliostats."
                 self.handler_set_origin()
@@ -646,10 +680,10 @@ class ControllerAuto(BoxLayout):
     def force_off_auto(self):
         self.ids.id_debug_mode.text = "debug off"
         self.ids.label_auto_mode.text = "Auto off"
-        self._finish_auto_mode()
         Clock.unschedule(self.checking_light_in_target)
         Clock.unschedule(self.active_auto_mode_debug)
         self.__off_loop_auto_calculate_diff()
+        self._finish_auto_mode()
 
     def active_auto_mode(self):
         h_id, _ = self.selection_url_by_id()
@@ -682,7 +716,7 @@ class ControllerAuto(BoxLayout):
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         payload = requests.get(url="http://"+self.__light_checking_ip_operate)
-                        # print("payload => ", payload)
+                        # print("payload => ", payload) 
                         setJson = payload.json()
                         self.__haddle_save_positon(
                             timestamp=timestamp,
@@ -954,10 +988,8 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             print(e)
             self.show_popup("Error get setting", f"Failed to get value in setting file: {e}")
-    
         scaling_x = round((current_width/setting_data['old_frame_resolution']['width']),2) 
         scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
-
         return scaling_x, scaling_y, current_height
 
     def active_loop_mode(self):
@@ -969,9 +1001,7 @@ class ControllerAuto(BoxLayout):
             self.is_loop_mode = False
 
     def list_fail_connection(self):
-        
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
-
         for url in self.fail_url:
             # print("list_fail_connection => ",url)
             grid = GridLayout(cols=2, size_hint=(1,1),height=40,spacing=10)
@@ -1032,7 +1062,6 @@ class ControllerAuto(BoxLayout):
             size=(1050, 960),
             auto_dismiss=True
         )
-
         popup.open()
 
 

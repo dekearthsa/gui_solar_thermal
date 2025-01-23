@@ -42,7 +42,7 @@ class ControlGetCurrentPOS():
                         print(f"Error connecting to {data}: {req_error}")
                         pending_json.append(data)
                         self.pending_url.append(data)
-                
+
             if len(self.pending_url) > 0:
                 for data in self.pending_url:
                     if data['ip'] != 'all':
