@@ -1,7 +1,31 @@
 from kivy.app import App
-# from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty
+from threading import Thread
+from flask import Flask, jsonify, request
+from controller.crud_data import CrudData
+import json 
+
+flask_api = Flask(__name__)
+@flask_api.route('/callback', methods=['POST'])
+def get_status_return_esp():
+    data = request.get_json()
+    print(data)
+    update_esp_call_back(status_in=data['status'])
+    return "ok"
+
+def update_esp_call_back( status_in):
+    try:
+        with open("./data/setting/status_return.json", 'r') as file:
+            storage = json.load(file)
+            storage['esp_status_call_back'] = status_in
+        with open("./data/setting/status_return.json", 'w') as file_change:
+            json.dump(storage, file_change)
+    except Exception as e:
+        print("error save status in to status_return.json!")
+
+def run_flask():
+    flask_api.run(host='0.0.0.0', port=8891, debug=False, use_reloader=False)
 
 class LabHeaderWidget(BoxLayout):
     def change_screen(self, screen_name, text):
@@ -20,5 +44,8 @@ class MainFrameWidget(BoxLayout):
 class SolarControlApp(App):
     current_mode = StringProperty('')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # Start Flask in a separate thread
+    flask_thread = Thread(target=run_flask, daemon=True)
+    flask_thread.start()
     SolarControlApp().run()

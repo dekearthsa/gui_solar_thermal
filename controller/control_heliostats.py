@@ -8,6 +8,8 @@ class ControlHelioStats():
 
     def haddle_check_ip(self):
         pass
+
+    
     
     ### handle path heliostats ### 
     def find_nearest_time_and_send(self, list_path_data, ip):
@@ -31,6 +33,8 @@ class ControlHelioStats():
         except Exception as e:
             return {"is_fail": True}
 
+    def fine_tune_heliostats(self):
+        pass
 
     def move_left(self):
         pass

@@ -14,9 +14,29 @@ class CrudData:
         self.path_current_pos = "./data/standby_conn/current_pos.json"
         self.path_receiver = "./data/receiver/result"
         self.path_calibrate = "./data/calibrate/result"
+        # self.path_status_esp_call_back = "./data/setting/status_return.json"
         self.previous_date_lookback = 7
 
+    def read_esp_call_back( status_in):
+        try:
+            with open("./data/setting/status_return.json", "r") as file:
+                storage = json.load(file)
+            return storage['esp_status_call_back']
+        except Exception as e:
+            print("error save status in to status_return.json!")
+
+    def roll_back_esp_status(self):
+        try:
+            with open("./data/setting/status_return", "r") as file:
+                storage = json.load(file)
+                storage['esp_status_call_back'] = False
+            with open("./data/setting/status_return", "w") as file_update:
+                json.dump(storage,file_update)
+        except Exception as e:
+            print("Error roll_back_esp_status")
+
     def open_list_connection(self):
+        
         print("open list helio stats conn...")
         try:
             with open('./data/setting/connection.json', 'r') as file:
@@ -24,7 +44,8 @@ class CrudData:
                 list_conn = storage['helio_stats_ip']
                 return list_conn
         except Exception as e:
-            print("Error ")
+            print("Error open_list_connection")
+            # print("Error " + e)
 
     def read_curre(self):
         print("open read pending...")

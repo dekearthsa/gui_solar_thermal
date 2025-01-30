@@ -21,7 +21,6 @@ class ControllerAuto(BoxLayout):
     def __init__(self,**kwargs ):
         
         super().__init__(**kwargs)
-
         self.is_loop_mode = False
         # self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
@@ -64,8 +63,11 @@ class ControllerAuto(BoxLayout):
         self.ignore_fail_connection_ip = False
         self.is_popup_show_fail_status = False
         self.is_move_helio_out_fail_status = False
+        self.status_esp_send_first_timer = False
+        self.status_esp_callback = False
         # self.current_heliostats_data = []
         self.debug_counting = 0
+
 
     def show_popup_continued(self, title, message ,action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
@@ -76,6 +78,7 @@ class ControllerAuto(BoxLayout):
                         content=layout,
                         auto_dismiss=False,
                         size_hint=(None, None), size=(1000, 600))
+
         if action == "to-origin":
             button_exit = Button(text="Terminate")
             button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
@@ -84,7 +87,6 @@ class ControllerAuto(BoxLayout):
             button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
             grid.add_widget(button_con)
             layout.add_widget(grid)
-            
             popup.open()
 
         elif action == "to-auto":
@@ -473,20 +475,15 @@ class ControllerAuto(BoxLayout):
             
 
     def _handle_fail(self):
-        # Show fail popup with ignore or try-again, etc.
         self.show_popup_with_ignore_con(
             title=self.fail_checking_light_desc['title'],
             message=self.fail_checking_light_desc['message'],
-            # h_data=self.helio_stats_fail_light_checking,
             action="rety-ignore"
         )
 
     def __ignore_failure_checking_light_function(self):
         self.path_data_heliostats.remove(self.helio_stats_fail_light_checking)
         self.list_success_set_origin = [item for item in self.list_success_set_origin if item['id'] != self.helio_stats_fail_light_checking['id']]
-        # self.process_next_helio()
-        # print(len(self.path_data_heliostats))
-        # print(self.current_helio_index)
         if  self.current_helio_index >= len(self.path_data_heliostats):
             # self.current_helio_index = 0
             self.ignore_fail_connection_ip = True
@@ -670,7 +667,6 @@ class ControllerAuto(BoxLayout):
                     self.show_popup("Alert", "Not found any helio stats!")
             else:
                 ### init heliostats one by one ### 
-                # print("On impre")
                 print("Finish checking connection heliostats.\n")
                 self.ids.logging_process.text = "Finish checking connection heliostats."
                 self.handler_set_origin()
@@ -706,19 +702,33 @@ class ControllerAuto(BoxLayout):
                 self.show_popup("Alert", f"Please turn on camera.")
         else:
             self.show_popup("Alert", f"Please select helio stats id and camera")
+    
+    ### checking status in when ESP32  ###
+    def handler_checking_callback_esp(self, dt):
+        with open("./data/setting/status_return.json","r") as file:
+            data = json.load(file)
+        if data['esp_status_call_back'] == True:
+            self.__off_checking_thread_callback()
+
+    def __on_checking_thread_callback(self):
+        Clock.schedule_interval(self.handler_checking_callback_esp, 3) ### set rety read 3 sec
+
+    def __off_checking_thread_callback(self):
+        Clock.unschedule(self.handler_checking_callback_esp)
+    ### ---end--- ###
 
     def update_loop_calulate_diff(self, dt):
         center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(self.center_frame_auto.text, self.center_target_auto.text)
         if self.status_auto.text == self.static_title_mode:
-                now = datetime.now()
-                timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-                path_time_stamp = now.strftime("%d_%m_%y")
-                if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
-                    try:
-                        payload = requests.get(url="http://"+self.__light_checking_ip_operate)
-                        # print("payload => ", payload) 
-                        setJson = payload.json()
-                        self.__haddle_save_positon(
+            now = datetime.now()
+            timestamp = now.strftime("%d/%m/%y %H:%M:%S")
+            path_time_stamp = now.strftime("%d_%m_%y")
+            if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
+                try:
+                    payload = requests.get(url="http://"+self.__light_checking_ip_operate)
+                    # print("payload => ", payload) 
+                    setJson = payload.json()
+                    self.__haddle_save_positon(
                             timestamp=timestamp,
                             pathTimestap=path_time_stamp,
                             helio_stats_id=self.helio_stats_selection_id,
@@ -738,23 +748,26 @@ class ControllerAuto(BoxLayout):
                             elevation=setJson['elevation'],
                             azimuth=setJson['azimuth'],
                         )
-                    except Exception as e:
-                        self.__off_loop_auto_calculate_diff()
-                        self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-                else:
+                except Exception as e:
+                    self.__off_loop_auto_calculate_diff()
+                    self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+            else:
+                if self.status_esp_send_first_timer == False:
                     self.__send_payload(
                         axis=self.set_axis,
-                        center_x=center_x, # frame x 
-                        center_y=center_y, # frame y
-                        center_y_light=target_y, # center_y_light
-                        center_x_light=target_x, # center_x_light
+                        center_x=center_x,
+                        center_y=center_y,
+                        center_y_light=target_y,
+                        center_x_light=target_x,
                         kp=self.set_kp,
                         ki=self.set_ki,
                         kd=self.set_kd,
                         max_speed=self.set_max_speed,
                         off_set=self.set_off_set,
                         status=self.set_status
-                        )
+                    )
+                else:
+                    self.__on_checking_thread_callback()
         else:
             self.__off_loop_auto_calculate_diff()
             ### move heliostats out ###
@@ -773,7 +786,7 @@ class ControllerAuto(BoxLayout):
                     else:
                         self.turn_on_auto_mode = False
                         self.ids.label_auto_mode.text = "Auto off"
-                        self.show_popup("Alert", "Camera is offline.")
+                        # self.show_popup("Alert", "Camera is offline.")
                 else:
                     Clock.schedule_once(self._increment_and_process, 0)
 
@@ -781,6 +794,7 @@ class ControllerAuto(BoxLayout):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
 
     def __off_loop_auto_calculate_diff(self):
+        self.status_esp_send_first_timer = False
         Clock.unschedule(self.update_loop_calulate_diff)
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
@@ -805,6 +819,7 @@ class ControllerAuto(BoxLayout):
                     center_x_light,
                     center_y_light,
                     kp,ki,kd,max_speed,off_set,status):
+
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
@@ -817,7 +832,6 @@ class ControllerAuto(BoxLayout):
             current_width=frame_w,
             current_height=frame_h
         )
-
         payload = {
                 "topic":"auto",
                 "axis": axis,
@@ -832,11 +846,9 @@ class ControllerAuto(BoxLayout):
                 "off_set":off_set,
                 "status": status
             }
-
         headers = {
             'Content-Type': 'application/json'  
-        }
-
+            }
         try:
             response = requests.post("http://"+self.__light_checking_ip_operate+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
             print("=== DEBUG AUTO ===")
@@ -846,26 +858,11 @@ class ControllerAuto(BoxLayout):
             print("\n")
             if response.status_code != 200:
                 self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-                # try:
-                #     error_info = response.json()
-                #     self.show_popup("Connection Error", f"{str(error_info)} \n auto mode off")
-                #     self.turn_on_auto_mode = False
-                #     self.ids.label_auto_mode.text = "Auto off"
-                #     self.__off_loop_auto_calculate_diff()
-                # except ValueError:
-                #     self.show_popup("Connection Error", f"{str(response.text)} \n auto mode off")
-                #     self.turn_on_auto_mode = False
-                #     self.ids.label_auto_mode.text = "Auto off"
-                #     self.__off_loop_auto_calculate_diff()
             else:
+                self.status_esp_send_first_timer = True
                 print("debug value post method = ",response)
-
         except Exception as e:
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-            # self.show_popup("Connection Error", f"{str(e)} \n auto mode off")
-            # self.turn_on_auto_mode = False
-            # self.ids.label_auto_mode.text = "Auto off"
-            # self.__off_loop_auto_calculate_diff() 
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
         
