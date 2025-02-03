@@ -2,8 +2,7 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty
 from threading import Thread
-from flask import Flask, jsonify, request
-from controller.crud_data import CrudData
+from flask import Flask, request
 import json 
 
 flask_api = Flask(__name__)

@@ -63,10 +63,12 @@ class ControllerAuto(BoxLayout):
         self.ignore_fail_connection_ip = False
         self.is_popup_show_fail_status = False
         self.is_move_helio_out_fail_status = False
-        self.status_esp_send_first_timer = False
+        self.status_esp_send_timer = False
         self.status_esp_callback = False
         # self.current_heliostats_data = []
         self.debug_counting = 0
+        self.debug_counting_callback = 0
+        self.is_call_back_thread_on = False
 
 
     def show_popup_continued(self, title, message ,action):
@@ -404,35 +406,38 @@ class ControllerAuto(BoxLayout):
                 "status":"ok"
             }
             result = requests.post("http://"+self.__light_checking_ip_operate+"/update-data",payload)
-            self.debug_counting += 1
-            self.is_popup_show_fail_status = False
-            print("counting => " + str(self.debug_counting))
-            if result.status_code == 200:
-                if self.debug_counting > 10:
-                    self.debug_stop_auto_mode = False
-                    self.debug_counting = 0
-                    status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
-                    if status == False:
-                        if self.is_move_helio_out_fail_status == False:
-                            self.is_move_helio_out_fail_status = True
-                            print("fail to move light out off target!")
-                            self.ids.logging_process.text = "Fail to move light out off target!"
-                            # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-                            self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
-                    else:
-                        self.is_move_helio_out_fail_status = False
-                        print("Move heliostats out success.")
-                        self.ids.logging_process.text = "Move heliostats out success."
-                        self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
-                        self.__debug_stop_active_auto_mode_debug()
-                        Clock.schedule_once(self._increment_and_process, 0)
-            else:
-                if self.is_popup_show_fail_status == False:
-                    self.is_popup_show_fail_status = True
-                    # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-                    self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+            if self.status_esp_send_timer == False:
+                self.debug_counting += 1
+                self.is_popup_show_fail_status = False
+                print("counting => " + str(self.debug_counting))
+                if result.status_code == 200:
+                    self.status_esp_send_timer = True
+                    if self.debug_counting > 10:
+                        self.debug_stop_auto_mode = False
+                        self.debug_counting = 0
+                        status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
+                        if status == False:
+                            if self.is_move_helio_out_fail_status == False:
+                                self.is_move_helio_out_fail_status = True
+                                print("fail to move light out off target!")
+                                self.ids.logging_process.text = "Fail to move light out off target!"
+                                # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                                self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+                        else:
+                            self.is_move_helio_out_fail_status = False
+                            print("Move heliostats out success.")
+                            self.ids.logging_process.text = "Move heliostats out success."
+                            self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
+                            self.__debug_stop_active_auto_mode_debug()
+                            Clock.schedule_once(self._increment_and_process, 0)
                 else:
-                    pass
+                    if self.is_popup_show_fail_status == False:
+                        self.is_popup_show_fail_status = True
+                        # self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                        self.show_popup(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection.")
+            else:
+                self.__on_checking_thread_callback()
+
         except Exception as e:
             if self.is_popup_show_fail_status == False:
                 self.is_popup_show_fail_status = True
@@ -705,15 +710,31 @@ class ControllerAuto(BoxLayout):
     
     ### checking status in when ESP32  ###
     def handler_checking_callback_esp(self, dt):
+        print("Wating callback from arduino.... " + str(self.debug_counting_callback))
+        self.debug_counting_callback += 1
         with open("./data/setting/status_return.json","r") as file:
             data = json.load(file)
         if data['esp_status_call_back'] == True:
+            self.status_esp_send_timer = False
             self.__off_checking_thread_callback()
 
     def __on_checking_thread_callback(self):
-        Clock.schedule_interval(self.handler_checking_callback_esp, 3) ### set rety read 3 sec
+        if self.is_call_back_thread_on == False:
+            self.is_call_back_thread_on = True
+            Clock.schedule_interval(self.handler_checking_callback_esp, 3) ### set rety read 3 sec
+        
 
     def __off_checking_thread_callback(self):
+        try:
+            with open("./data/setting/status_return.json", 'r') as file:
+                storage = json.load(file)
+                storage['esp_status_call_back'] = False
+            with open("./data/setting/status_return.json", 'w') as file_change:
+                json.dump(storage, file_change)
+                self.is_call_back_thread_on = False
+        except Exception as e:
+            print("error save status in to status_return.json!")
+        
         Clock.unschedule(self.handler_checking_callback_esp)
     ### ---end--- ###
 
@@ -752,7 +773,7 @@ class ControllerAuto(BoxLayout):
                     self.__off_loop_auto_calculate_diff()
                     self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
             else:
-                if self.status_esp_send_first_timer == False:
+                if self.status_esp_send_timer == False:
                     self.__send_payload(
                         axis=self.set_axis,
                         center_x=center_x,
@@ -794,7 +815,7 @@ class ControllerAuto(BoxLayout):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
 
     def __off_loop_auto_calculate_diff(self):
-        self.status_esp_send_first_timer = False
+        self.status_esp_send_timer = False
         Clock.unschedule(self.update_loop_calulate_diff)
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
@@ -859,7 +880,7 @@ class ControllerAuto(BoxLayout):
             if response.status_code != 200:
                 self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
             else:
-                self.status_esp_send_first_timer = True
+                self.status_esp_send_timer = True
                 print("debug value post method = ",response)
         except Exception as e:
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
@@ -1060,5 +1081,4 @@ class ControllerAuto(BoxLayout):
             auto_dismiss=True
         )
         popup.open()
-
 
