@@ -721,7 +721,7 @@ class ControllerAuto(BoxLayout):
     def __on_checking_thread_callback(self):
         if self.is_call_back_thread_on == False:
             self.is_call_back_thread_on = True
-            Clock.schedule_interval(self.handler_checking_callback_esp, 3) ### set rety read 3 sec
+            Clock.schedule_interval(self.handler_checking_callback_esp, 1) ### set rety read 3 sec
         
 
     def __off_checking_thread_callback(self):

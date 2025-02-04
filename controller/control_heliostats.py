@@ -23,6 +23,7 @@ class ControlHelioStats():
         }
         current_time_as_datetime = datetime.strptime(current_time, "%H:%M:%S")
         nearest = min(list_path_data, key=lambda entry: abs(datetime.strptime(entry["timestamp"], "%H:%M:%S") - current_time_as_datetime))
+        print("nearest => ", nearest)
         try:
             ### Endpoint for send path data?? ### 
             result =  requests.post("http://"+ip+"/update-data", data=json.dumps(nearest), headers=headers, timeout=5)
