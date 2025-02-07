@@ -65,10 +65,25 @@ class ControllerAuto(BoxLayout):
         self.is_move_helio_out_fail_status = False
         self.status_esp_send_timer = False
         self.status_esp_callback = False
+        self.is_call_back_thread_on = False
+        self.status_esp_origin_callback = False
+        self.loop_timer_origin_callback = 1
+        self.loop_timer_esp_callback = 1
+
+        self.loop_timeout_origin_is_finish = True
+        self.origin_set_axis = "x"
+        self.origin_axis_process = ""
+        self.loop_delay_set_origin = 10 ## this func use handle_checking_origin_callback
+        self.counting_set_origin = 0
+        self.index_array_origin = 0
+        self.range_of_heliostats = 0
+
+        self.move_comp = 0
         # self.current_heliostats_data = []
         self.debug_counting = 0
         self.debug_counting_callback = 0
-        self.is_call_back_thread_on = False
+        
+        
 
 
     def show_popup_continued(self, title, message ,action):
@@ -526,106 +541,109 @@ class ControllerAuto(BoxLayout):
         else:
             self.process_next_helio()
 
-    ### next checking 1 ###
-    # def __send_origin_and_store(self, sdd):
-    #     pass
+    def haddle_counting_index_origin(self,dt=None):
+        print("haddle_counting_index_origin start...")
+        if self.loop_timeout_origin_is_finish == True:
+            self.loop_timeout_origin_is_finish = False
+            print("self.index_array_origin: " + str(self.index_array_origin) + " " + "self.range_of_heliostats: "+ str(self.range_of_heliostats))
+            if self.index_array_origin == self.range_of_heliostats:
+                print("Set origin finish")
+                self.__off_counting_index_origin()
+                self.origin_set_axis = None
+            
+            if self.origin_set_axis == 'x':
+                print("haddle_counting_index_origin set origin X " + str(f"{self.standby_url[self.index_array_origin]['ip']}"))
+                payload_x = ControlOrigin.send_set_origin_x(
+                    self,
+                    ip=self.standby_url[self.index_array_origin]['ip'], 
+                    id=self.standby_url[self.index_array_origin]['id']
+                )
+                if payload_x['is_fail'] == True:
+                    self.list_fail_set_origin.append(payload_x)
+                    self.ids.logging_process.text = "Warning found error connection" + str(self.standby_url[self.index_array_origin]['ip'])
+                    self.index_array_origin += 1
+                    self.loop_timeout_origin_is_finish = True
+                    self.origin_set_axis = "x"
+                else:
+                    self.origin_axis_process = 'y' 
+                    self.__on_thread_check_callback_origin()
+                    
+
+            if self.origin_set_axis == 'y':
+                print("haddle_counting_index_origin set origin Y " + str(f"{self.standby_url[self.index_array_origin]['ip']}"))
+                payload_y = ControlOrigin.send_set_origin_y(
+                    self,
+                    ip=self.standby_url[self.index_array_origin]['ip'], 
+                    id=self.standby_url[self.index_array_origin]['id']
+                )
+                if payload_y['is_fail'] == True:
+                    self.list_fail_set_origin.append(payload_y)
+                    self.ids.logging_process.text = "Warning found error connection" + str(self.standby_url[self.index_array_origin]['ip'])
+                    self.index_array_origin += 1
+                    self.loop_timeout_origin_is_finish = True
+                    self.origin_set_axis = "x"
+                else:
+                    self.origin_axis_process = 'success' 
+                    self.__on_thread_check_callback_origin()
+
+            if self.origin_set_axis == 'success': 
+                print("haddle_counting_index_origin set origin save.. "  + str(f"{self.standby_url[self.index_array_origin]['ip']} \n"))
+                self.list_success_set_origin.append(self.standby_url[self.index_array_origin])
+                self.index_array_origin += 1
+                self.origin_set_axis = "x"
+                self.origin_axis_process = '' 
+                self.loop_timeout_origin_is_finish = True
+
+
+    def __off_counting_index_origin(self):
+        Clock.unschedule(self.haddle_counting_index_origin) ## close thread 
+        if len(self.list_fail_set_origin) > 0:
+            CrudData.save_fail_origin(self,self.list_fail_set_origin)
+            self.list_origin_standby= self.list_success_set_origin
+            self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
+        else:
+            CrudData.save_origin(self,self.list_success_set_origin)
+            self.list_origin_standby= self.list_success_set_origin
+            print("finish set origin to all heliostats.\n")
+            self.ids.logging_process.text = "finish set origin to all heliostats."
+            self.handle_checking_light()
+
+    def __on__counting_index_origin(self):
+        self.origin_set_axis = "x"
+        Clock.schedule_interval(self.haddle_counting_index_origin, self.loop_timer_origin_callback) ## 2 sec
+
+    def handle_checking_origin_callback(self,dt=None):
+        ## if set origin it will delay 10 sec
+        self.counting_set_origin += 1
+        print("Set origin wating callback from arduino.... " + str(self.counting_set_origin))
+        if self.loop_delay_set_origin == self.counting_set_origin: ## loop_delay_set_origin is 10sec
+            self.counting_set_origin = 0
+            self.loop_timeout_origin_is_finish = True
+            self.origin_set_axis = self.origin_axis_process
+            self.__off_terminate_thread_origin()
+
+    def __on_thread_check_callback_origin(self):
+        Clock.schedule_interval(self.handle_checking_origin_callback, self.loop_timer_origin_callback) ## 2 sec
+
+    def __off_terminate_thread_origin(self):
+        Clock.unschedule(self.handle_checking_origin_callback)
 
     def handler_set_origin(self, *args):
         print("Start set origin handler_set_origin...")
         self.ids.logging_process.text = "Start set origin handler_set_origin..."
         ### change self.ids.id_debug_mode.text == "debug on" to self.ids.label_auto_mode.text = "Auto on" in production mode 
         if self.operation_type_selection == "all" and self.ids.id_debug_mode.text == "debug on":
-            # try:
-                print("Set origin to all heliostats mode.")
-                for data in self.standby_url:
-                    payload_x = ControlOrigin.send_set_origin_x(self,ip=data['ip'], id=data['id'])
-                    if payload_x['is_fail'] == True:
-                        self.list_fail_set_origin.append(payload_x)
-                        self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-
-                    payload_y = ControlOrigin.send_set_origin_y(self,data['ip'], id=data['id'])
-                    if payload_y['is_fail'] == True:
-                        self.list_fail_set_origin.append(payload_y)
-                        self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-
-                    if payload_x['is_fail'] == False and payload_y['is_fail'] == False:
-                        self.list_success_set_origin.append(data)
-
-                if len(self.list_fail_set_origin) > 0:
-                    CrudData.save_fail_origin(self,self.list_fail_set_origin)
-                    self.list_origin_standby= self.list_success_set_origin
-                    self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
-                else:
-                    CrudData.save_origin(self,self.list_success_set_origin)
-                    self.list_origin_standby= self.list_success_set_origin
-                    print("finish set origin to all heliostats.\n")
-                    self.ids.logging_process.text = "finish set origin to all heliostats."
-                    self.handle_checking_light()
-            # except Exception as e:
-            #     print("error handler_set_origin func " + f"{e}")
-            #     self.show_popup("Error",f"error in handler_set_origin function {e}")
-
+            self.range_of_heliostats = len(self.standby_url)
+            print("Set origin to all heliostats mode.")
+            self.__on__counting_index_origin()
         elif self.ids.id_debug_mode.text == "debug on":
             ip_helio_stats = CrudData.open_list_connection(self)
-            print("ip_helio_stats => ", ip_helio_stats)
-            print("self.operation_type_selection =>", self.operation_type_selection)
             for h_data in ip_helio_stats:
                 if h_data['id'] == self.operation_type_selection:
-
-                    payload_x = ControlOrigin.send_set_origin_x(self,ip=h_data['ip'],id=h_data['id'])
-                    if payload_x['is_fail'] == True:
-                        self.list_fail_set_origin.append(payload_x)
-                        self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-                    
-                    payload_y = ControlOrigin.send_set_origin_y(self,ip=h_data['ip'],id=h_data['id'])
-                    if payload_y['is_fail'] == True:
-                        self.list_fail_set_origin.append(payload_y)
-                        self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-
-                    if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
-                        self.list_success_set_origin.append(h_data)
-
-                    if len(self.list_fail_set_origin) > 0:
-                        CrudData.save_fail_origin(self,payload=self.list_fail_set_origin)
-                        self.list_origin_standby= self.list_success_set_origin
-                        self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
-                    else:
-                        CrudData.save_origin(self,payload=self.list_success_set_origin)
-                        self.list_origin_standby= self.list_success_set_origin
-                        print("finish set origin to all heliostats.\n")
-                        self.ids.logging_process.text = "finish set origin to all heliostats."
-                        self.handle_checking_light() 
-                        
-                else:
-                    if self.helio_stats_id.text == h_data['id']:
-
-                        payload_x = ControlOrigin.send_set_origin_x(self,ip=h_data['ip'],id=h_data['id'])
-                        if payload_x['is_fail'] == True:
-                            self.list_fail_set_origin.append(payload_x)
-                            self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-                        
-                        payload_y = ControlOrigin.send_set_origin_y(self,ip=h_data['ip'],id=h_data['id'])
-                        if payload_y['is_fail'] == True:
-                            self.list_fail_set_origin.append(payload_y)
-                            self.ids.logging_process.text = "Warning found error connection" + str(data['ip'])
-                        
-                        if payload_x['is_fail'] == False and  payload_y['is_fail'] == False:
-                            self.list_success_set_origin.append(h_data)
-
-                        if len(self.list_fail_set_origin) > 0:
-                            CrudData.save_fail_origin(self,payload=self.list_fail_set_origin)
-                            self.list_origin_standby= self.list_success_set_origin
-                            self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
-                        else:
-                            CrudData.save_origin(self,payload=self.list_success_set_origin)
-                            self.list_origin_standby= self.list_success_set_origin
-                            print("finish set origin to all heliostats.\n")
-                            self.ids.logging_process.text = "finish set origin to all heliostats."
-                            self.handle_checking_light() 
-
+                    self.standby_url = []
+                    self.standby_url = [h_data]
         else:
             self.force_off_auto()
-            # print("ok 2")
 
     ### finish checking ###
     def handler_loop_checking(self):
@@ -710,19 +728,26 @@ class ControllerAuto(BoxLayout):
     
     ### checking status in when ESP32  ###
     def handler_checking_callback_esp(self, dt):
-        print("Wating callback from arduino.... " + str(self.debug_counting_callback))
+        print("Wating callback from arduino.... " + self.__light_checking_ip_operate + " " + str(self.debug_counting_callback))
         self.debug_counting_callback += 1
-        with open("./data/setting/status_return.json","r") as file:
-            data = json.load(file)
-        if data['esp_status_call_back'] == True:
+        
+        # with open("./data/setting/status_return.json","r") as file:
+        #     data = json.load(file)
+        # if data['esp_status_call_back'] == True:
+        #     self.status_esp_send_timer = False
+        #     self.__off_checking_thread_callback()
+        comp_status = requests.get("http://"+self.__light_checking_ip_operate)
+        setJson = comp_status.json()
+        if setJson['move_comp'] == 1:
             self.status_esp_send_timer = False
             self.__off_checking_thread_callback()
+            
 
     def __on_checking_thread_callback(self):
         if self.is_call_back_thread_on == False:
             self.is_call_back_thread_on = True
-            Clock.schedule_interval(self.handler_checking_callback_esp, 1) ### set rety read 3 sec
-        
+            self.debug_counting_callback = 0
+            Clock.schedule_interval(self.handler_checking_callback_esp, self.loop_timer_esp_callback) ### set rety read 3 sec
 
     def __off_checking_thread_callback(self):
         try:
@@ -860,6 +885,7 @@ class ControllerAuto(BoxLayout):
                 "cy":int((scaling_height-center_y_light)/scaling_y), # center y light
                 "target_x":int(center_x/scaling_x), #  center x frame
                 "target_y":int(center_y/scaling_y), #  center y frame
+                "move_comp": self.move_comp, ## move comp defaut = 0
                 "kp":kp,
                 "ki":ki,
                 "kd":kd,
