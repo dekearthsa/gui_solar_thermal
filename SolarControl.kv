@@ -1001,13 +1001,13 @@ MainFrameWidget:
             id: id_debug_mode
             text: 'debug off'
             # on_press: root.debug_mode_data()
-            on_press: root.handler_loop_checking()
+            on_press: root.control_auto_mode()
             # on_press: root.force_off_auto()
 
         Button:
             id: label_auto_mode
             text: 'Auto off'
-            on_press: root.active_auto_mode()
+            on_press: root.control_auto_mode()
             BlinkSpot:
                 auto_text: self.parent.text
                 size: 50, 50  
@@ -1029,9 +1029,9 @@ MainFrameWidget:
                 text: 'Reconnect'
                 on_press: root.list_fail_connection()
             Button:
-                id: origin_fail
-                text: 'Check origin'
-                on_press: root.handler_check_origin()
+                id: set_origin_id
+                text: 'Origin'
+                on_press: root.handler_set_origin()
 
 
 

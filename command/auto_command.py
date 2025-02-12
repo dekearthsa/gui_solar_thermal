@@ -57,6 +57,9 @@ class ControllerAuto(BoxLayout):
         self.list_pos_move_out = []
         self.current_helio_index = 0
         self._on_check_light_timeout_event = None
+        self.fail_to_tacking_light = False
+        self.is_conn_fail_tacking_light = False
+
         self.path_data_heliostats = []
         self.path_data_not_found_list = []
         self.operation_type_selection = ""
@@ -73,11 +76,11 @@ class ControllerAuto(BoxLayout):
         self.loop_timeout_origin_is_finish = True
         self.origin_set_axis = "x"
         self.origin_axis_process = ""
-        self.loop_delay_set_origin = 10 ## this func use handle_checking_origin_callback
+        self.loop_delay_set_origin = 1 ## this func use handle_checking_origin_callback
         self.counting_set_origin = 0
         self.index_array_origin = 0
         self.range_of_heliostats = 0
-
+        self.is_origin_set = False
         self.move_comp = 0
         # self.current_heliostats_data = []
         self.debug_counting = 0
@@ -87,87 +90,110 @@ class ControllerAuto(BoxLayout):
 
 
     def show_popup_continued(self, title, message ,action):
-        layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
-        label = Label(text=message)
-        layout.add_widget(label)
-        grid = GridLayout(cols=2, size_hint=(1,.3) ,height=30)
-        popup = Popup(title=title,
-                        content=layout,
-                        auto_dismiss=False,
-                        size_hint=(None, None), size=(1000, 600))
 
-        if action == "to-origin":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="continue set origin")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
+        if action != "tacking-fail":
+            layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
+            label = Label(text=message)
+            layout.add_widget(label)
+            grid = GridLayout(cols=2, size_hint=(1,.3) ,height=30)
+            popup = Popup(title=title,
+                            content=layout,
+                            auto_dismiss=False,
+                            size_hint=(None, None), size=(1000, 600))
 
-        elif action == "to-auto":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="continue auto start")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
+            if action == "to-origin":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="continue set origin")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
 
-        elif action == "to-checking-light":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="continue auto start")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
+            elif action == "to-auto":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="continue auto start")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
 
-        elif action == "try-again":
+            elif action == "to-checking-light":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="continue auto start")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+
+            elif action == "try-again":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="try again")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+            elif action == "to-process-next-helio":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="continue")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+            elif action == "reconnect-auto-mode":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="Retry")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+            elif action == "error-stop-heliostats":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="Retry")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+            elif action == "reconnect-move-out":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="Retry")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
+        elif action == "tacking-fail":
+            layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
+            label = Label(text=message)
+            layout.add_widget(label)
+            grid = GridLayout(cols=3, size_hint=(1,.3) ,height=30)
+            popup = Popup(title=title,
+                            content=layout,
+                            auto_dismiss=False,
+                            size_hint=(None, None), size=(1000, 600))
+            
             button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="try again")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
-        elif action == "to-process-next-helio":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="continue")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
-        elif action == "reconnect-auto-mode":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
+            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process="Terminate", terminate=True, is_light_checking=True))
             grid.add_widget(button_exit)
             button_con = Button(text="Retry")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process="Retry", terminate=False, is_light_checking=True))
             grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
-        elif action == "error-stop-heliostats":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="Retry")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
-            grid.add_widget(button_con)
-            layout.add_widget(grid)
-            popup.open()
-        elif action == "reconnect-move-out":
-            button_exit = Button(text="Terminate")
-            button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True))
-            grid.add_widget(button_exit)
-            button_con = Button(text="Retry")
-            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False))
+            button_con = Button(text="Continue")
+            button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process="Continue", terminate=False, is_light_checking=True))
             grid.add_widget(button_con)
             layout.add_widget(grid)
             popup.open()
@@ -179,50 +205,63 @@ class ControllerAuto(BoxLayout):
         #     layout.add_widget(grid)
         #     popup.open()
 
-    def close_popup_and_continue(self, popup, process, terminate):
+    def close_popup_and_continue(self, popup, process, terminate, is_light_checking):
         popup.dismiss() 
-        if process == "to-origin":
-            if terminate:
+        if is_light_checking == False:
+            if process == "to-origin":
+                if terminate:
+                    self.force_off_auto()
+                # else:
+                #     self.handler_set_origin() # edit
+            elif process == "to-checking-light":
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.handle_checking_light()
+            elif process == "to-auto":
+                if terminate:
+                    self.force_off_auto()
+                # else:
+                #     self.handler_set_origin()
+            elif process == "try-again":
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.handle_checking_light()
+                
+            elif process == "to-process-next-helio":
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.process_next_helio()
+            elif process == "reconnect-auto-mode":
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.__debug_on_active_auto_mode_debug()
+                    # self.__on_loop_auto_calculate_diff() ## for production mode
+            elif process == "error-stop-heliostats": ## at light checking 
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.checking_light_in_target()
+            elif process == "reconnect-move-out": ## 
+                if terminate: 
+                    self.force_off_auto()
+                else:
+                    self.__on_loop_auto_calculate_diff()
+        else:
+            if process == "Terminate":
                 self.force_off_auto()
-            else:
-                self.handler_set_origin() 
-        elif process == "to-checking-light":
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.handle_checking_light()
-        elif process == "to-auto":
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.handler_set_origin()
-        elif process == "try-again":
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.handle_checking_light()
-            
-        elif process == "to-process-next-helio":
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.process_next_helio()
-        elif process == "reconnect-auto-mode":
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.__debug_on_active_auto_mode_debug()
-                # self.__on_loop_auto_calculate_diff() ## for production mode
-        elif process == "error-stop-heliostats": ## at light checking 
-            if terminate:
-                self.force_off_auto()
-            else:
-                self.checking_light_in_target()
-        elif process == "reconnect-move-out": ## 
-            if terminate: 
-                self.force_off_auto()
-            else:
-                self.__on_loop_auto_calculate_diff()
+            elif process == "Retry":
+                self.fail_to_tacking_light = False
+                self.current_helio_index -= 2
+                Clock.schedule_once(self._increment_and_process, 0)
+            elif process == "Continue":
+                self.fail_to_tacking_light = False
+                self.current_helio_index -= 1
+                Clock.schedule_once(self._increment_and_process, 0)
+    
 
     def show_popup_with_ignore_con(self, title, message, action):
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -298,7 +337,8 @@ class ControllerAuto(BoxLayout):
         print("start check light result " +  self.__light_checking_ip_operate + " light detect = " +self.number_center_light.text)
         self.ids.logging_process.text = "Start check light result in target."
         ### production need to > 0 ###
-        if int(self.number_center_light.text) == 0: ### for debug mode ### 
+        print("checking light")
+        if int(self.number_center_light.text) == 1: ### for debug mode ### 
         # if int(self.number_center_light.text) > 0:
             status = ControlHelioStats.stop_move(self,ip=self.__light_checking_ip_operate)
             if status:
@@ -317,91 +357,103 @@ class ControllerAuto(BoxLayout):
         ### production ###
         # self.active_auto_mode()
 
+    def _on_check_light_timeout(self, dt=None):
+        print("30 seconds have passed, checking light result...")
+        self.ids.logging_process.text = "Fail to tacking " + f"{self.__light_checking_ip_operate}"
+        self.fail_to_tacking_light = True 
+        Clock.unschedule(self.checking_light_in_target)
+        Clock.schedule_once(self._increment_and_process, 0)
+
+
+
     def process_next_helio(self, dt=None):
         # Check if we are done with all heliostats
-        if self.status_finish_loop_mode_first == False:
-            print("Loop using function use path.")
-            self.ids.logging_process.text = "Loop using function use path."
-            # print("self.current_helio_index => ", self.current_helio_index)
-            if self.ignore_fail_connection_ip == False:
-                if self.current_helio_index >= len(self.path_data_heliostats):
-                        # All done
-                    if self.is_loop_mode:
-                        self.current_helio_index = 0
-                        self.list_fail_set_origin = self.path_data_heliostats
-                    else:
-                        self.force_off_auto()
-                        return
-            self.ignore_fail_connection_ip = False
-            h_data = self.path_data_heliostats[self.current_helio_index]
-            
-            # 2. Send nearest time data
-            result = ControlHelioStats.find_nearest_time_and_send(
-                self, list_path_data=h_data['path'], ip=h_data['ip']
-            )
-            if result['is_fail']:
-                # Fail to send => show error, store fail, break the entire process
-                self.fail_checking_light_desc = {
-                    "title": "Error send path",
-                    "message": "Fail to connect heliostats " + f"{h_data['ip']} \n if ignore this heliostats will not operate in loop!",
-                }
+        if self.fail_to_tacking_light == False:
+            if self.status_finish_loop_mode_first == False:
+                print("Loop using function use path.")
+                self.ids.logging_process.text = "Loop using function use path."
+                # print("self.current_helio_index => ", self.current_helio_index)
+                if self.ignore_fail_connection_ip == False:
+                    if self.current_helio_index >= len(self.path_data_heliostats):
+                            # All done
+                        if self.is_loop_mode:
+                            self.current_helio_index = 0
+                            self.list_fail_set_origin = self.path_data_heliostats
+                        else:
+                            self.force_off_auto()
+                            return
+                self.ignore_fail_connection_ip = False
+                h_data = self.path_data_heliostats[self.current_helio_index]
+                
+                # 2. Send nearest time data
+                result = ControlHelioStats.find_nearest_time_and_send(
+                    self, list_path_data=h_data['path'], ip=h_data['ip']
+                )
+                if result['is_fail']:
+                    # Fail to send => show error, store fail, break the entire process
+                    self.fail_checking_light_desc = {
+                        "title": "Error send path",
+                        "message": "Fail to connect heliostats " + f"{h_data['ip']} \n if ignore this heliostats will not operate in loop!",
+                    }
 
-                self.fail_checking_light = True
-                self.helio_stats_fail_light_checking = h_data
-                # print(self.helio_stats_fail_light_checking)
-                self._handle_fail()
-                return
-            
-            # 3. Start checking the light
-            print(f"Start auto mode. ip = {h_data['ip']}")
-            self._light_check_result = False
-            self.__light_checking_ip_operate = h_data['ip']
-            
-            # Schedule checking_light_in_target periodically
-            Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
-            
-            # Schedule a timeout in 30 seconds to evaluate the result
-            self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 10)
+                    self.fail_checking_light = True
+                    self.helio_stats_fail_light_checking = h_data
+                    # print(self.helio_stats_fail_light_checking)
+                    self._handle_fail()
+                    return
+                
+                # 3. Start checking the light
+                print(f"Start auto mode. ip = {h_data['ip']}")
+                self._light_check_result = False
+                self.__light_checking_ip_operate = h_data['ip']
+                
+                # Schedule checking_light_in_target periodically
+                Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
+                
+                # Schedule a timeout in 30 seconds to evaluate the result
+                self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 10)
+            else:
+                print("Debug loop using function move in heliostats.")
+                self.ids.logging_process.text = "Debug loop using function move in heliostats."
+                if self.ignore_fail_connection_ip == False:
+                    if self.current_helio_index >= len(self.path_data_heliostats):
+                        # All done
+                        if self.is_loop_mode:
+                            self.current_helio_index = 0
+                            self.list_fail_set_origin = self.path_data_heliostats
+                        else:
+                            self._finish_auto_mode()
+                            return
+                self.ignore_fail_connection_ip = False
+                h_data = self.path_data_heliostats[self.current_helio_index]
+                
+                # 2. Send nearest time data
+                result = ControlHelioStats.move_helio_in(
+                    self, ip=h_data['ip']
+                )
+                if result['is_fail']:
+                    # Fail to send => show error, store fail, break the entire process
+                    self.fail_checking_light_desc = {
+                        "title": "Error send path",
+                        "message": "Fail to nearest path time to heliostats",
+                    }
+                    self.fail_checking_light = True
+                    self.helio_stats_fail_light_checking = h_data
+                    self._handle_fail()
+                    return
+                
+                # 3. Start checking the light
+                print(f"Start auto mode. ip = {h_data['ip']}")
+                self._light_check_result = False
+                self.__light_checking_ip_operate = h_data['ip']
+                
+                # Schedule checking_light_in_target periodically
+                Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
+                
+                # Schedule a timeout in 30 seconds to evaluate the result
+                self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 10)
         else:
-            print("Debug loop using function move in heliostats.")
-            self.ids.logging_process.text = "Debug loop using function move in heliostats."
-            if self.ignore_fail_connection_ip == False:
-                if self.current_helio_index >= len(self.path_data_heliostats):
-                    # All done
-                    if self.is_loop_mode:
-                        self.current_helio_index = 0
-                        self.list_fail_set_origin = self.path_data_heliostats
-                    else:
-                        self._finish_auto_mode()
-                        return
-            self.ignore_fail_connection_ip = False
-            h_data = self.path_data_heliostats[self.current_helio_index]
-            
-            # 2. Send nearest time data
-            result = ControlHelioStats.move_helio_in(
-                self, ip=h_data['ip']
-            )
-            if result['is_fail']:
-                # Fail to send => show error, store fail, break the entire process
-                self.fail_checking_light_desc = {
-                    "title": "Error send path",
-                    "message": "Fail to nearest path time to heliostats",
-                }
-                self.fail_checking_light = True
-                self.helio_stats_fail_light_checking = h_data
-                self._handle_fail()
-                return
-            
-            # 3. Start checking the light
-            print(f"Start auto mode. ip = {h_data['ip']}")
-            self._light_check_result = False
-            self.__light_checking_ip_operate = h_data['ip']
-            
-            # Schedule checking_light_in_target periodically
-            Clock.schedule_interval(self.checking_light_in_target, self.time_check_light_update)
-            
-            # Schedule a timeout in 30 seconds to evaluate the result
-            self._on_check_light_timeout_event = Clock.schedule_once(self._on_check_light_timeout, 10)
+            self.show_popup_continued(title="Tacking fail", message="Fail to tacking ip " + f"{self.__light_checking_ip_operate}", action="tacking-fail")
 
     ### for debug mode ###
     def __debug_stop_active_auto_mode_debug(self):
@@ -461,11 +513,7 @@ class ControllerAuto(BoxLayout):
             else:
                 pass
 
-    def _on_check_light_timeout(self, dt=None):
-        print("30 seconds have passed, checking light result...")
-        self.ids.logging_process.text = "30 seconds have passed, checking light result..."
-        Clock.unschedule(self.checking_light_in_target)
-        Clock.schedule_once(self._increment_and_process, 0)
+
 
     def _increment_and_process(self, dt=None):
         # Move index to next heliostat
@@ -476,6 +524,7 @@ class ControllerAuto(BoxLayout):
         print("Finish auto mode for all heliostats.")
         self.ids.logging_process.text = "Finish auto mode for all heliostats."
         self.status_finish_loop_mode_first = True
+        self.is_origin_set = False
         self.helio_stats_fail_light_checking = ""
         self.__light_checking_ip_operate = ""
         self.pending_url = []
@@ -600,13 +649,16 @@ class ControllerAuto(BoxLayout):
         if len(self.list_fail_set_origin) > 0:
             CrudData.save_fail_origin(self,self.list_fail_set_origin)
             self.list_origin_standby= self.list_success_set_origin
-            self.show_popup_continued(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
+            self.is_origin_set = True
+            self.show_popup(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}")
+            # self.show_popup(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
         else:
             CrudData.save_origin(self,self.list_success_set_origin)
-            self.list_origin_standby= self.list_success_set_origin
+            self.list_origin_standby = self.list_success_set_origin
             print("finish set origin to all heliostats.\n")
+            self.is_origin_set = True
             self.ids.logging_process.text = "finish set origin to all heliostats."
-            self.handle_checking_light()
+            # self.handle_checking_light()
 
     def __on__counting_index_origin(self):
         self.origin_set_axis = "x"
@@ -631,74 +683,38 @@ class ControllerAuto(BoxLayout):
     def handler_set_origin(self, *args):
         print("Start set origin handler_set_origin...")
         self.ids.logging_process.text = "Start set origin handler_set_origin..."
-        ### change self.ids.id_debug_mode.text == "debug on" to self.ids.label_auto_mode.text = "Auto on" in production mode 
-        if self.operation_type_selection == "all" and self.ids.id_debug_mode.text == "debug on":
-            self.range_of_heliostats = len(self.standby_url)
+        ip_helio_stats = CrudData.open_list_connection(self)
+        # print(ip_helio_stats)
+        print("self.operation_type_selection => ",self.helio_stats_id.text)
+        if self.helio_stats_id.text == "all":
+            self.range_of_heliostats = len(ip_helio_stats) - 1
+            self.standby_url = ip_helio_stats[1:]
+            print(self.standby_url)
             print("Set origin to all heliostats mode.")
             self.__on__counting_index_origin()
-        elif self.ids.id_debug_mode.text == "debug on":
-            ip_helio_stats = CrudData.open_list_connection(self)
+        else:
             for h_data in ip_helio_stats:
                 if h_data['id'] == self.operation_type_selection:
                     self.standby_url = []
                     self.standby_url = [h_data]
-        else:
-            self.force_off_auto()
 
     ### finish checking ###
-    def handler_loop_checking(self):
-        # if self.ids.label_auto_mode.text = "Auto off"
-        if self.ids.id_debug_mode.text == "debug off":
-            self.ids.id_debug_mode.text = "debug on"
-            self.ids.label_auto_mode.text = "Auto on"
-            # print("self.helio_stats_id.text => ", self.helio_stats_id.text.strip())
-            print("Start checking connection heliostats.")
-            self.ids.logging_process.text = "Start checking connection heliostats."
-            if self.helio_stats_id.text.strip() == "all":
-                self.operation_type_selection = self.helio_stats_id.text.strip()
-                print("self.operation_type_selection => ", self.operation_type_selection)
-                list_conn = CrudData.open_list_connection(self)
-                # print("list_conn => ",list_conn)
-                if len(list_conn) > 0 and self.ids.id_debug_mode.text == "debug on": ### production using self.ids.label_auto_mode.text == "Auto on"
-                    if self.is_loop_mode == True:
-                        list_standby, list_pending, list_fail = ControlGetCurrentPOS.handler_get_current_pos(self,list_url=list_conn)
-                        self.standby_url = list_standby
-                        self.pending_url = list_pending
-                        self.fail_url = list_fail
-                        if len(self.fail_url) > 0 and self.ids.id_debug_mode.text == "debug on":
-                            self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected = {self.fail_url}", action="to-origin")
-                        elif  self.ids.id_debug_mode.text == "debug on":
-                            print("Finish checking connection heliostats.\n")
-                            self.ids.logging_process.text = "Finish checking connection heliostats."
-                            self.handler_set_origin()
-                    elif  self.ids.id_debug_mode.text == "debug on":
-                        list_standby, list_pending, list_fail = ControlCheckConnHelioStats.handler_checking_connection(self,list_conn=list_conn)
-                        self.standby_url = list_standby
-                        self.pending_url = list_pending
-                        self.fail_url = list_fail
-                        if len(self.fail_url) > 0 and self.ids.id_debug_mode.text == "debug on":
-                            self.show_popup_continued(title="Warning",  message=f"Number heliostats disconnected = {len(self.fail_url)}", action="to-origin")
-                        elif self.ids.id_debug_mode.text == "debug on":
-                            print("Finish checking connection heliostats.\n")
-                            self.ids.logging_process.text = "Finish checking connection heliostats."
-                            self.handler_set_origin()
-                else:
-                    print("Not found heliostats\n")
-                    self.ids.id_debug_mode.text = "debug off"
-                    self.ids.label_auto_mode.text = "Auto off"
-                    self.ids.logging_process.text = "Not found heliostats"
-                    self.show_popup("Alert", "Not found any helio stats!")
+    def control_auto_mode(self):
+        if self.is_origin_set == True: 
+            if self.ids.id_debug_mode.text == "debug off":
+                self.ids.id_debug_mode.text = "debug on"
+                self.ids.label_auto_mode.text = "Auto on"
+                print("Start checking connection heliostats.")
+                self.handle_checking_light()
             else:
-                ### init heliostats one by one ### 
-                print("Finish checking connection heliostats.\n")
-                self.ids.logging_process.text = "Finish checking connection heliostats."
-                self.handler_set_origin()
+                self.force_off_auto()
         else:
-            self.force_off_auto()
+            self.show_popup(title="Alert", message="Origin must set first.")
 
     def force_off_auto(self):
         self.ids.id_debug_mode.text = "debug off"
         self.ids.label_auto_mode.text = "Auto off"
+        self.is_origin_set = False
         Clock.unschedule(self.checking_light_in_target)
         Clock.unschedule(self.active_auto_mode_debug)
         self.__off_loop_auto_calculate_diff()
