@@ -1025,12 +1025,12 @@ MainFrameWidget:
                 text: 'Loop off'
                 on_press: root.active_loop_mode()
             Button:
-                id: reconn_list
-                text: 'Reconnect'
-                on_press: root.list_fail_connection()
+                id: force_set_origin
+                text: 'Force origin off'
+                on_press: root.button_force_origin()
             Button:
                 id: set_origin_id
-                text: 'Origin'
+                text: 'Set origin'
                 on_press: root.handler_set_origin()
 
 
