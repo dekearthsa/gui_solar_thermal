@@ -52,28 +52,40 @@ class ControlHelioStats():
         pass
 
     ## function move back (pos right) ##
-    def move_helio_in(self, ip):
-        payload_set = {
-            "topic":"forward",
-            "step": 100,
-            "speed": 500,
-        }
-        try:
-            response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
-            if response.status_code == 200:
-                return {"is_fail":False}
-            else:
-                return  {"is_fail":True}
-        except Exception as e:
-            print("Error move_helio_in => " + f"{e}")
-            return  {"is_fail":True}
+    def move_helio_in(self, target, heliostats_id,ip):
+        print("move in process")
+        data_list = []
+        now = datetime.now()
+        path_time_stamp = now.strftime("%d_%m_%y"+"_"+heliostats_id)
+        if target == "camera-bottom":
+            try:
+                with open("./data/calibrate/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                    for line in file:
+                        clean_line = line.lstrip('*').strip()
+                        data_list.append(json.loads(clean_line))
+                        break
+            except Exception as e:
+                return {"is_fail": True}
+            self.find_nearest_time_and_send(list_path_data=data_list,ip=ip )
+        else:
+            try:
+                with open("./data/calibrate/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                    for line in file:
+                        clean_line = line.lstrip('*').strip()
+                        data_list.append(json.loads(clean_line))
+                        break
+            except Exception as e:
+                return {"is_fail": True}
+            self.find_nearest_time_and_send(list_path_data=data_list,ip=ip )
     
+
     ## function move out (pos left) ##
-    def move_helio_out(self, ip):
+    def move_helio_out(self, ip ):
+
         payload_set = {
-            "topic":"reverse",
-            "step": 100,
-            "speed": 500,
+            "topic":"mtt",
+            "x": 300.0,
+            "y": 300.0,
         }
         try:
             response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
@@ -85,9 +97,11 @@ class ControlHelioStats():
             print("Error move_helio_out => " + f"{e}")
             return False
 
+
     def stop_move(self, ip):
         
         payload_set = {"topic":"stop"}
+        print("stop_move => ", ip)
         try:
             response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=5)
             if response.status_code == 200:

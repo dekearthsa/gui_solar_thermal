@@ -583,7 +583,7 @@ class SetAutoScreen(Screen):
                     bounding_box_frame_h = max_height
 
                     counting_light_center = 0
-
+                    
                     for cnt in contours_light:
                         c_area = cv2.contourArea(cnt)
                         if self.static_min_area < c_area: #and self.static_max_area > c_area:
@@ -594,6 +594,7 @@ class SetAutoScreen(Screen):
                             cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                     ### draw center of frame
+                    self.ids.number_of_center_light_detected.text = str(counting_light_center)
                     cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
                     cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     

@@ -5,26 +5,18 @@
             "ip": "all"
         },
         {
-            "id": "h1",
-            "ip": "localhost:8888"
-        },
-        {
-            "id": "h2",
-            "ip": "localhost:8889"
-        },
-        {
-            "id": "h3",
-            "ip": "localhost:9000"
+            "id": "h6",
+            "ip": "192.168.0.111"
         }
     ],
     "camera_url": [
         {
             "id": "camera-bottom",
-            "url": "test_video.avi"
+            "url": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         },  
         {
             "id": "camera-top",
-            "url": "test_video.avi"
+            "url": "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"
         }
     ]
 }

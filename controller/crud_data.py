@@ -273,6 +273,7 @@ class CrudData:
                     counting_date += 1
                     previous_date = now - timedelta(days=is_date + 1)
                     path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
+                    print(path_time_stamp)
                     try:
                         with open("./data/calibrate/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
                             # print("file => ",file)
@@ -296,7 +297,7 @@ class CrudData:
                     previous_date = now - timedelta(days=is_date + 1)
                     # print(previous_date)
                     path_time_stamp = previous_date.strftime("%d_%m_%y"+"_"+heliostats_id)
-                    # print(path_time_stamp)
+                    print(path_time_stamp)
                     try:
                         with open("./data/receiver/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
                             # print("file => ",file)
