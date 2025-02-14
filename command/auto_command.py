@@ -439,11 +439,12 @@ class ControllerAuto(BoxLayout):
                             return
                 self.ignore_fail_connection_ip = False
                 h_data = self.path_data_heliostats[self.current_helio_index]
-                
+
                 # 2. Send nearest time data
                 result = ControlHelioStats.move_helio_in(
                     self, ip=h_data['ip']
                 )
+
                 if result['is_fail']:
                     # Fail to send => show error, store fail, break the entire process
                     self.fail_checking_light_desc = {
@@ -801,9 +802,14 @@ class ControllerAuto(BoxLayout):
         #     self.__off_checking_thread_callback()
         comp_status = requests.get("http://"+self.__light_checking_ip_operate)
         setJson = comp_status.json()
-        if setJson['move_comp'] == 1:
+        
+        # if setJson['move_comp'] == 0 and setJson['start_tracking'] == 1:
+        if setJson['move_comp'] == 1 and setJson['start_tracking'] == 0:
             self.status_esp_send_timer = False
             self.__off_checking_thread_callback()
+        elif setJson['move_comp'] == 0 and setJson['start_tracking'] == 0:
+            print("arduino dead check arduino! " + self.__light_checking_ip_operate)
+            
             
 
     def __on_checking_thread_callback(self):
@@ -827,77 +833,78 @@ class ControllerAuto(BoxLayout):
     ### ---end--- ###
 
     def update_loop_calulate_diff(self, dt):
-        center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(self.center_frame_auto.text, self.center_target_auto.text)
-        if self.status_auto.text == self.static_title_mode:
-            now = datetime.now()
-            timestamp = now.strftime("%d/%m/%y %H:%M:%S")
-            path_time_stamp = now.strftime("%d_%m_%y")
-            if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
-                try:
-                    payload = requests.get(url="http://"+self.__light_checking_ip_operate)
-                    # print("payload => ", payload) 
-                    setJson = payload.json()
-                    self.__haddle_save_positon(
-                            timestamp=timestamp,
-                            pathTimestap=path_time_stamp,
-                            helio_stats_id=self.helio_stats_selection_id,
-                            camera_use = self.camera_endpoint,
-                            id=setJson['id'],
-                            currentX=setJson['currentX'],
-                            currentY=setJson['currentY'],
-                            err_posx=setJson['err_posx'],
-                            err_posy=setJson['err_posy'],
-                            x=setJson['safety']['x'],
-                            y=setJson['safety']['y'],
-                            x1=setJson['safety']['x1'],
-                            y1=setJson['safety']['y1'],
-                            ls1=setJson['safety']['ls1'],
-                            st_path=setJson['safety']['st_path'],
-                            move_comp=setJson['safety']['move_comp'],
-                            elevation=setJson['elevation'],
-                            azimuth=setJson['azimuth'],
+        if self.is_call_back_thread_on == False:
+            center_x, center_y, target_x, target_y = self.__extract_coordinates_pixel(self.center_frame_auto.text, self.center_target_auto.text)
+            if self.status_auto.text == self.static_title_mode:
+                now = datetime.now()
+                timestamp = now.strftime("%d/%m/%y %H:%M:%S")
+                path_time_stamp = now.strftime("%d_%m_%y")
+                if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
+                    try:
+                        payload = requests.get(url="http://"+self.__light_checking_ip_operate)
+                        # print("payload => ", payload) 
+                        setJson = payload.json()
+                        self.__haddle_save_positon(
+                                timestamp=timestamp,
+                                pathTimestap=path_time_stamp,
+                                helio_stats_id=self.helio_stats_selection_id,
+                                camera_use = self.camera_endpoint,
+                                id=setJson['id'],
+                                currentX=setJson['currentX'],
+                                currentY=setJson['currentY'],
+                                err_posx=setJson['err_posx'],
+                                err_posy=setJson['err_posy'],
+                                x=setJson['safety']['x'],
+                                y=setJson['safety']['y'],
+                                x1=setJson['safety']['x1'],
+                                y1=setJson['safety']['y1'],
+                                ls1=setJson['safety']['ls1'],
+                                st_path=setJson['safety']['st_path'],
+                                move_comp=setJson['safety']['move_comp'],
+                                elevation=setJson['elevation'],
+                                azimuth=setJson['azimuth'],
+                            )
+                    except Exception as e:
+                        self.__off_loop_auto_calculate_diff()
+                        self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+                else:
+                    if self.status_esp_send_timer == False:
+                        self.__send_payload(
+                            axis=self.set_axis,
+                            center_x=center_x,
+                            center_y=center_y,
+                            center_y_light=target_y,
+                            center_x_light=target_x,
+                            kp=self.set_kp,
+                            ki=self.set_ki,
+                            kd=self.set_kd,
+                            max_speed=self.set_max_speed,
+                            off_set=self.set_off_set,
+                            status=self.set_status
                         )
-                except Exception as e:
-                    self.__off_loop_auto_calculate_diff()
-                    self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-            else:
-                if self.status_esp_send_timer == False:
-                    self.__send_payload(
-                        axis=self.set_axis,
-                        center_x=center_x,
-                        center_y=center_y,
-                        center_y_light=target_y,
-                        center_x_light=target_x,
-                        kp=self.set_kp,
-                        ki=self.set_ki,
-                        kd=self.set_kd,
-                        max_speed=self.set_max_speed,
-                        off_set=self.set_off_set,
-                        status=self.set_status
-                    )
-                else:
-                    self.__on_checking_thread_callback()
-        else:
-            self.__off_loop_auto_calculate_diff()
-            ### move heliostats out ###
-            status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
-            if status == False:
-                print("Helio stats error move out!")
-                # self.__off_loop_auto_calculate_diff()
-                self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
-            else:
-                self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
-                if len(self.list_success_set_origin) <= 0:
-                    if self.is_loop_mode:
-                        self.current_helio_index = 0
-                        self.list_fail_set_origin = self.list_success_set_origin
-                        Clock.schedule_once(self._increment_and_process, 0)
                     else:
-                        self.turn_on_auto_mode = False
-                        self.ids.label_auto_mode.text = "Auto off"
-                        # self.show_popup("Alert", "Camera is offline.")
+                        self.__on_checking_thread_callback()
+            else:
+                self.__off_loop_auto_calculate_diff()
+                ### move heliostats out ###
+                status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate)
+                if status == False:
+                    print("Helio stats error move out!")
+                    # self.__off_loop_auto_calculate_diff()
+                    self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
                 else:
-                    Clock.schedule_once(self._increment_and_process, 0)
+                    self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
+                    if len(self.list_success_set_origin) <= 0:
+                        if self.is_loop_mode:
+                            self.current_helio_index = 0
+                            self.list_fail_set_origin = self.list_success_set_origin
+                            Clock.schedule_once(self._increment_and_process, 0)
+                        else:
+                            self.turn_on_auto_mode = False
+                            self.ids.label_auto_mode.text = "Auto off"
+                            # self.show_popup("Alert", "Camera is offline.")
+                    else:
+                        Clock.schedule_once(self._increment_and_process, 0)
 
     def __on_loop_auto_calculate_diff(self):
         Clock.schedule_interval(self.update_loop_calulate_diff, self.time_loop_update)
