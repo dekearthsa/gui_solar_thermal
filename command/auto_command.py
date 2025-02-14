@@ -73,6 +73,7 @@ class ControllerAuto(BoxLayout):
         self.status_esp_origin_callback = False
         self.loop_timer_origin_callback = 1
         self.loop_timer_esp_callback = 1
+        self.is_esp_move_fail = False
 
         self.loop_timeout_origin_is_finish = True
         self.origin_set_axis = "x"
@@ -184,6 +185,15 @@ class ControllerAuto(BoxLayout):
                 grid.add_widget(button_con)
                 layout.add_widget(grid)
                 popup.open()
+            elif action == "redo-esp":
+                button_exit = Button(text="Terminate")
+                button_exit.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=True, is_light_checking=False))
+                grid.add_widget(button_exit)
+                button_con = Button(text="Retry")
+                button_con.bind(on_release=lambda instance: self.close_popup_and_continue(popup=popup, process=action, terminate=False, is_light_checking=False))
+                grid.add_widget(button_con)
+                layout.add_widget(grid)
+                popup.open()
             
         elif action == "tacking-fail":
             layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
@@ -262,12 +272,15 @@ class ControllerAuto(BoxLayout):
                 else:
                     self.__on_loop_auto_calculate_diff()
             elif process == "f-origin":
-                print("sss")
                 if terminate: 
                     pass
                 else:
-                    print("sss2")
                     self.force_set_origin()
+            elif process == "redo-esp":
+                if terminate:
+                    self.force_off_auto()
+                else:
+                    self.is_esp_move_fail = False
         else:
             if process == "Terminate":
                 self.force_off_auto()
@@ -763,6 +776,7 @@ class ControllerAuto(BoxLayout):
         self.ids.id_debug_mode.text = "debug off"
         self.ids.label_auto_mode.text = "Auto off"
         self.is_origin_set = False
+        self.is_esp_move_fail = False
         Clock.unschedule(self.checking_light_in_target)
         # Clock.unschedule(self.active_auto_mode_debug)
         Clock.unschedule(self.update_loop_calulate_diff)
@@ -793,24 +807,23 @@ class ControllerAuto(BoxLayout):
     
     ### checking status in when ESP32  ###
     def handler_checking_callback_esp(self, dt):
-        print("Wating callback from arduino.... " + self.__light_checking_ip_operate + " " + str(self.debug_counting_callback))
-        self.debug_counting_callback += 1
-        # with open("./data/setting/status_return.json","r") as file:
-        #     data = json.load(file)
-        # if data['esp_status_call_back'] == True:
-        #     self.status_esp_send_timer = False
-        #     self.__off_checking_thread_callback()
-        comp_status = requests.get("http://"+self.__light_checking_ip_operate)
-        setJson = comp_status.json()
-        
-        # if setJson['move_comp'] == 0 and setJson['start_tracking'] == 1:
-        if setJson['move_comp'] == 1 and setJson['start_tracking'] == 0:
-            self.status_esp_send_timer = False
-            self.__off_checking_thread_callback()
-        elif setJson['move_comp'] == 0 and setJson['start_tracking'] == 0:
-            print("arduino dead check arduino! " + self.__light_checking_ip_operate)
-            
-            
+        if self.is_esp_move_fail == False:
+            print("Wating arduino.... " + self.__light_checking_ip_operate + " " + str(self.debug_counting_callback))
+            self.ids.logging_process.text = "Wating arduino.... " + self.__light_checking_ip_operate + " " + str(self.debug_counting_callback)
+            self.debug_counting_callback += 1
+
+            comp_status = requests.get("http://"+self.__light_checking_ip_operate)
+            setJson = comp_status.json()
+
+            # if setJson['move_comp'] == 0 and setJson['start_tracking'] == 1:
+            if setJson['move_comp'] == 1 and setJson['start_tracking'] == 0:
+                self.status_esp_send_timer = False
+                self.__off_checking_thread_callback()
+            elif setJson['move_comp'] == 0 and setJson['start_tracking'] == 0:
+                self.is_esp_move_fail = True
+                print("arduino dead check arduino! " + self.__light_checking_ip_operate)
+                self.ids.logging_process.text = "Arduino status: Device is unhealthy!"
+                self.show_popup_continued(title="Critical error", message="Arduino is unhealthy please check connection or device.", action="redo-esp")
 
     def __on_checking_thread_callback(self):
         if self.is_call_back_thread_on == False:
