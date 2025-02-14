@@ -25,6 +25,7 @@ class ControllerAuto(BoxLayout):
         self.is_loop_mode = False
         # self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
+        self.helio_id = ""
         self.camera_endpoint = ""
         self.camera_selection = ""
         self.turn_on_auto_mode = False
@@ -363,7 +364,7 @@ class ControllerAuto(BoxLayout):
     #         self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
     #         h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
     #         c_id = storage['storage_endpoint']['camera_ip']['id']
-    #         return h_id, c_id
+    #         return h_id[1:], c_id
     #     except Exception as e:
     #         self.show_popup("Error", f"{e}")
 
@@ -421,6 +422,7 @@ class ControllerAuto(BoxLayout):
                         
                 self.ignore_fail_connection_ip = False
                 h_data = self.path_data_heliostats[self.current_helio_index]
+                self.helio_id = h_data['id']
                 # 2. Send nearest time data
                 result = ControlHelioStats.find_nearest_time_and_send(
                     self, list_path_data=h_data['path'], ip=h_data['ip']
@@ -468,7 +470,8 @@ class ControllerAuto(BoxLayout):
                     target=self.camera_url_id.text,
                     heliostats_id=h_data['id']
                 )
-                print(result)
+                self.helio_id = h_data['id']
+                # print(result)
 
                 if result['is_fail']:
                     # Fail to send => show error, store fail, break the entire process
@@ -777,6 +780,7 @@ class ControllerAuto(BoxLayout):
         # h_id, _ = self.selection_url_by_id()
         print("active_auto_mode => ",self.__light_checking_ip_operate)
         h_id =self.__light_checking_ip_operate
+        ### Edit id  ####
         if self.camera_url_id.text != "" and self.__light_checking_ip_operate != "":
             print("if self.camera_url_id.text != "" and self.__light_checking_ip_operate != "":")
             if self.status_auto.text == self.static_title_mode:
@@ -786,7 +790,7 @@ class ControllerAuto(BoxLayout):
                     if int(self.number_center_light.text) == 1:
                         print("if int(self.number_center_light.text) == 1:")
                         self.turn_on_auto_mode = True
-                        self.helio_stats_selection_id = h_id
+                        self.helio_stats_selection_id = h_id ###  <= must be id heliostats  ####
                         self.ids.label_auto_mode.text = "Auto on"
                         # self.update_loop_calulate_diff(1)
                         self.__on_loop_auto_calculate_diff()
@@ -856,7 +860,7 @@ class ControllerAuto(BoxLayout):
                         self.__haddle_save_positon(
                                 timestamp=timestamp,
                                 pathTimestap=path_time_stamp,
-                                helio_stats_id=self.helio_stats_selection_id,
+                                helio_stats_id=self.helio_id,
                                 camera_use = self.camera_endpoint,
                                 id=setJson['id'],
                                 currentX=setJson['currentX'],
@@ -931,12 +935,14 @@ class ControllerAuto(BoxLayout):
         self.increment_move_out += 1
         if self.increment_move_out >= 10: ## delay 10 sec
             Clock.schedule_once(self._increment_and_process, 0)
+            self.increment_move_out = 0
             self.__off_delay_move_out()
 
     def __on_delay_move_out(self):
         Clock.schedule_interval(self.thread_delay_move_out, 1)
 
     def __off_delay_move_out(self):
+
         Clock.unschedule(self.thread_delay_move_out)
 
     def __extract_coordinates_pixel(self, s1, s2): ##(frame_center, target_center)
@@ -1008,6 +1014,7 @@ class ControllerAuto(BoxLayout):
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
+        # print("helio_stats_id save => ", helio_stats_id)
         self.turn_on_auto_mode = False
         with open('./data/setting/setting.json', 'r') as file:
             storage = json.load(file)

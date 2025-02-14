@@ -46,7 +46,7 @@
     "hsv_threshold": {
         "low_h": 0,
         "low_s": 0,
-        "low_v": 199,
+        "low_v": 202,
         "high_h": 179,
         "high_s": 255,
         "high_v": 255
@@ -58,7 +58,7 @@
     "control_speed_distance": {
         "manual_mode": {
             "speed": 300,
-            "step": 10.0
+            "step": 50.0
         },
         "auto_mode": {
             "speed": 600,
@@ -84,8 +84,8 @@
     },
     "storage_endpoint": {
         "helio_stats_ip": {
-            "id": "all",
-            "ip": "all"
+            "id": "h1",
+            "ip": "192.168.0.106"
         },
         "camera_ip": {
             "id": "camera-top",
