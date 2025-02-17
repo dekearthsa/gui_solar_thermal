@@ -80,15 +80,15 @@ class ControlHelioStats():
     
 
     ## function move out (pos left) ##
-    def move_helio_out(self, ip ):
-
-        payload_set = {
-            "topic":"mtt",
-            "x": 300.0,
-            "y": 300.0,
-        }
+    def move_helio_out(self, ip ,payload ):
+        ## example data payload ##
+        # payload_set = {
+        #     "topic":"mtt",
+        #     "x": 300.0,
+        #     "y": 300.0,
+        # }
         try:
-            response = requests.post("http://"+ip+"/update-data", json=payload_set, timeout=10)
+            response = requests.post("http://"+ip+"/update-data", json=payload, timeout=10)
             if response.status_code == 200:
                 return True
             else:
