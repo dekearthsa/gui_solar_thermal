@@ -92,6 +92,7 @@ class ControllerAuto(BoxLayout):
         self.delay_timeout_origin_xy = 50
         self.is_range_origin = False
         self.array_origin_range = []
+        self.speed_origin = 600 ## default speed 600
 
         self.increment_move_out = 0
         # self.current_heliostats_data = []
@@ -625,31 +626,39 @@ class ControllerAuto(BoxLayout):
     ### start origin ###
     def handler_set_origin(self, *args):
         print("Start set origin handler_set_origin...")
-        self.ids.logging_process.text = "Start set origin handler_set_origin..."
-        if self.is_range_origin == False:
-            ip_helio_stats = CrudData.open_list_connection(self)
-            # print("ip_helio_stats => ",ip_helio_stats)
-            # print("self.operation_type_selection => ",self.helio_stats_id.text)
-            if self.helio_stats_id.text == "all":
-                self.range_of_heliostats = len(ip_helio_stats) - 1
-                self.standby_url = ip_helio_stats[1:]
-                self.list_success_set_origin = ip_helio_stats[1:]
-                # print(self.standby_url)
-                print("Set origin to all heliostats mode.")
-                self.__on__counting_index_origin()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            self.speed_origin = setting_data['control_speed_distance']['auto_mode']['origin_speed']
+            self.ids.logging_process.text = "Start set origin handler_set_origin..."
+            if self.is_range_origin == False:
+                ip_helio_stats = CrudData.open_list_connection(self)
+                # print("ip_helio_stats => ",ip_helio_stats)
+                # print("self.operation_type_selection => ",self.helio_stats_id.text)
+                if self.helio_stats_id.text == "all":
+                    self.range_of_heliostats = len(ip_helio_stats) - 1
+                    self.standby_url = ip_helio_stats[1:]
+                    self.list_success_set_origin = ip_helio_stats[1:]
+                    # print(self.standby_url)
+                    print("Set origin to all heliostats mode.")
+                    self.__on__counting_index_origin()
+                else:
+                    for h_data in ip_helio_stats:
+                        if h_data['id'] == self.helio_stats_id.text:
+                            print("h_data['id']" , h_data['id'])
+                            self.standby_url = []
+                            self.standby_url = [h_data]
+                            self.list_success_set_origin = [h_data]
+                            self.range_of_heliostats = len(self.standby_url)
+                            self.__on__counting_index_origin()
             else:
-                for h_data in ip_helio_stats:
-                    if h_data['id'] == self.helio_stats_id.text:
-                        print("h_data['id']" , h_data['id'])
-                        self.standby_url = []
-                        self.standby_url = [h_data]
-                        self.list_success_set_origin = [h_data]
-                        self.range_of_heliostats = len(self.standby_url)
-                        self.__on__counting_index_origin()
-        else:
-            self.range_of_heliostats = len(self.array_origin_range)
-            self.list_success_set_origin = self.array_origin_range
-            self.standby_url = self.array_origin_range
+                self.range_of_heliostats = len(self.array_origin_range)
+                self.list_success_set_origin = self.array_origin_range
+                self.standby_url = self.array_origin_range
+        except Exception as e:
+            pass
+        
+        
 
 
     def haddle_counting_index_origin(self,dt=None):
@@ -685,6 +694,7 @@ class ControllerAuto(BoxLayout):
                     }
                     payload = {
                         "topic": "mtt",
+                        "speed": self.speed_origin,
                         "x": 300.0,
                         "y": 0.0
                     }
@@ -718,6 +728,7 @@ class ControllerAuto(BoxLayout):
                     }
                     payload = {
                         "topic": "mtt",
+                        "speed": self.speed_origin,
                         "x": 300.0,
                         "y": 300.0
                     }

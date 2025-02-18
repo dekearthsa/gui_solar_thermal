@@ -850,6 +850,16 @@ class SetAutoScreen(Screen):
                 ),
                 "handler": self.handle_offset_change
             },
+            {
+                "label": "Origin-speed",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['origin_speed']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
         ]
 
         # Iterate over each parameter to create GridLayouts
