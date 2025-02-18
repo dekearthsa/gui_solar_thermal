@@ -77,6 +77,7 @@ class ControllerAuto(BoxLayout):
         self.loop_timer_esp_callback = 1
         self.is_esp_move_fail = False
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
+        self.move_out_delay_sec = 10 ## delay 10 sec default
         
         ### origin varibale ###
         self.loop_timeout_origin_is_finish = True
@@ -89,10 +90,12 @@ class ControllerAuto(BoxLayout):
         self.is_origin_set = False
         self.move_comp = 0
         self.ip_origin_process= ""
-        self.delay_timeout_origin_xy = 50
+        self.time_sleep_origin = 50
         self.is_range_origin = False
         self.array_origin_range = []
         self.speed_origin = 600 ## default speed 600
+        self.move_out_pos_x = 100 
+        self.move_out_pos_y = 100
 
         self.increment_move_out = 0
         # self.current_heliostats_data = []
@@ -630,6 +633,7 @@ class ControllerAuto(BoxLayout):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
             self.speed_origin = setting_data['control_speed_distance']['auto_mode']['origin_speed']
+            self.time_sleep_origin = setting_data['control_speed_distance']['auto_mode']['time_sleep_origin']
             self.ids.logging_process.text = "Start set origin handler_set_origin..."
             if self.is_range_origin == False:
                 ip_helio_stats = CrudData.open_list_connection(self)
@@ -688,7 +692,7 @@ class ControllerAuto(BoxLayout):
                     self.origin_set_axis = "x"
                 else:
                     print("sleep x 50 sec")
-                    time.sleep(self.delay_timeout_origin_xy) ## default = 50 sec
+                    time.sleep(self.time_sleep_origin) ## default = 50 sec
                     headers = {
                         'Content-Type': 'application/json'  
                     }
@@ -700,7 +704,7 @@ class ControllerAuto(BoxLayout):
                     }
                     result =  requests.post("http://"+self.standby_url[self.index_array_origin]['ip']+"/update-data", data=json.dumps(payload), headers=headers, timeout=5)
                     print("sleep x 300 50 sec")
-                    time.sleep(self.delay_timeout_origin_xy) ## default = 50 sec
+                    time.sleep(self.time_sleep_origin) ## default = 50 sec
                     if result.status_code == 200:
                         self.origin_axis_process = 'y' 
                         self.__on_thread_check_callback_origin()
@@ -722,7 +726,7 @@ class ControllerAuto(BoxLayout):
                     self.origin_set_axis = "x"
                 else:
                     print("sleep y 50 sec")
-                    time.sleep(self.delay_timeout_origin_xy) ## default = 50 sec
+                    time.sleep(self.time_sleep_origin) ## default = 50 sec
                     headers = {
                         'Content-Type': 'application/json'  
                     }
@@ -734,7 +738,7 @@ class ControllerAuto(BoxLayout):
                     }
                     result =  requests.post("http://"+self.standby_url[self.index_array_origin]['ip']+"/update-data", data=json.dumps(payload), headers=headers, timeout=5)
                     print("sleep y 300 50 sec")
-                    time.sleep(self.delay_timeout_origin_xy) ## default = 50 sec
+                    time.sleep(self.time_sleep_origin) ## default = 50 sec
                     if result.status_code == 200:
                         self.origin_axis_process = 'y' 
                         self.__on_thread_check_callback_origin()
@@ -815,12 +819,12 @@ class ControllerAuto(BoxLayout):
     def active_auto_mode(self):
         # h_id, _ = self.selection_url_by_id()
         # print("active_auto_mode => ",self.__light_checking_ip_operate)
-        h_id = self.__light_checking_ip_operate
         try:
-            data = requests.get("http://"+self.helio_get_data+"/",timeout=7)
-            json_data =  data.json()
-            self.current_pos_heliostats_for_moveout['x'] = json_data['currentX']
-            self.current_pos_heliostats_for_moveout['y'] = json_data['currentY']
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            self.current_pos_heliostats_for_moveout['x'] = setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+            self.current_pos_heliostats_for_moveout['y'] = setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+            self.move_out_delay_sec = setting_data['control_speed_distance']['auto_mode']['moveout_delay_sec']
             ### Edit id  ####
             if self.camera_url_id.text != "" and self.__light_checking_ip_operate != "":
                 print("if self.camera_url_id.text != "" and self.__light_checking_ip_operate != "":")
@@ -831,7 +835,7 @@ class ControllerAuto(BoxLayout):
                         if int(self.number_center_light.text) == 1:
                             print("if int(self.number_center_light.text) == 1:")
                             self.turn_on_auto_mode = True
-                            self.helio_stats_selection_id = h_id ###  <= must be id heliostats  ####
+                            self.helio_stats_selection_id = self.__light_checking_ip_operate ###  <= must be id heliostats  ####
                             self.ids.label_auto_mode.text = "Auto on"
                             # self.update_loop_calulate_diff(1)
                             self.__on_loop_auto_calculate_diff()
@@ -847,7 +851,7 @@ class ControllerAuto(BoxLayout):
                 self.show_popup("Alert", f"Please select helio stats id and camera")
         except Exception as e:
             print("Connection error heliostats "+ f"{self.__light_checking_ip_operate}" + " in function active_auto_mode.")
-            self.show_popup_continued(title="Connection error", message="Lost connection " +f"{self.__light_checking_ip_operate}", action="get-data-heliostats")
+            self.show_popup(title="Connection error", message="Cannot open file ./data/setting/setting.json\n setting.json is missing.")
         
     
     ### checking status in when ESP32  ###
@@ -877,7 +881,6 @@ class ControllerAuto(BoxLayout):
             Clock.schedule_interval(self.handler_checking_callback_esp, self.loop_timer_esp_callback) ### set rety read 3 sec
 
     def __off_checking_thread_callback(self):
-        
         try:
             with open("./data/setting/status_return.json", 'r') as file:
                 storage = json.load(file)
@@ -948,15 +951,12 @@ class ControllerAuto(BoxLayout):
                 self.__off_loop_auto_calculate_diff()
                 ### move heliostats out ###
                 status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
-                # time.sleep(10)
                 if status == False:
                     print("Helio stats error move out!")
-                    # self.__off_loop_auto_calculate_diff()
                     self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
                 else:
                     print("loop on delay diff")
                     self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
-                    # self.list_pos_move_out.append({"id":self.path_data_heliostats[self.current_helio_index]['id'],"ip":self.path_data_heliostats[self.current_helio_index]['ip'],})
                     if len(self.list_success_set_origin) <= 0:
                         if self.is_loop_mode:
                             self.current_helio_index = 0
@@ -978,7 +978,7 @@ class ControllerAuto(BoxLayout):
 
     def thread_delay_move_out(self,  dt=None):
         self.increment_move_out += 1
-        if self.increment_move_out >= 10: ## delay 10 sec
+        if self.increment_move_out >= self.move_out_delay_sec: ## delay 10 sec default
             Clock.schedule_once(self._increment_and_process, 0)
             self.increment_move_out = 0
             self.__off_delay_move_out()
@@ -1116,9 +1116,6 @@ class ControllerAuto(BoxLayout):
                     os.mkdir(path_folder_by_date)
                     with open(path_file_by_date, mode='w', newline='') as text_f:
                         text_f.write(perfixed_json+"\n")
-                    # self.show_popup("Finish", f"Auto mode off")
-                    # self.turn_on_auto_mode = False
-                    # self.ids.label_auto_mode.text = "Auto off"
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
@@ -1127,9 +1124,6 @@ class ControllerAuto(BoxLayout):
                 else:
                     with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
                         text_f.write(perfixed_json+"\n")
-                    # self.show_popup("Finish", f"Auto mode off")
-                    # self.turn_on_auto_mode = False
-                    # self.ids.label_auto_mode.text = "Auto off"
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
@@ -1157,9 +1151,6 @@ class ControllerAuto(BoxLayout):
                     os.mkdir(path_folder_by_date)
                     with open(path_file_by_date, mode='w', newline='') as text_f:
                         text_f.write(perfixed_json+"\n")
-                    # self.show_popup("Finish", f"Auto mode off")
-                    # self.turn_on_auto_mode = False
-                    # self.ids.label_auto_mode.text = "Auto off"
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
@@ -1167,9 +1158,6 @@ class ControllerAuto(BoxLayout):
                 else:
                     with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
                         text_f.write(perfixed_json+"\n")
-                    # self.show_popup("Finish", f"Auto mode off")
-                    # self.turn_on_auto_mode = False
-                    # self.ids.label_auto_mode.text = "Auto off"
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"

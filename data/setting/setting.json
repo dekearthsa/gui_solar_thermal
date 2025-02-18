@@ -63,6 +63,10 @@
         "auto_mode": {
             "speed": 600,
             "origin_speed": 600,
+            "moveout_x_stay": 100,
+            "moveout_y_stay": 100,
+            "moveout_delay_sec": 10,
+            "time_sleep_origin": 50,
             "step": 8
         },
         "path_mode": {

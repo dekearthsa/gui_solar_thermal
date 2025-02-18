@@ -860,6 +860,46 @@ class SetAutoScreen(Screen):
                 ),
                 "handler": self.handle_speed_change
             },
+            {
+                "label": "Move out pos X",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
+            {
+                "label": "Move out pos Y",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
+            {
+                "label": "Move out delay",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['moveout_delay_sec']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
+            {
+                "label": "Sleep origin",
+                "text_input": TextInput(
+                    text=str(setting_data['control_speed_distance']['auto_mode']['time_sleep_origin']),
+                    hint_text="Enter your speed",
+                    multiline=False,
+                    size_hint=(.3, 1)
+                ),
+                "handler": self.handle_speed_change
+            },
         ]
 
         # Iterate over each parameter to create GridLayouts
@@ -897,7 +937,7 @@ class SetAutoScreen(Screen):
             title=title,
             content=layout,
             size_hint=(None, None),
-            size=(850, 590),
+            size=(850, 850),
             auto_dismiss=True  # Allow dismissal by clicking outside or pressing Escape
         )
         popup.open()
@@ -911,6 +951,11 @@ class SetAutoScreen(Screen):
             setting_data['auto_mode_config']['kd'] = 2.0
             setting_data['auto_mode_config']['offset'] = 1.0
             setting_data['control_speed_distance']['auto_mode']['speed'] = 100
+            setting_data['control_speed_distance']['auto_mode']['origin_speed'] = 600
+            setting_data['control_speed_distance']['auto_mode']['moveout_x_stay'] = 100
+            setting_data['control_speed_distance']['auto_mode']['moveout_y_stay'] = 100
+            setting_data['control_speed_distance']['auto_mode']['moveout_delay_sec'] = 10
+            setting_data['control_speed_distance']['auto_mode']['time_sleep_origin'] = 50
             with open('./data/setting/setting.json', 'w') as file_save:
                 json.dump(setting_data, file_save, indent=4)
         except Exception as e:
