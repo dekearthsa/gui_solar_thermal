@@ -90,6 +90,8 @@ class ControllerAuto(BoxLayout):
         self.move_comp = 0
         self.ip_origin_process= ""
         self.delay_timeout_origin_xy = 50
+        self.is_range_origin = False
+        self.array_origin_range = []
 
         self.increment_move_out = 0
         # self.current_heliostats_data = []
@@ -624,25 +626,31 @@ class ControllerAuto(BoxLayout):
     def handler_set_origin(self, *args):
         print("Start set origin handler_set_origin...")
         self.ids.logging_process.text = "Start set origin handler_set_origin..."
-        ip_helio_stats = CrudData.open_list_connection(self)
-        # print("ip_helio_stats => ",ip_helio_stats)
-        # print("self.operation_type_selection => ",self.helio_stats_id.text)
-        if self.helio_stats_id.text == "all":
-            self.range_of_heliostats = len(ip_helio_stats) - 1
-            self.standby_url = ip_helio_stats[1:]
-            self.list_success_set_origin = ip_helio_stats[1:]
-            # print(self.standby_url)
-            print("Set origin to all heliostats mode.")
-            self.__on__counting_index_origin()
+        if self.is_range_origin == False:
+            ip_helio_stats = CrudData.open_list_connection(self)
+            # print("ip_helio_stats => ",ip_helio_stats)
+            # print("self.operation_type_selection => ",self.helio_stats_id.text)
+            if self.helio_stats_id.text == "all":
+                self.range_of_heliostats = len(ip_helio_stats) - 1
+                self.standby_url = ip_helio_stats[1:]
+                self.list_success_set_origin = ip_helio_stats[1:]
+                # print(self.standby_url)
+                print("Set origin to all heliostats mode.")
+                self.__on__counting_index_origin()
+            else:
+                for h_data in ip_helio_stats:
+                    if h_data['id'] == self.helio_stats_id.text:
+                        print("h_data['id']" , h_data['id'])
+                        self.standby_url = []
+                        self.standby_url = [h_data]
+                        self.list_success_set_origin = [h_data]
+                        self.range_of_heliostats = len(self.standby_url)
+                        self.__on__counting_index_origin()
         else:
-            for h_data in ip_helio_stats:
-                if h_data['id'] == self.helio_stats_id.text:
-                    print("h_data['id']" , h_data['id'])
-                    self.standby_url = []
-                    self.standby_url = [h_data]
-                    self.list_success_set_origin = [h_data]
-                    self.range_of_heliostats = len(self.standby_url)
-                    self.__on__counting_index_origin()
+            self.range_of_heliostats = len(self.array_origin_range)
+            self.list_success_set_origin = self.array_origin_range
+            self.standby_url = self.array_origin_range
+
 
     def haddle_counting_index_origin(self,dt=None):
         # print("haddle_counting_index_origin start...")
@@ -858,6 +866,7 @@ class ControllerAuto(BoxLayout):
             Clock.schedule_interval(self.handler_checking_callback_esp, self.loop_timer_esp_callback) ### set rety read 3 sec
 
     def __off_checking_thread_callback(self):
+        
         try:
             with open("./data/setting/status_return.json", 'r') as file:
                 storage = json.load(file)
@@ -1219,8 +1228,6 @@ class ControllerAuto(BoxLayout):
             print("error handler_reconn_helio func " + f"{e}")
             self.show_popup("Error", "Error in handler_reconn_helio\n" + f"{e}")
 
-    
-
     def re_set_origin(self,payload):
         try:
             payload = {"topic":"origin","axis": payload['origin'],"speed": 400}
@@ -1251,3 +1258,63 @@ class ControllerAuto(BoxLayout):
         )
         popup.open()
 
+    def haddle_clear_origin(self):
+        self.is_range_origin = False
+        self.array_origin_range = []
+        self.status_finish_loop_mode_first = True
+        self.is_origin_set = False
+        self.helio_stats_fail_light_checking = ""
+        self.__light_checking_ip_operate = ""
+        self.pending_url = []
+        self.standby_url = []
+        self.fail_url = []
+        self.list_fail_set_origin = []
+        self.list_success_set_origin = []
+        self.list_success_set_origin_store = []
+        self.list_origin_standby = []
+        self.path_data_heliostats = []
+        self.path_data_not_found_list = []
+        self.current_helio_index = 0
+        self._on_check_light_timeout_event = None
+
+    def haddle_add_origin(self):
+        try:
+            with open("./data/setting/connection.json", 'r') as file:
+                connection_list = json.load(file)
+
+            layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+            for url in connection_list['helio_stats_ip'][1:]:
+                grid = GridLayout(cols=2, size_hint=(1,1), height=40, spacing=10)
+                label = Label(text=str(url), size_hint=(0.3,1))
+                button_origin_set = Button(text="Add", size_hint=(0.2,1))
+                button_origin_set.bind(on_release= lambda instance: self.adding_origin(url=url))
+                grid.add_widget(label)
+                grid.add_widget(button_origin_set)
+                layout.add_widget(grid)
+
+            popup = Popup(
+                title="Add heliostats to set origin",
+                content=layout,
+                size_hint=(None, None),
+                size=(1050, 960),
+                auto_dismiss=True
+            )
+
+            popup.open()
+
+        except Exception as e:
+            print("File not found!")
+
+    def adding_origin(self, url):
+        if len(self.array_origin_range) == 0:
+            self.is_range_origin = True
+            self.array_origin_range.append(url)
+            self.show_popup(title="alert", message="Heliostats "+f"{url}"+ " is adding.")
+        else:
+            for i in self.array_origin_range:
+                if i['ip'] == url['ip']:
+                    self.show_popup(title="alert", message="Heliostats "+f"{url}"+ " is readly added.")
+                    break 
+                else:
+                    self.array_origin_range.append(url)
+                    self.show_popup(title="alert", message="Heliostats "+f"{url}"+ " is adding.")

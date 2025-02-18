@@ -81,6 +81,8 @@ class ControlHelioStats():
 
     ## function move out (pos left) ##
     def move_helio_out(self, ip ,payload ):
+        payload['speed'] = 400.0
+        
         ## example data payload ##
         # payload_set = {
         #     "topic":"mtt",

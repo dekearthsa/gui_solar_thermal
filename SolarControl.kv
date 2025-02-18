@@ -977,17 +977,19 @@ MainFrameWidget:
                     # size: 200, 44
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_helio_stats(self, self.text)
-
-            ControllerAuto:
-                id: controller_auto
-                status_auto: auto_camera_status
-                center_frame_auto: auto_center_frame_position
-                center_target_auto: auto_center_target_position
-                helio_stats_id: selected_label_helio_stats
-                camera_url_id: selected_label_camera
-                number_center_light: number_of_center_light_detected
-                bounding_box_frame_data: auto_bounding_frame_position
-                
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_x: .75
+                ControllerAuto:
+                    id: controller_auto
+                    status_auto: auto_camera_status
+                    center_frame_auto: auto_center_frame_position
+                    center_target_auto: auto_center_target_position
+                    helio_stats_id: selected_label_helio_stats
+                    camera_url_id: selected_label_camera
+                    number_center_light: number_of_center_light_detected
+                    bounding_box_frame_data: auto_bounding_frame_position
+                    
 
 <ControllerAuto>:
     orientation: 'vertical'
@@ -997,12 +999,7 @@ MainFrameWidget:
         Label:
             id: logging_process
             text: "-"
-        Button:
-            id: id_debug_mode
-            text: 'debug off'
-            # on_press: root.debug_mode_data()
-            on_press: root.control_auto_mode()
-            # on_press: root.force_off_auto()
+        
 
         Button:
             id: label_auto_mode
@@ -1018,20 +1015,32 @@ MainFrameWidget:
                     Ellipse:
                         pos: self.pos
                         size: self.size
+        Button:
+            id: set_origin_id
+            text: 'Set origin'
+            on_press: root.handler_set_origin()
         GridLayout:
-            cols: 3
+            cols: 4
             Button:
                 id: label_loop_mode
                 text: 'Loop off'
                 on_press: root.active_loop_mode()
             Button:
+                id: clear_origin
+                text: 'Clear origin'
+                on_press: root.haddle_clear_origin()
+            Button:
+                id: add_origin
+                text: 'Add origin'
+                on_press: root.haddle_add_origin()
+            Button:
                 id: force_set_origin
                 text: 'Force origin off'
                 on_press: root.button_force_origin()
-            Button:
-                id: set_origin_id
-                text: 'Set origin'
-                on_press: root.handler_set_origin()
+            # Button:
+            #     id: set_origin_id
+            #     text: 'Set origin'
+            #     on_press: root.handler_set_origin()
 
 
 

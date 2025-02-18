@@ -603,13 +603,10 @@ class ManualScreen(Screen):
                         error_y = centers_frame[1] - centers_light[1][0]
                         self.ids.manual_error_center.text = f"X: {error_x}px Y: {error_y}px"
                         self.ids.manual_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-
-
-
                 except Exception as e:
                     self.show_popup("Error", str(e))
                     return
-
+                
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
             return "Description: light detected status healthy!"
@@ -705,7 +702,9 @@ class ManualScreen(Screen):
                     setting_data = json.load(file)
                 payload = {
                     "topic": "mtt",
-                    "speed": setting_data['control_speed_distance']['manual_mode']['speed']
+                    "speed": setting_data['control_speed_distance']['manual_mode']['speed'],
+                    "x":300.0,
+                    "y": 300.0
                 }
                 try:
                     response = requests.post("http://"+setting_data['storage_endpoint']['helio_stats_ip']['ip']+"/update-data", json=payload, timeout=5)
