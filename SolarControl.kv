@@ -1020,11 +1020,15 @@ MainFrameWidget:
             text: 'Set origin'
             on_press: root.handler_set_origin()
         GridLayout:
-            cols: 4
+            cols: 5
             Button:
                 id: label_loop_mode
                 text: 'Loop off'
                 on_press: root.active_loop_mode()
+            Button:
+                id: label_loop_mode
+                text: 'Use date now'
+                on_press: root.active_datenow()
             Button:
                 id: clear_origin
                 text: 'Clear origin'

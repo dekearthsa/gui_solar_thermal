@@ -850,16 +850,16 @@ class SetAutoScreen(Screen):
                 ),
                 "handler": self.handle_offset_change
             },
-            {
-                "label": "Origin-speed",
-                "text_input": TextInput(
-                    text=str(setting_data['control_speed_distance']['auto_mode']['origin_speed']),
-                    hint_text="Enter your speed",
-                    multiline=False,
-                    size_hint=(.3, 1)
-                ),
-                "handler": self.handle_speed_change
-            },
+            # {
+            #     "label": "Origin-speed",
+            #     "text_input": TextInput(
+            #         text=str(setting_data['control_speed_distance']['auto_mode']['origin_speed']),
+            #         hint_text="Enter your speed",
+            #         multiline=False,
+            #         size_hint=(.3, 1)
+            #     ),
+            #     "handler": self.handle_speed_change
+            # },
             {
                 "label": "Move out pos X",
                 "text_input": TextInput(
@@ -868,7 +868,7 @@ class SetAutoScreen(Screen):
                     multiline=False,
                     size_hint=(.3, 1)
                 ),
-                "handler": self.handle_speed_change
+                "handler": self.handle_moveout_x_stay_change
             },
             {
                 "label": "Move out pos Y",
@@ -878,7 +878,7 @@ class SetAutoScreen(Screen):
                     multiline=False,
                     size_hint=(.3, 1)
                 ),
-                "handler": self.handle_speed_change
+                "handler": self.handle_moveout_y_stay_change
             },
             {
                 "label": "Move out delay",
@@ -888,7 +888,7 @@ class SetAutoScreen(Screen):
                     multiline=False,
                     size_hint=(.3, 1)
                 ),
-                "handler": self.handle_speed_change
+                "handler": self.handle_moveout_delay_sec_change
             },
             {
                 "label": "Sleep origin",
@@ -898,7 +898,7 @@ class SetAutoScreen(Screen):
                     multiline=False,
                     size_hint=(.3, 1)
                 ),
-                "handler": self.handle_speed_change
+                "handler": self.handle_time_sleep_origin_change
             },
         ]
 
@@ -971,7 +971,61 @@ class SetAutoScreen(Screen):
                 json.dump(setting_data, file_save, indent=4)
         except Exception as e:
             self.show_popup("Error", f"Failed to reset crop values: {e}")
-        
+    
+    def handle_moveout_x_stay_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['moveout_x_stay'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+            
+    def handle_moveout_y_stay_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['moveout_y_stay'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+    
+    def handle_moveout_delay_sec_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['moveout_delay_sec'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+            
+    def handle_time_sleep_origin_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['time_sleep_origin'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
+            
+    def handle_mtt_speed_move_out_change(self, text_input, instance):
+        val = text_input.text.strip()
+        try:
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            setting_data['control_speed_distance']['auto_mode']['mtt_speed_move_out'] = int(val)
+            with open('./data/setting/setting.json', 'w') as file_save:
+                json.dump(setting_data, file_save, indent=4)
+        except Exception as e:
+            self.show_popup("Error", f"Failed to reset crop values: {e}")
 
     def handle_KI_change(self, text_input, instance):
         val = text_input.text.strip()

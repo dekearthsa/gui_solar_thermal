@@ -63,29 +63,35 @@ class ControlHelioStats():
                     for line in file:
                         clean_line = line.lstrip('*').strip()
                         data_list.append(json.loads(clean_line))
-                        break
             except Exception as e:
+                print(e)
                 return {"is_fail": True}
-            self.find_nearest_time_and_send(list_path_data=data_list,ip=ip )
+            return {"is_fail": False, "path":data_list}
+            # return self.find_nearest_time_and_send(list_path_data=data_list,ip=ip)
+            
         else:
+            print("\npath_time_stamp = ",path_time_stamp)
             try:
-                with open("./data/calibrate/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
+                with open("./data/receiver/result"+"/"+path_time_stamp+"/data.txt" , 'r') as file:
                     for line in file:
                         clean_line = line.lstrip('*').strip()
+                        print(clean_line)
                         data_list.append(json.loads(clean_line))
-                        break
             except Exception as e:
+                print(e)
                 return {"is_fail": True}
-            self.find_nearest_time_and_send(list_path_data=data_list,ip=ip )
+            print("path ",data_list)
+            # self.find_nearest_time_and_send(list_path_data=data_list,ip=ip )
+            return {"is_fail": False, "path":data_list}
+            # return self.find_nearest_time_and_send(list_path_data=data_list,ip=ip)
     
 
     ## function move out (pos left) ##
     def move_helio_out(self, ip ,payload ):
-        payload['speed'] = 400.0
-        
         ## example data payload ##
         # payload_set = {
         #     "topic":"mtt",
+        #     "speed": 600,
         #     "x": 300.0,
         #     "y": 300.0,
         # }

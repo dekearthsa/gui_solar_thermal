@@ -17,12 +17,15 @@ from controller.control_origin import ControlOrigin
 from controller.control_heliostats import ControlHelioStats
 # from command.manual_command import ControllerManual
 import time
+import logging 
+logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 class ControllerAuto(BoxLayout):
     def __init__(self,**kwargs ):
         
         super().__init__(**kwargs)
         self.is_loop_mode = False
+        self.is_first_loop_finish = False
         # self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
         self.helio_stats_selection_id = "" ####  admin select helio stats id
         self.helio_id = ""
@@ -96,6 +99,8 @@ class ControllerAuto(BoxLayout):
         self.speed_origin = 600 ## default speed 600
         self.move_out_pos_x = 100 
         self.move_out_pos_y = 100
+        self.current_x_pos = 0
+        self.current_y_pos = 0
 
         self.increment_move_out = 0
         # self.current_heliostats_data = []
@@ -430,13 +435,15 @@ class ControllerAuto(BoxLayout):
             if self.status_finish_loop_mode_first == False:
                 print("Loop using function use path.")
                 self.ids.logging_process.text = "Loop using function use path."
-                print("self.current_helio_index ",self.current_helio_index)
-                print("self.path_data_heliostats ",self.path_data_heliostats)
-                print("list_success_set_origin => ", self.list_success_set_origin)
+                # print("self.current_helio_index ",self.current_helio_index)
+                # print("self.path_data_heliostats ",self.path_data_heliostats)
+                # print("list_success_set_origin => ", self.list_success_set_origin)
                 if self.ignore_fail_connection_ip == False:
                     if self.current_helio_index >= len(self.list_success_set_origin):
                             # All done
                         if self.is_loop_mode:
+                            # self.is_first_loop_finish = True
+                            self.status_finish_loop_mode_first = True
                             self.current_helio_index = 0
                             # self.list_fail_set_origin =self.list_success_set_origin
                         else:
@@ -446,6 +453,12 @@ class ControllerAuto(BoxLayout):
                 self.ignore_fail_connection_ip = False
                 h_data = self.path_data_heliostats[self.current_helio_index]
                 self.helio_id = h_data['id']
+                
+                # if self.is_first_loop_finish == True:
+                #     self.path_data_heliostats = self.open_previous_data(self, target=self.camera_url_id.text,heliostats_id=h_data['id'], is_first_time_loop=self.is_first_loop_finish)
+                #     h_data = self.path_data_heliostats[self.current_helio_index]
+                #     self.helio_id = h_data['id']
+
                 # 2. Send nearest time data
                 result = ControlHelioStats.find_nearest_time_and_send(
                     self, list_path_data=h_data['path'], ip=h_data['ip']
@@ -473,12 +486,13 @@ class ControllerAuto(BoxLayout):
             else:
                 print("loop using function move in heliostats.")
                 self.ids.logging_process.text = "loop using function move in heliostats."
-                print("self.current_helio_index ",self.current_helio_index)
-                print("self.path_data_heliostats ",self.path_data_heliostats)
+                # print("self.current_helio_index ",self.current_helio_index)
+                # print("self.path_data_heliostats ",self.path_data_heliostats)
                 if self.ignore_fail_connection_ip == False:
                     if self.current_helio_index >= len(self.list_success_set_origin):
                         # All done
                         if self.is_loop_mode:
+                            # self.is_first_loop_finish = True
                             self.current_helio_index = 0
                             # self.list_fail_set_origin = self.path_data_heliostats
                         else:
@@ -486,17 +500,33 @@ class ControllerAuto(BoxLayout):
                             return
                 self.ignore_fail_connection_ip = False
                 h_data = self.path_data_heliostats[self.current_helio_index]
-
+                
                 # 2. Send nearest time data
                 result = ControlHelioStats.move_helio_in(
                     self, ip=h_data['ip'],
                     target=self.camera_url_id.text,
                     heliostats_id=h_data['id']
                 )
+                print('move in result: ', result)
                 self.helio_id = h_data['id']
                 # print(result)
 
                 if result['is_fail']:
+                    # Fail to send => show error, store fail, break the entire process
+                    self.fail_checking_light_desc = {
+                        "title": "Error send path",
+                        "message": "Fail to find path",
+                    }
+                    self.fail_checking_light = True
+                    self.helio_stats_fail_light_checking = h_data
+                    self.__handle_fail()
+                    return
+                
+                result_ner = ControlHelioStats.find_nearest_time_and_send(
+                    self, list_path_data=result['path'], ip=h_data['ip']
+                )
+                print("result_ner => ", result_ner)
+                if result_ner['is_fail']:
                     # Fail to send => show error, store fail, break the entire process
                     self.fail_checking_light_desc = {
                         "title": "Error send path",
@@ -506,7 +536,6 @@ class ControllerAuto(BoxLayout):
                     self.helio_stats_fail_light_checking = h_data
                     self.__handle_fail()
                     return
-                
                 # 3. Start checking the light
                 print(f"Start auto mode. ip = {h_data['ip']}")
                 self._light_check_result = False
@@ -572,7 +601,7 @@ class ControllerAuto(BoxLayout):
     def stanby_get_helio_stats_path(self):
         for h_data in self.list_success_set_origin:
             print("stanby_get_helio_stats_path => ", h_data)
-            list_path_data = CrudData.open_previous_data(self, self.camera_url_id.text, h_data['id'])
+            list_path_data = CrudData.open_previous_data(self, target=self.camera_url_id.text,heliostats_id=h_data['id'])
             if list_path_data['found'] == False:
                 self.path_data_not_found_list.append(h_data['id'])
             else:
@@ -590,11 +619,14 @@ class ControllerAuto(BoxLayout):
         self.stanby_get_helio_stats_path()
         # print("self.path_data_not_found_list => ", self.path_data_not_found_list)
         # print("self.path_data_heliostats => ", self.path_data_heliostats)
-        if len(self.path_data_not_found_list) > 0:
-            self.show_popup_continued(title="Warning", message="There are missing path or out of date \n"+ f"{self.path_data_not_found_list} \n if continue those heliostats will not operate." , action="to-process-next-helio")
-        else:
-            print(self.path_data_heliostats)
+        if self.status_finish_loop_mode_first == True:
             self.process_next_helio()
+        else:
+            if len(self.path_data_not_found_list) > 0:
+                self.show_popup_continued(title="Warning", message="There are missing path or out of date \n"+ f"{self.path_data_not_found_list} \n if continue those heliostats will not operate." , action="to-process-next-helio")
+            else:
+                # print(self.path_data_heliostats)
+                self.process_next_helio()
 
     ### function origin control ###
     def button_force_origin(self):
@@ -632,7 +664,7 @@ class ControllerAuto(BoxLayout):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            self.speed_origin = setting_data['control_speed_distance']['auto_mode']['origin_speed']
+            self.speed_origin = setting_data['control_speed_distance']['auto_mode']['speed']
             self.time_sleep_origin = setting_data['control_speed_distance']['auto_mode']['time_sleep_origin']
             self.ids.logging_process.text = "Start set origin handler_set_origin..."
             if self.is_range_origin == False:
@@ -795,8 +827,7 @@ class ControllerAuto(BoxLayout):
     #### auto mode ####
     def control_auto_mode(self):
         if self.is_origin_set == True: 
-            if self.ids.id_debug_mode.text == "debug off":
-                self.ids.id_debug_mode.text = "debug on"
+            if self.ids.label_auto_mode.text == "Auto off":
                 self.ids.label_auto_mode.text = "Auto on"
                 print("Start checking connection heliostats.")
                 self.handle_checking_light()
@@ -806,7 +837,7 @@ class ControllerAuto(BoxLayout):
             self.show_popup(title="Alert", message="Origin must set first.")
 
     def force_off_auto(self):
-        self.ids.id_debug_mode.text = "debug off"
+        self.is_first_loop_finish = False
         self.ids.label_auto_mode.text = "Auto off"
         self.is_origin_set = False
         self.is_esp_move_fail = False
@@ -822,8 +853,8 @@ class ControllerAuto(BoxLayout):
         try:
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
-            self.current_pos_heliostats_for_moveout['x'] = setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
-            self.current_pos_heliostats_for_moveout['y'] = setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+            self.move_out_pos_x = setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+            self.move_out_pos_y = setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
             self.move_out_delay_sec = setting_data['control_speed_distance']['auto_mode']['moveout_delay_sec']
             ### Edit id  ####
             if self.camera_url_id.text != "" and self.__light_checking_ip_operate != "":
@@ -950,23 +981,34 @@ class ControllerAuto(BoxLayout):
                 print("update_loop_calulate_diff else ")
                 self.__off_loop_auto_calculate_diff()
                 ### move heliostats out ###
-                status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
-                if status == False:
-                    print("Helio stats error move out!")
-                    self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
-                else:
-                    print("loop on delay diff")
-                    self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
-                    if len(self.list_success_set_origin) <= 0:
-                        if self.is_loop_mode:
-                            self.current_helio_index = 0
-                            self.list_fail_set_origin = self.list_success_set_origin
-                            self.__on_delay_move_out()
-                        else:
-                            self.turn_on_auto_mode = False
-                            self.ids.label_auto_mode.text = "Auto off"
+                try:
+                    payload = requests.get(url="http://"+self.__light_checking_ip_operate)
+                    setJson = payload.json()
+                    with open('./data/setting/setting.json', 'r') as file:
+                        setting_data = json.load(file)
+                    self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
+                    self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
+                    self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
+                    status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
+                    if status == False:
+                        print("Helio stats error move out!")
+                        self.show_popup_continued(title="Critical error move helio stats out", message="Cannot connection to helio stats when move out \nPlease check the connection and move heliostats out off target.", action="reconnect-move-out")
                     else:
-                        self.__on_delay_move_out()
+                        print("loop on delay diff")
+                        self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
+                        if len(self.list_success_set_origin) <= 0:
+                            if self.is_loop_mode:
+                                self.current_helio_index = 0
+                                self.list_fail_set_origin = self.list_success_set_origin
+                                self.__on_delay_move_out()
+                            else:
+                                self.turn_on_auto_mode = False
+                                self.ids.label_auto_mode.text = "Auto off"
+                        else:
+                            self.__on_delay_move_out()
+                except Exception as e:
+                    print("Helio stats error move out connection")
+                    self.show_popup_continued(title="Connection error", message="Connection error "+ f"{self.__light_checking_ip_operate}", action="reconnect-move-out")
 
 
     def __on_loop_auto_calculate_diff(self):
@@ -1084,8 +1126,6 @@ class ControllerAuto(BoxLayout):
             "azimuth": azimuth,
             "control_by": "machine"
         }
-
-
         now = datetime.now()
         path_time_stamp = now.strftime("%d_%m_%y"+"_"+helio_stats_id)
         timing =  now.strftime("%H:%M:%S")
@@ -1097,6 +1137,9 @@ class ControllerAuto(BoxLayout):
         
         json_str = json.dumps(adding_path_data)
         perfixed_json = f"*{json_str}"
+        self.current_pos_heliostats_for_moveout['x'] = currentX -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
+        self.current_pos_heliostats_for_moveout['y'] = currentY +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
+        self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
@@ -1185,6 +1228,14 @@ class ControllerAuto(BoxLayout):
         scaling_y = round((current_height/setting_data['old_frame_resolution']['height']),2)
         return scaling_x, scaling_y, current_height
 
+    def active_datenow(self):
+        if self.status_finish_loop_mode_first == True:
+            self.status_finish_loop_mode_first = False
+            self.show_popup(title="Update", message="Focus off current date")
+        else:
+            self.status_finish_loop_mode_first = True
+            self.show_popup(title="Update", message="Focus on current date")
+    
     def active_loop_mode(self):
         if self.is_loop_mode == False:
             self.is_loop_mode = True
@@ -1287,6 +1338,7 @@ class ControllerAuto(BoxLayout):
                 label = Label(text=str(url), size_hint=(0.3,1))
                 button_origin_set = Button(text="Add", size_hint=(0.2,1))
                 button_origin_set.bind(on_release= lambda instance: self.adding_origin(url=url))
+                print(url)
                 grid.add_widget(label)
                 grid.add_widget(button_origin_set)
                 layout.add_widget(grid)
@@ -1305,6 +1357,8 @@ class ControllerAuto(BoxLayout):
             print("File not found!")
 
     def adding_origin(self, url):
+        print(url)
+        print(self.array_origin_range)
         if len(self.array_origin_range) == 0:
             self.is_range_origin = True
             self.array_origin_range.append(url)
@@ -1312,8 +1366,8 @@ class ControllerAuto(BoxLayout):
         else:
             for i in self.array_origin_range:
                 if i['ip'] == url['ip']:
-                    self.show_popup(title="alert", message="Heliostats "+f"{url}"+ " is readly added.")
+                    self.show_popup(title="alert", message="Heliostats "+f"{i}"+ " is readly added.")
                     break 
                 else:
                     self.array_origin_range.append(url)
-                    self.show_popup(title="alert", message="Heliostats "+f"{url}"+ " is adding.")
+                    self.show_popup(title="alert", message="Heliostats "+f"{i}"+ " is adding.")
