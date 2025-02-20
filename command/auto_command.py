@@ -383,18 +383,6 @@ class ControllerAuto(BoxLayout):
                     size_hint=(None, None), size=(1000, 600))
         popup.open()
 
-    ### camera endpoint debug ###
-    # def selection_url_by_id(self):
-    #     try:
-    #         with open('./data/setting/setting.json', 'r') as file:
-    #             storage = json.load(file)
-    #         self.__light_checking_ip_operate = storage['storage_endpoint']['helio_stats_ip']['ip']
-    #         self.camera_endpoint = storage['storage_endpoint']['camera_ip']['ip']
-    #         h_id =  storage['storage_endpoint']['helio_stats_ip']['id']
-    #         c_id = storage['storage_endpoint']['camera_ip']['id']
-    #         return h_id[1:], c_id
-    #     except Exception as e:
-    #         self.show_popup("Error", f"{e}")
 
     def checking_light_in_target(self,dt=None):
         print("start check light result " +  self.__light_checking_ip_operate + " light detect = " +self.number_center_light.text)
@@ -454,11 +442,6 @@ class ControllerAuto(BoxLayout):
                 h_data = self.path_data_heliostats[self.current_helio_index]
                 self.helio_id = h_data['id']
                 
-                # if self.is_first_loop_finish == True:
-                #     self.path_data_heliostats = self.open_previous_data(self, target=self.camera_url_id.text,heliostats_id=h_data['id'], is_first_time_loop=self.is_first_loop_finish)
-                #     h_data = self.path_data_heliostats[self.current_helio_index]
-                #     self.helio_id = h_data['id']
-
                 # 2. Send nearest time data
                 result = ControlHelioStats.find_nearest_time_and_send(
                     self, list_path_data=h_data['path'], ip=h_data['ip']
@@ -986,9 +969,9 @@ class ControllerAuto(BoxLayout):
                     setJson = payload.json()
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_data = json.load(file)
-                    self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
-                    self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
-                    self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
+                    self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] -  setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+                    self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+                    self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
                     status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
                     if status == False:
                         print("Helio stats error move out!")
@@ -1337,7 +1320,7 @@ class ControllerAuto(BoxLayout):
                 grid = GridLayout(cols=2, size_hint=(1,1), height=40, spacing=10)
                 label = Label(text=str(url), size_hint=(0.3,1))
                 button_origin_set = Button(text="Add", size_hint=(0.2,1))
-                button_origin_set.bind(on_release= lambda instance: self.adding_origin(url=url))
+                button_origin_set.bind(on_release= lambda instance, url=url:self.adding_origin(url=url))
                 print(url)
                 grid.add_widget(label)
                 grid.add_widget(button_origin_set)
