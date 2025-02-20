@@ -57,7 +57,7 @@
     },
     "control_speed_distance": {
         "manual_mode": {
-            "speed": 800,
+            "speed": 600,
             "step": 300.0
         },
         "auto_mode": {
@@ -90,8 +90,8 @@
     },
     "storage_endpoint": {
         "helio_stats_ip": {
-            "id": "all",
-            "ip": "all"
+            "id": "h6",
+            "ip": "192.168.0.111"
         },
         "camera_ip": {
             "id": "camera-top",
