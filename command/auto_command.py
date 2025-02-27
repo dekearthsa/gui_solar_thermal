@@ -12,18 +12,23 @@ import json
 import requests
 from controller.crud_data import CrudData
 from controller.control_origin import ControlOrigin
-# from controller.control_get_current_pos import ControlGetCurrentPOS
-# from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
 from controller.control_heliostats import ControlHelioStats
-# from command.manual_command import ControllerManual
 import time
 import logging 
+from pysolar.solar import get_altitude, get_azimuth, get_solar_declination, get_solar_hour_angle
+from pysolar.radiation import get_radiation_direct
+import mysql.connector
+
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 class ControllerAuto(BoxLayout):
     def __init__(self,**kwargs ):
         
         super().__init__(**kwargs)
+        self.latitude = 14.382198  ### GEOLUXE lat 
+        self.longitude = 100.842897 ### GEOLUXE lng
+        self.time_zone = "Asia/Bangkok" ### Thailand time zone
+        self.is_time = datetime.datetime.now(self.time_zone).astimezone(self.time_zone.utc)  # แปลงเป็น UTC
         self.is_loop_mode = False
         self.is_first_loop_finish = False
         # self.helio_stats_id_endpoint = "" ### admin select helio stats endpoint
@@ -780,132 +785,6 @@ class ControllerAuto(BoxLayout):
             self.ids.logging_process.text = "Some of heliostats are fail to set origin"
             self.show_popup_continued(title="warning", message="Finish origin but some origin fail \n" +f"{self.list_fail_set_origin}",action="retry-origin")
 
-    ### Set origin old version ###
-    # def haddle_counting_index_origin(self,dt=None):
-    #     # print("haddle_counting_index_origin start...")
-    #     if self.loop_timeout_origin_is_finish == True:
-    #         self.loop_timeout_origin_is_finish = False
-    #         print("self.index_array_origin: " + str(self.index_array_origin) + " " + "self.range_of_heliostats: "+ str(self.range_of_heliostats))
-    #         if self.index_array_origin == self.range_of_heliostats:
-    #             print("Set origin finish")
-    #             self.__off_counting_index_origin()
-    #             self.origin_set_axis = None
-            
-    #         if self.origin_set_axis == 'x':
-    #             print("haddle_counting_index_origin set origin X " + str(f"{self.standby_url[self.index_array_origin]['ip']}"))
-    #             self.ip_origin_process = "x " + f"{self.standby_url[self.index_array_origin]['ip']}"
-    #             payload_x = ControlOrigin.send_set_origin_x(
-    #                     self,
-    #                     ip=self.standby_url[self.index_array_origin]['ip'], 
-    #                     id=self.standby_url[self.index_array_origin]['id']
-    #                 )
-    #             if payload_x['is_fail'] == True:
-    #                 self.list_fail_set_origin.append(payload_x)
-    #                 self.ids.logging_process.text = "Warning found error connection" + str(self.standby_url[self.index_array_origin]['ip'])
-    #                 self.index_array_origin += 1
-    #                 self.loop_timeout_origin_is_finish = True
-    #                 self.origin_set_axis = "x"
-    #             else:
-    #                 print("sleep x 50 sec")
-    #                 time.sleep(self.time_sleep_origin) ## default = 50 sec
-    #                 headers = {
-    #                     'Content-Type': 'application/json'  
-    #                 }
-
-    #                 payload = {
-    #                     "topic": "mtt",
-    #                     "speed": self.speed_origin,
-    #                     "x": 300.0,
-    #                     "y": 0.0
-    #                 }
-
-    #                 result =  requests.post("http://"+self.standby_url[self.index_array_origin]['ip']+"/update-data", data=json.dumps(payload), headers=headers, timeout=5)
-    #                 print("sleep x 300 50 sec")
-    #                 time.sleep(self.time_sleep_origin) ## default = 50 sec
-    #                 if result.status_code == 200:
-    #                     self.origin_axis_process = 'y' 
-    #                     self.__on_thread_check_callback_origin()
-
-    #         if self.origin_set_axis == 'y':
-    #             print("haddle_counting_index_origin set origin Y " + str(f"{self.standby_url[self.index_array_origin]['ip']}"))
-    #             self.ip_origin_process = "y " + f"{self.standby_url[self.index_array_origin]['ip']}"
-    #             payload_y = ControlOrigin.send_set_origin_y(
-    #                 self,
-    #                 ip=self.standby_url[self.index_array_origin]['ip'], 
-    #                 id=self.standby_url[self.index_array_origin]['id']
-    #             )
-    #             if payload_y['is_fail'] == True:
-    #                 self.list_fail_set_origin.append(payload_y)
-    #                 self.ids.logging_process.text = "Warning found error connection" + str(self.standby_url[self.index_array_origin]['ip'])
-    #                 self.index_array_origin += 1
-    #                 self.loop_timeout_origin_is_finish = True
-    #                 self.origin_set_axis = "x"
-    #             else:
-    #                 print("sleep y 50 sec")
-    #                 time.sleep(self.time_sleep_origin) ## default = 50 sec
-    #                 headers = {
-    #                     'Content-Type': 'application/json'  
-    #                 }
-    #                 payload = {
-    #                     "topic": "mtt",
-    #                     "speed": self.speed_origin,
-    #                     "x": 300.0,
-    #                     "y": 300.0
-    #                 }
-    #                 result =  requests.post("http://"+self.standby_url[self.index_array_origin]['ip']+"/update-data", data=json.dumps(payload), headers=headers, timeout=5)
-    #                 print("sleep y 300 50 sec")
-    #                 time.sleep(self.time_sleep_origin) ## default = 50 sec
-    #                 if result.status_code == 200:
-    #                     self.origin_axis_process = 'y' 
-    #                     self.origin_axis_process = 'success' 
-    #                     self.__on_thread_check_callback_origin()
-
-    #         if self.origin_set_axis == 'success': 
-    #             print("haddle_counting_index_origin set origin save.. "  + str(f"{self.standby_url[self.index_array_origin]['ip']} \n"))
-    #             self.ip_origin_process = "save " + f"{self.standby_url[self.index_array_origin]['ip']}"
-    #             self.list_success_set_origin.append(self.standby_url[self.index_array_origin])
-    #             self.index_array_origin += 1
-    #             self.origin_set_axis = "x"
-    #             self.origin_axis_process = '' 
-    #             self.loop_timeout_origin_is_finish = True
-
-    # def __off_counting_index_origin(self):
-    #     Clock.unschedule(self.haddle_counting_index_origin) ## close thread 
-    #     if len(self.list_fail_set_origin) > 0:
-    #         CrudData.save_fail_origin(self,self.list_fail_set_origin)
-    #         self.list_origin_standby= self.list_success_set_origin
-    #         self.is_origin_set = True
-    #         self.show_popup(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}")
-    #         # self.show_popup(title="warning", message="Number of origin fail " +f"{len(self.list_fail_set_origin)}", action="to-checking-light")
-    #     else:
-    #         CrudData.save_origin(self,self.list_success_set_origin)
-    #         self.list_origin_standby = self.list_success_set_origin
-    #         print("finish set origin to all heliostats.\n")
-    #         self.is_origin_set = True
-    #         self.ids.logging_process.text = "finish set origin to all heliostats."
-    #         # self.handle_checking_light()
-
-    # def __on__counting_index_origin(self):
-    #     self.origin_set_axis = "x"
-    #     Clock.schedule_interval(self.haddle_counting_index_origin, self.loop_timer_origin_callback) ## 2 sec
-
-    # def handle_checking_origin_callback(self,dt=None):
-    #     ## if set origin it will delay 10 sec
-    #     self.counting_set_origin += 1
-    #     self.ids.logging_process.text = "Waiting set origin  " + self.ip_origin_process + " " + str(self.counting_set_origin) + "/" +"30"  ### default is 30 sec
-    #     # print("Set origin wating callback from arduino.... " + str(self.counting_set_origin))
-    #     if self.loop_delay_set_origin == self.counting_set_origin: ## loop_delay_set_origin is 10sec
-    #         self.counting_set_origin = 0
-    #         self.loop_timeout_origin_is_finish = True
-    #         self.origin_set_axis = self.origin_axis_process
-    #         self.__off_terminate_thread_origin()
-
-    # def __on_thread_check_callback_origin(self):
-    #     Clock.schedule_interval(self.handle_checking_origin_callback, self.loop_timer_origin_callback) ## 2 sec
-
-    # def __off_terminate_thread_origin(self):
-    #     self.ids.logging_process.text = "Finish set origin."
-    #     Clock.unschedule(self.handle_checking_origin_callback)
 
     #### auto mode ####
     def control_auto_mode(self):
@@ -1183,6 +1062,34 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
 
+    def insert_into_db(self, data_in):
+        try:
+            conn = mysql.connector.connect(
+                host="your_host",
+                user="your_username",
+                password="your_password",
+                database="your_database"
+            )
+            cursor = conn.cursor()
+            query = """INSERT INTO solar_data (timestamp, string_date, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) """
+            values = (
+                data_in['timestamp'],
+                data_in['string_date'],
+                data_in['altitude'],
+                data_in['azimuth'],
+                data_in['declination'],
+                data_in['hour_angle'],
+                data_in['radiation'],
+                data_in['x'],
+                data_in['y']
+                )
+            
+            cursor.execute(query, values)
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("Insert database error" + f"{e}")
+
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
         # print("helio_stats_id save => ", helio_stats_id)
         self.turn_on_auto_mode = False
@@ -1217,6 +1124,24 @@ class ControllerAuto(BoxLayout):
             "x":  currentX,
             "y": currentY,
         }
+
+        is_altitude = get_altitude(self.latitude, self.longitude, self.is_time)
+        is_azimuth = get_azimuth(self.latitude, self.longitude, self.is_time)
+        declination = get_solar_declination(self.is_time)  # มุมเอนเอียงของดวงอาทิตย์
+        hour_angle = get_solar_hour_angle(self.is_time, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
+        radiation = get_radiation_direct(self.is_time, self.latitude)  # การแผ่รังสีแสงอาทิตย์
+
+        adding_in_database = {
+            "timestamp": now,
+            "string_date": now.strftime("%d/%m/%y %H:%M:%S"),
+            "altitude": is_altitude,
+            "azimuth": is_azimuth,
+            "declination": declination,
+            "hour_angle": hour_angle,
+            "radiation":radiation,
+            "x": currentX,
+            "y": currentY,
+        }
         
         json_str = json.dumps(adding_path_data)
         perfixed_json = f"*{json_str}"
@@ -1225,6 +1150,9 @@ class ControllerAuto(BoxLayout):
         self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
+        ### insert into db ###
+        self.insert_into_db(data_in=adding_in_database)
+        ### end insert into db ###
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
             filename = "./data/calibrate/result/error_data.csv"
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
