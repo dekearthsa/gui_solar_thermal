@@ -1151,9 +1151,11 @@ class ControllerAuto(BoxLayout):
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
         ### insert into db ###
-        self.insert_into_db(data_in=adding_in_database)
+        
         ### end insert into db ###
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
+            adding_in_database['camera'] = "bottom"
+            self.insert_into_db(data_in=adding_in_database)
             filename = "./data/calibrate/result/error_data.csv"
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}"
@@ -1189,6 +1191,8 @@ class ControllerAuto(BoxLayout):
                 self.show_popup("Error",f"Error saving file:\n{str(e)}")  
 
         else:
+            adding_in_database['camera'] = "top"
+            self.insert_into_db(data_in=adding_in_database)
             filename = "./data/receiver/result/error_data.csv"
             path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
