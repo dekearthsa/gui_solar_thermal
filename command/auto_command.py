@@ -1071,10 +1071,11 @@ class ControllerAuto(BoxLayout):
                 database="your_database"
             )
             cursor = conn.cursor()
-            query = """INSERT INTO solar_data (timestamp, string_date, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (timestamp, string_date, camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['timestamp'],
                 data_in['string_date'],
+                data_in['camera'],
                 data_in['altitude'],
                 data_in['azimuth'],
                 data_in['declination'],
