@@ -16,6 +16,9 @@ from kivy.properties import StringProperty
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
+
+# cv2.setLogLevel(0) ## hide log video file damage.
+
 class SetAutoScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -554,74 +557,78 @@ class SetAutoScreen(Screen):
         return True
 
     def update_frame(self, dt):
-        ### Read frames from the capture and process them.###
         if self.capture:
-            ret, frame = self.capture.read()
-            # debug_start = time.time()
-            if ret:
-                    frame = cv2.flip(frame, 0) ### <= flip
-                    frame, max_width, max_height = self.apply_crop_methods(frame) 
-                    ### frame bottom ###
-                    contours_light, bin_light = self.__find_bounding_boxes_hsv_mode(
-                        frame_color=frame, 
-                        low_H=self.static_low_h, 
-                        low_S=self.static_low_s, 
-                        low_V=self.static_low_v,
-                        high_H=self.static_high_h,
-                        high_S=self.static_high_s,
-                        high_V=self.static_high_v,
-                        blur_kernel=self.static_blur_kernel
-                    )
+            try:
+                ret, frame = self.capture.read()
+                if  frame is None:
+                    print("(frame) Frame damage pass the process...")
+                if ret:
+                        frame = cv2.flip(frame, 0) ### <= flip
+                        frame, max_width, max_height = self.apply_crop_methods(frame) 
+                        ### frame bottom ###
+                        contours_light, bin_light = self.__find_bounding_boxes_hsv_mode(
+                            frame_color=frame, 
+                            low_H=self.static_low_h, 
+                            low_S=self.static_low_s, 
+                            low_V=self.static_low_v,
+                            high_H=self.static_high_h,
+                            high_S=self.static_high_s,
+                            high_V=self.static_high_v,
+                            blur_kernel=self.static_blur_kernel
+                        )
 
-                    # Calculate centers
-                    centers_light = self.calculate_centers(contours_light)
-                    centers_frame = self.__calulate_centers_frame(frame)
+                        # Calculate centers
+                        centers_light = self.calculate_centers(contours_light)
+                        centers_frame = self.__calulate_centers_frame(frame)
 
-                    bounding_box_frame_x = centers_frame[0]
-                    bounding_box_frame_y = centers_frame[1]
-                    bounding_box_frame_w = max_width
-                    bounding_box_frame_h = max_height
+                        bounding_box_frame_x = centers_frame[0]
+                        bounding_box_frame_y = centers_frame[1]
+                        bounding_box_frame_w = max_width
+                        bounding_box_frame_h = max_height
 
-                    counting_light_center = 0
-                    
-                    for cnt in contours_light:
-                        c_area = cv2.contourArea(cnt)
-                        if self.static_min_area < c_area: #and self.static_max_area > c_area:
-                            counting_light_center += 1
-                            x, y, w, h = cv2.boundingRect(cnt)
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                            cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
-                            cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        counting_light_center = 0
+                        
+                        for cnt in contours_light:
+                            c_area = cv2.contourArea(cnt)
+                            if self.static_min_area < c_area: #and self.static_max_area > c_area:
+                                counting_light_center += 1
+                                x, y, w, h = cv2.boundingRect(cnt)
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                                cv2.circle(frame, (centers_light[0][0], centers_light[1][0]), 5, (255, 0, 0), -1)
+                                cv2.putText(frame, "C-L", (centers_light[0][0], centers_light[1][0]+30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                    ### draw center of frame
-                    self.ids.number_of_center_light_detected.text = str(counting_light_center)
-                    cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
-                    cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    
-                    # Convert frame to Kivy texture
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
-                    texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
-                    texture_bin = Texture.create(size=(bin_light.shape[1], bin_light.shape[0]), colorfmt='luminance')
-                    texture_bin.blit_buffer(bin_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
+                        ### draw center of frame
+                        self.ids.number_of_center_light_detected.text = str(counting_light_center)
+                        cv2.circle(frame, centers_frame, 5,  (0, 255, 0), -1)
+                        cv2.putText(frame, "C-F", centers_frame, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        
+                        # Convert frame to Kivy texture
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        texture_rgb = Texture.create(size=(frame_rgb.shape[1], frame_rgb.shape[0]), colorfmt='rgb')
+                        texture_rgb.blit_buffer(frame_rgb.tobytes(), colorfmt='rgb', bufferfmt='ubyte')
+                        texture_bin = Texture.create(size=(bin_light.shape[1], bin_light.shape[0]), colorfmt='luminance')
+                        texture_bin.blit_buffer(bin_light.tobytes(), colorfmt='luminance', bufferfmt='ubyte')
 
-                    self.ids.auto_cam_image.texture = texture_rgb
-                    self.ids.auto_cam_image_demo.texture = texture_bin
+                        self.ids.auto_cam_image.texture = texture_rgb
+                        self.ids.auto_cam_image_demo.texture = texture_bin
 
 
-                    # Update UI labels
-                    if centers_light[0] and centers_frame[0]:
-                        self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
-                        self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
-                        self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
-                        error_x = centers_frame[0] - centers_light[0][0]
-                        error_y = centers_frame[1] - centers_light[1][0]
-                        self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
-                        self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                # except Exception as e:
-                #     self.show_popup("Error", str(e))
-                #     return
-
+                        # Update UI labels
+                        if centers_light[0] and centers_frame[0]:
+                            self.ids.description_of_center_light_count.text = self.__description_light_detected(counting_light_center)
+                            self.ids.auto_center_target_position.text = f"X: {centers_light[0][0]}px Y: {centers_light[1][0]}px"
+                            self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
+                            error_x = centers_frame[0] - centers_light[0][0]
+                            error_y = centers_frame[1] - centers_light[1][0]
+                            self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
+                            self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
+                    # except Exception as e:
+                    #     self.show_popup("Error", str(e))
+                    #     return
+                else:
+                    print("(ret) frame damage pass frame...")
+            except Exception as e:
+                print("Video stream file damage pass frame...")
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
             return "Description: light detected status healthy!"
