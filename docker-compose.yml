@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydatabase
+      MYSQL_DATABASE: solarthermal
       MYSQL_USER: user
       MYSQL_PASSWORD: userpassword
     ports:

@@ -108,6 +108,13 @@ class ControllerAuto(BoxLayout):
         self.current_y_pos = 0
         self.rety_origin = False
 
+        ### database connection ###
+        self.db_host= "localhost"
+        self.db_user="root"
+        self.db_password="rootpassword"
+        self.db_database_name="solarthermal"
+        self.db_port=3306
+
         self.increment_move_out = 0
         # self.current_heliostats_data = []
         self.debug_counting = 0
@@ -1065,16 +1072,21 @@ class ControllerAuto(BoxLayout):
     def insert_into_db(self, data_in):
         try:
             conn = mysql.connector.connect(
-                host="your_host",
-                user="your_username",
-                password="your_password",
-                database="your_database"
+                host=self.db_host,
+                user=self.db_user,
+                password=self.db_password,
+                database=self.db_database_name,
+                port=self.db_port
             )
             cursor = conn.cursor()
-            query = """INSERT INTO solar_data (timestamp_s, string_date, camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
+                data_in['heliostats_id'],
                 data_in['timestamp'],
                 data_in['string_date'],
+                data_in['is_day'],
+                data_in['is_month'],
+                data_in['is_year'],
                 data_in['camera'],
                 data_in['altitude'],
                 data_in['azimuth'],
@@ -1119,6 +1131,9 @@ class ControllerAuto(BoxLayout):
         }
         now = datetime.now()
         path_time_stamp = now.strftime("%d_%m_%y"+"_"+helio_stats_id)
+        is_day = now.strftime("%d")
+        is_month = now.strftime("%m")
+        is_year = now.strftime("%y")
         timing =  now.strftime("%H:%M:%S")
         adding_path_data = {
             "timestamp": timing,
@@ -1133,8 +1148,12 @@ class ControllerAuto(BoxLayout):
         radiation = get_radiation_direct(self.is_time, self.latitude)  # การแผ่รังสีแสงอาทิตย์
 
         adding_in_database = {
+            "heliostats_id":helio_stats_id,
             "timestamp": now,
             "string_date": now.strftime("%d/%m/%y %H:%M:%S"),
+            "is_day": is_day,
+            "is_month": is_month,
+            "is_year": is_year,
             "altitude": is_altitude,
             "azimuth": is_azimuth,
             "declination": declination,
