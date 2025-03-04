@@ -13,7 +13,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql  # Use a named volume for Windows compatibility
+      - ./initdb:/var/lib/mysql  # Use a named volume for Windows compatibility
       - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - net

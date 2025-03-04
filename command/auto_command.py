@@ -12,13 +12,10 @@ import json
 import requests
 from controller.crud_data import CrudData
 from controller.control_origin import ControlOrigin
-# from controller.control_get_current_pos import ControlGetCurrentPOS
-# from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
+from controller.control_get_solar_cal import ControlCalSolar
 from controller.control_heliostats import ControlHelioStats
-# from command.manual_command import ControllerManual
 import time
 import logging 
-# from pysolar.solar import get_altitude, get_azimuth, get_solar_declination, get_solar_hour_angle
 from pysolar.solar import get_altitude, get_azimuth
 from pysolar.radiation import get_radiation_direct
 import mysql.connector
@@ -907,9 +904,11 @@ class ControllerAuto(BoxLayout):
                 path_time_stamp = now.strftime("%d_%m_%y")
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
-                        payload = requests.get(url="http://"+self.__light_checking_ip_operate)
+                        payload = requests.get(url="http://"+self.__light_checking_ip_operate, timeout=30)
+                        print("function update_loop_calulate_diff get method http://"+self.__light_checking_ip_operate)
                         # print("payload => ", payload) 
                         setJson = payload.json()
+                        print("Start Save pos...")
                         self.__haddle_save_positon(
                                 timestamp=timestamp,
                                 pathTimestap=path_time_stamp,
@@ -999,6 +998,7 @@ class ControllerAuto(BoxLayout):
             self.__off_delay_move_out()
 
     def __on_delay_move_out(self):
+        print("finish-- \n")
         Clock.schedule_interval(self.thread_delay_move_out, 1)
 
     def __off_delay_move_out(self):
@@ -1064,13 +1064,10 @@ class ControllerAuto(BoxLayout):
             print("End point => ","http://"+self.__light_checking_ip_operate+"/auto-data")
             print("payload => ",payload)
             print("reply status => ",response.status_code)
-            print("\n")
-            if response.status_code != 200:
-                self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-            else:
-                self.status_esp_send_timer = True
-                print("debug value post method = ",response)
+            self.status_esp_send_timer = True
+            print("debug value post method = ",response)
         except Exception as e:
+            print("error send pyload diff", e)
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
 
     def insert_into_db(self, data_in):
@@ -1083,8 +1080,8 @@ class ControllerAuto(BoxLayout):
                 port=self.db_port
             )
             cursor = conn.cursor()
-            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
-            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['heliostats_id'],
                 data_in['timestamp'],
@@ -1095,8 +1092,8 @@ class ControllerAuto(BoxLayout):
                 data_in['camera'],
                 data_in['altitude'],
                 data_in['azimuth'],
-                # data_in['declination'],
-                # data_in['hour_angle'],
+                data_in['declination'],
+                data_in['hour_angle'],
                 data_in['radiation'],
                 data_in['x'],
                 data_in['y']
@@ -1109,7 +1106,7 @@ class ControllerAuto(BoxLayout):
             print("Insert database error" + f"{e}")
 
     def __haddle_save_positon(self,timestamp,pathTimestap,helio_stats_id,camera_use,id,currentX, currentY,err_posx,err_posy,x,y,x1,y1,ls1,st_path,move_comp,elevation,azimuth):
-        # print("helio_stats_id save => ", helio_stats_id)
+        print("helio_stats_id save => ", helio_stats_id)
         self.turn_on_auto_mode = False
         with open('./data/setting/setting.json', 'r') as file:
             storage = json.load(file)
@@ -1145,11 +1142,13 @@ class ControllerAuto(BoxLayout):
             "x":  currentX,
             "y": currentY,
         }
+
+        print("calulate sun path")
         is_time = datetime.now(self.time_zone).astimezone(self.time_zone.utc)
         is_altitude = get_altitude(self.latitude, self.longitude,is_time)
         is_azimuth = get_azimuth(self.latitude, self.longitude,is_time)
-        # declination = get_solar_declination(is_time)  # มุมเอนเอียงของดวงอาทิตย์
-        # hour_angle = get_solar_hour_angle(is_time, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
+        declination = ControlCalSolar.get_solar_declination(self,now)  # มุมเอนเอียงของดวงอาทิตย์
+        hour_angle = ControlCalSolar.get_solar_hour_angle(self,now, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
         radiation = get_radiation_direct(is_time, self.latitude)  # การแผ่รังสีแสงอาทิตย์
 
         adding_in_database = {
@@ -1161,8 +1160,8 @@ class ControllerAuto(BoxLayout):
             "is_year": is_year,
             "altitude": is_altitude,
             "azimuth": is_azimuth,
-            # "declination": declination,
-            # "hour_angle": hour_angle,
+            "declination": declination,
+            "hour_angle": hour_angle,
             "radiation":radiation,
             "x": currentX,
             "y": currentY,
@@ -1173,14 +1172,18 @@ class ControllerAuto(BoxLayout):
         self.current_pos_heliostats_for_moveout['x'] = currentX -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
         self.current_pos_heliostats_for_moveout['y'] = currentY +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
         self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
+        print("Try to move-out")
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
+        print("Move out success.")
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
         ### insert into db ###
         
         ### end insert into db ###
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
             adding_in_database['camera'] = "bottom"
+            print("Try to save in db")
             self.insert_into_db(data_in=adding_in_database)
+            print("Success save in db")
             filename = "./data/calibrate/result/error_data.csv"
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}"
@@ -1217,7 +1220,9 @@ class ControllerAuto(BoxLayout):
 
         else:
             adding_in_database['camera'] = "top"
+            print("Try to save in db")
             self.insert_into_db(data_in=adding_in_database)
+            print("Success save in db")
             filename = "./data/receiver/result/error_data.csv"
             path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
@@ -1329,6 +1334,7 @@ class ControllerAuto(BoxLayout):
             self.show_popup("Error connection", f"{payload} error connection!")
 
     def handler_check_origin(self):
+        
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         for url in self.list_fail_set_origin:
             grid = GridLayout(cols=2, size_hint=(1,1), height=40, spacing=10)
