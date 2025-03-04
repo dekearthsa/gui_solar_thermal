@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -13,7 +13,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./initdb:/var/lib/mysql
+      - mysql_data:/var/lib/mysql  # Use a named volume for Windows compatibility
       - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - net
@@ -24,7 +24,7 @@ services:
       retries: 3
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
+    image: phpmyadmin
     container_name: phpmyadmin
     restart: always
     environment:
@@ -39,7 +39,6 @@ services:
 
 networks:
   net:
-    external: true
     driver: bridge
 
 volumes:
