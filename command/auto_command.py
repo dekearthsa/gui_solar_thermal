@@ -12,13 +12,10 @@ import json
 import requests
 from controller.crud_data import CrudData
 from controller.control_origin import ControlOrigin
-# from controller.control_get_current_pos import ControlGetCurrentPOS
-# from controller.control_check_conn_heliostats import ControlCheckConnHelioStats
+from controller.control_get_solar_cal import ControlCalSolar
 from controller.control_heliostats import ControlHelioStats
-# from command.manual_command import ControllerManual
 import time
 import logging 
-# from pysolar.solar import get_altitude, get_azimuth, get_solar_declination, get_solar_hour_angle
 from pysolar.solar import get_altitude, get_azimuth
 from pysolar.radiation import get_radiation_direct
 import mysql.connector
@@ -1083,8 +1080,8 @@ class ControllerAuto(BoxLayout):
                 port=self.db_port
             )
             cursor = conn.cursor()
-            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
-            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['heliostats_id'],
                 data_in['timestamp'],
@@ -1095,8 +1092,8 @@ class ControllerAuto(BoxLayout):
                 data_in['camera'],
                 data_in['altitude'],
                 data_in['azimuth'],
-                # data_in['declination'],
-                # data_in['hour_angle'],
+                data_in['declination'],
+                data_in['hour_angle'],
                 data_in['radiation'],
                 data_in['x'],
                 data_in['y']
@@ -1148,8 +1145,8 @@ class ControllerAuto(BoxLayout):
         is_time = datetime.now(self.time_zone).astimezone(self.time_zone.utc)
         is_altitude = get_altitude(self.latitude, self.longitude,is_time)
         is_azimuth = get_azimuth(self.latitude, self.longitude,is_time)
-        # declination = get_solar_declination(is_time)  # มุมเอนเอียงของดวงอาทิตย์
-        # hour_angle = get_solar_hour_angle(is_time, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
+        declination = ControlCalSolar.get_solar_declination(self,now)  # มุมเอนเอียงของดวงอาทิตย์
+        hour_angle = ControlCalSolar.get_solar_hour_angle(self,now, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
         radiation = get_radiation_direct(is_time, self.latitude)  # การแผ่รังสีแสงอาทิตย์
 
         adding_in_database = {
@@ -1161,8 +1158,8 @@ class ControllerAuto(BoxLayout):
             "is_year": is_year,
             "altitude": is_altitude,
             "azimuth": is_azimuth,
-            # "declination": declination,
-            # "hour_angle": hour_angle,
+            "declination": declination,
+            "hour_angle": hour_angle,
             "radiation":radiation,
             "x": currentX,
             "y": currentY,
