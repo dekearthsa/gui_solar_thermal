@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS solar_data (
     is_year:INT,
     camera: VARCHAR(255),
     altitude: FLOAT,
+    azimuth_gyro: FLOAT,
+    elevation_gyro: FLOAT,
     azimuth: FLOAT,
     declination: FLOAT,
     hour_angle: FLOAT,
