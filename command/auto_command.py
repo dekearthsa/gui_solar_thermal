@@ -1097,7 +1097,7 @@ class ControllerAuto(BoxLayout):
                 port=self.db_port
             )
             cursor = conn.cursor()
-            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year,is_lat ,is_lng ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['heliostats_id'],
@@ -1106,6 +1106,8 @@ class ControllerAuto(BoxLayout):
                 data_in['is_day'],
                 data_in['is_month'],
                 data_in['is_year'],
+                data_in['is_lat'],
+                data_in['is_lng'],
                 data_in['camera'],
                 data_in['altitude'],
                 data_in['azimuth'],
@@ -1163,6 +1165,8 @@ class ControllerAuto(BoxLayout):
             "is_day": int(is_day),
             "is_month": int(is_month),
             "is_year": int(is_year),
+            "is_lat": round(float(self.latitude),6),
+            "is_lng": round(float(self.longitude), 6),
             "altitude": round(float(is_altitude),6),
             "azimuth": round(float(is_azimuth),6),
             "azimuth_gyro": round(float(azimuth),6),
