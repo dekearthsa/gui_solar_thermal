@@ -11,3 +11,7 @@ myenv
 test.json
 test9.png
 test10.png
+./data
+data
+mysql_data
+./mysql_data

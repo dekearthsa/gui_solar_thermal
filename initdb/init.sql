@@ -1,14 +1,14 @@
 USE solarthermal;
 
-CREATE TABLE IF NOT EXISTS sun_path (
+CREATE TABLE IF NOT EXISTS solar_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    heliostats_id VARCHAR(6),
-    timestamp_s: VARCHAR(25),
-    string_date: VARCHAR(25),
-    is_day: VARCHAR(2),
-    is_month: VARCHAR(2),
-    is_year: VARCHAR(4),
-    camera: VARCHAR(25),
+    heliostats_id VARCHAR(255),
+    timestamp_s: VARCHAR(255),
+    string_date: VARCHAR(255),
+    is_day:INT,
+    is_month:INT,
+    is_year:INT,
+    camera: VARCHAR(255),
     altitude: FLOAT,
     azimuth: FLOAT,
     declination: FLOAT,

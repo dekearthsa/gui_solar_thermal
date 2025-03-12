@@ -19,7 +19,7 @@ import logging
 from pysolar.solar import get_altitude, get_azimuth
 from pysolar.radiation import get_radiation_direct
 import mysql.connector
-
+import pytz
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 class ControllerAuto(BoxLayout):
@@ -43,7 +43,7 @@ class ControllerAuto(BoxLayout):
         
         self.status_finish_loop_mode_first = False
         self.static_title_mode = "Auto menu || Camera status:On"
-        self.time_loop_update = 2 ## 2 sec test update frame
+        self.time_loop_update = 1.5 ## default 1 sec test update frame แก้ตรงนี้นะครับปรับ loop เวลาคำนวณ diff auto mode
         self.time_check_light_update = 1
         self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
         self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
@@ -488,7 +488,7 @@ class ControllerAuto(BoxLayout):
                     self.__handle_fail()
                     return
                 # 3. Start checking the light
-                print(f"Start auto mode. ip = {h_data['ip']}")
+                # print(f"Start auto mode. ip = {h_data['ip']}")
                 self._light_check_result = False
                 self.__light_checking_ip_operate = h_data['ip']
                 # Schedule checking_light_in_target periodically
@@ -519,7 +519,7 @@ class ControllerAuto(BoxLayout):
                     target=self.camera_url_id.text,
                     heliostats_id=h_data['id']
                 )
-                print('move in result: ', result)
+                # print('move in result: ', result)
                 self.helio_id = h_data['id']
                 # print(result)
 
@@ -537,7 +537,7 @@ class ControllerAuto(BoxLayout):
                 result_ner = ControlHelioStats.find_nearest_time_and_send(
                     self, list_path_data=result['path'], ip=h_data['ip']
                 )
-                print("result_ner => ", result_ner)
+                # print("result_ner => ", result_ner)
                 if result_ner['is_fail']:
                     # Fail to send => show error, store fail, break the entire process
                     self.fail_checking_light_desc = {
@@ -549,7 +549,7 @@ class ControllerAuto(BoxLayout):
                     self.__handle_fail()
                     return
                 # 3. Start checking the light
-                print(f"Start auto mode. ip = {h_data['ip']}")
+                # print(f"Start auto mode. ip = {h_data['ip']}")
                 self._light_check_result = False
                 self.__light_checking_ip_operate = h_data['ip']
                 
@@ -612,7 +612,7 @@ class ControllerAuto(BoxLayout):
 
     def stanby_get_helio_stats_path(self):
         for h_data in self.list_success_set_origin:
-            print("stanby_get_helio_stats_path => ", h_data)
+            # print("stanby_get_helio_stats_path => ", h_data)
             list_path_data = CrudData.open_previous_data(self, target=self.camera_url_id.text,heliostats_id=h_data['id'])
             if list_path_data['found'] == False:
                 self.path_data_not_found_list.append(h_data['id'])
@@ -905,10 +905,10 @@ class ControllerAuto(BoxLayout):
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         payload = requests.get(url="http://"+self.__light_checking_ip_operate, timeout=30)
-                        print("function update_loop_calulate_diff get method http://"+self.__light_checking_ip_operate)
+                        # print("function update_loop_calulate_diff get method http://"+self.__light_checking_ip_operate)
                         # print("payload => ", payload) 
                         setJson = payload.json()
-                        print("Start Save pos...")
+                        # print("Start Save pos...")
                         self.__haddle_save_positon(
                                 timestamp=timestamp,
                                 pathTimestap=path_time_stamp,
@@ -930,6 +930,7 @@ class ControllerAuto(BoxLayout):
                                 azimuth=setJson['azimuth'],
                             )
                     except Exception as e:
+                        print("error update_loop_calulate_diff => ", e)
                         self.__off_loop_auto_calculate_diff()
                         self.show_popup_continued(title="Error connection get calculate diff", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
                 else:
@@ -998,7 +999,7 @@ class ControllerAuto(BoxLayout):
             self.__off_delay_move_out()
 
     def __on_delay_move_out(self):
-        print("finish-- \n")
+        # print("finish-- \n")
         Clock.schedule_interval(self.thread_delay_move_out, 1)
 
     def __off_delay_move_out(self):
@@ -1061,17 +1062,33 @@ class ControllerAuto(BoxLayout):
         try:
             response = requests.post("http://"+self.__light_checking_ip_operate+"/auto-data", data=json.dumps(payload), headers=headers, timeout=5)
             print("=== DEBUG AUTO ===")
-            print("End point => ","http://"+self.__light_checking_ip_operate+"/auto-data")
+            # print("End point => ","http://"+self.__light_checking_ip_operate+"/auto-data")
             print("payload => ",payload)
-            print("reply status => ",response.status_code)
+            # print("reply status => ",response.status_code)
             self.status_esp_send_timer = True
-            print("debug value post method = ",response)
+            # print("debug value post method = ",response)
         except Exception as e:
             print("error send pyload diff", e)
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
 
     def insert_into_db(self, data_in):
         try:
+            # print(data_in)
+            # print(type(data_in['heliostats_id']))
+            # print(type(data_in['timestamp']))
+            # print(type(data_in['string_date']))
+            # print(type(data_in['is_day']))
+            # print(type(data_in['is_month']))
+            # print(type(data_in['is_year']))
+            # print(type(data_in['camera']))
+            # print(type(data_in['altitude']))
+            # print(type(data_in['azimuth']))
+            # print(type(data_in['declination']))
+            # print(type(data_in['hour_angle']))
+            # print(type(data_in['radiation']))
+            # print(type(data_in['x']))
+            # print(type(data_in['y']))
+            
             conn = mysql.connector.connect(
                 host=self.db_host,
                 user=self.db_user,
@@ -1111,26 +1128,6 @@ class ControllerAuto(BoxLayout):
         with open('./data/setting/setting.json', 'r') as file:
             storage = json.load(file)
 
-        adding_time = {
-            "timestamp": timestamp,
-            "helio_stats_id": helio_stats_id,
-            "camera_use": storage['storage_endpoint']['camera_ip']['id'],
-            "id": id,
-            "currentX":  currentX,
-            "currentY": currentY,
-            "err_posx": err_posx,
-            "err_posy": err_posy,
-            "x": x,
-            "y": y,
-            "x1": x1,
-            "y1": y1, 
-            "ls1": ls1,
-            "st_path": st_path,
-            "move_comp": move_comp,
-            "elevation": elevation,
-            "azimuth": azimuth,
-            "control_by": "machine"
-        }
         now = datetime.now()
         path_time_stamp = now.strftime("%d_%m_%y"+"_"+helio_stats_id)
         is_day = now.strftime("%d")
@@ -1142,59 +1139,72 @@ class ControllerAuto(BoxLayout):
             "x":  currentX,
             "y": currentY,
         }
+        #### Edit
+        adding_path_data_gyro = {
+            "timestamp": timing,
+            "elevation":  elevation,
+            "azimuth": azimuth,
+        }
 
-        print("calulate sun path")
-        is_time = datetime.now(self.time_zone).astimezone(self.time_zone.utc)
+        tz = pytz.timezone(self.time_zone)
+        time = datetime.now(tz)  # Get current local time
+        is_time = time.astimezone(pytz.utc)  # Convert to UTC
         is_altitude = get_altitude(self.latitude, self.longitude,is_time)
         is_azimuth = get_azimuth(self.latitude, self.longitude,is_time)
         declination = ControlCalSolar.get_solar_declination(self,now)  # มุมเอนเอียงของดวงอาทิตย์
         hour_angle = ControlCalSolar.get_solar_hour_angle(self,now, self.longitude)  # มุมชั่วโมงของดวงอาทิตย์
         radiation = get_radiation_direct(is_time, self.latitude)  # การแผ่รังสีแสงอาทิตย์
-
         adding_in_database = {
-            "heliostats_id":helio_stats_id,
-            "timestamp": now,
-            "string_date": now.strftime("%d/%m/%y %H:%M:%S"),
-            "is_day": is_day,
-            "is_month": is_month,
-            "is_year": is_year,
-            "altitude": is_altitude,
-            "azimuth": is_azimuth,
-            "declination": declination,
-            "hour_angle": hour_angle,
-            "radiation":radiation,
-            "x": currentX,
-            "y": currentY,
+            "heliostats_id":str(helio_stats_id),
+            "timestamp": str(now),
+            "string_date":str(now.strftime("%d/%m/%y %H:%M:%S")),
+            "is_day": int(is_day),
+            "is_month": int(is_month),
+            "is_year": int(is_year),
+            "altitude": round(float(is_altitude),6),
+            "azimuth": round(float(is_azimuth),6),
+            "declination":round(float(declination),6),
+            "hour_angle": round(float(hour_angle),6),
+            "radiation": round(float(radiation),6),
+            "x": float(currentX),
+            "y": float(currentY),
         }
         
         json_str = json.dumps(adding_path_data)
+        json_str_gyro = json.dumps(adding_path_data_gyro)
         perfixed_json = f"*{json_str}"
+        perfixed_gyro_json = f"*{json_str_gyro}"
         self.current_pos_heliostats_for_moveout['x'] = currentX -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
         self.current_pos_heliostats_for_moveout['y'] = currentY +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
         self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
-        print("Try to move-out")
+        # print("Try to move-out")
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
-        print("Move out success.")
+        # print("Move out success.")
         self.current_pos_heliostats_for_moveout = {"topic":"mtt",}
         ### insert into db ###
         
         ### end insert into db ###
         if storage['storage_endpoint']['camera_ip']['id'] == "camera-bottom":
             adding_in_database['camera'] = "bottom"
-            print("Try to save in db")
+            # print("Try to save in db")
             self.insert_into_db(data_in=adding_in_database)
-            print("Success save in db")
-            filename = "./data/calibrate/result/error_data.csv"
+            # print("Success save in db")
+            # filename = "./data/calibrate/result/error_data.csv"
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
-            path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}"
-            filepath = os.path.join(os.getcwd(), filename)
+            path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}" 
+            path_file_by_date_gyro = f"./data/calibrate_gyro/{path_time_stamp}.txt" #### Edit
+            # path_folder_by_date_gyro = f"./data/calibrate_gyro/{path_time_stamp}.txt"  #### Edit
+            # filepath = os.path.join(os.getcwd(), filename)
             filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
-            check_file_path = os.path.isdir(filepath_by_date)
+            check_file_path = os.path.isdir(filepath_by_date) 
+
+            filepath_by_date_gyro = os.path.join(os.getcwd(), path_file_by_date_gyro) #### Edit
+            check_file_path_gyro = os.path.isdir(filepath_by_date_gyro) #### Edit
             try:
-                fieldnames = adding_time.keys()
-                with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                    writer.writerow(adding_time)
+                # fieldnames = adding_time.keys()
+                # with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                #     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                #     writer.writerow(adding_time)
 
                 if check_file_path == False:
                     os.mkdir(path_folder_by_date)
@@ -1212,6 +1222,24 @@ class ControllerAuto(BoxLayout):
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     self.__on_delay_move_out()
+
+                if check_file_path_gyro == False:
+                    os.mkdir(path_file_by_date_gyro)
+                    with open(path_file_by_date_gyro, mode='w', newline='') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
+                    self.__off_loop_auto_calculate_diff()
+                    print("move heliostats out...")
+                    self.ids.logging_process.text = "move heliostats out"
+                    
+                    self.__on_delay_move_out()
+                else:
+                    with open(path_file_by_date_gyro, mode='a', newline='', encoding='utf-8') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
+                    self.__off_loop_auto_calculate_diff()
+                    print("move heliostats out...")
+                    self.ids.logging_process.text = "move heliostats out"
+                    self.__on_delay_move_out()
+
             except Exception as e:
                 self.turn_on_auto_mode = False
                 self.ids.label_auto_mode.text = "Auto off"
@@ -1220,20 +1248,26 @@ class ControllerAuto(BoxLayout):
 
         else:
             adding_in_database['camera'] = "top"
-            print("Try to save in db")
+            # print("Try to save in db")
             self.insert_into_db(data_in=adding_in_database)
-            print("Success save in db")
-            filename = "./data/receiver/result/error_data.csv"
+            # print("Success save in db")
+            # filename = "./data/receiver/result/error_data.csv"
             path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
-            filepath = os.path.join(os.getcwd(), filename)
+            # filepath = os.path.join(os.getcwd(), filename)
+            path_file_by_date_gyro = f"./data/receiver_gyro/{path_time_stamp}.txt" #### Edit
+            # path_folder_by_date_gyro = f"./data/receiver_gyro/{path_time_stamp}.txt"  #### Edit
+
             filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
             check_file_path = os.path.isdir(filepath_by_date)
+
+            filepath_by_date_gyro = os.path.join(os.getcwd(), path_file_by_date_gyro) #### Edit
+            check_file_path_gyro = os.path.isdir(filepath_by_date_gyro) #### Edit
             try:
-                fieldnames = adding_time.keys()
-                with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                    writer.writerow(adding_time)
+                # fieldnames = adding_time.keys()
+                # with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
+                #     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                #     writer.writerow(adding_time)
 
                 if check_file_path == False:
                     os.mkdir(path_folder_by_date)
@@ -1250,11 +1284,28 @@ class ControllerAuto(BoxLayout):
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     self.__on_delay_move_out()
+
+                if check_file_path_gyro == False:
+                    os.mkdir(path_file_by_date_gyro)
+                    with open(path_file_by_date_gyro, mode='w', newline='') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
+                    self.__off_loop_auto_calculate_diff()
+                    print("move heliostats out...")
+                    self.ids.logging_process.text = "move heliostats out"
+                    self.__on_delay_move_out()
+                else:
+                    with open(path_file_by_date_gyro, mode='a', newline='', encoding='utf-8') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
+                    self.__off_loop_auto_calculate_diff()
+                    print("move heliostats out...")
+                    self.ids.logging_process.text = "move heliostats out"
+                    self.__on_delay_move_out()
+
             except Exception as e:
                 self.turn_on_auto_mode = False
                 self.ids.label_auto_mode.text = "Auto off"
                 self.__off_loop_auto_calculate_diff()
-                self.show_popup("Error",f"Error saving file:\n{str(e)}")  
+                self.show_popup("Error",f"Error saving file:\n{str(e)}") 
 
     def haddle_extact_boarding_frame(self):
         data = self.bounding_box_frame_data.text
@@ -1417,3 +1468,150 @@ class ControllerAuto(BoxLayout):
                 else:
                     self.array_origin_range.append(url)
                     self.show_popup(title="alert", message="Heliostats "+f"{i}"+ " is adding.")
+                    
+                    
+    def handler_set_mtt(self, url):
+            try:
+                if url == "all":
+                    with open('./data/setting/connection.json', 'r') as file:
+                        connection_list = json.load(file)
+                    with open('./data/setting/setting.json', 'r') as file:
+                        setting_data = json.load(file) 
+                    for h_data in connection_list['helio_stats_ip'][1:]:
+                        payload = {
+                            "topic": "mtt",
+                            "speed": setting_data['control_speed_distance']['auto_mode']['speed'],
+                            "x":300.0,
+                            "y": 300.0
+                        }
+                        response = requests.post("http://"+h_data['ip']+"/update-data", json=payload, timeout=5)
+                        if response.status_code != 200:
+                            self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
+                else:
+                    payload = {
+                        "topic": "mtt",
+                        "speed": setting_data['control_speed_distance']['auto_mode']['speed'],
+                        "x":300.0,
+                        "y": 300.0
+                    }
+                    response = requests.post("http://"+url+"/update-data", json=payload, timeout=5)
+                    if response.status_code != 200:
+                        self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
+            except Exception as e:
+                print("handler_set_mtt error " + f"{e}") 
+                self.show_popup("Error connection", f"Erorr at {str(e)}")
+
+
+    def show_popup_mtt(self):
+        try:
+            with open('./data/setting/connection.json', 'r') as file:
+                connection_list = json.load(file)
+            layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+            for h_data in connection_list['helio_stats_ip']:
+                grid = GridLayout(cols=2, size_hint=(1,1), height=40, spacing=10)
+                label = Label(text=str(h_data), size_hint=(0.3,1))
+                button_origin_set = Button(text="Send MTT", size_hint=(0.2,1))
+                button_origin_set.bind(on_release= lambda instance, url=h_data['ip']:self.handler_set_mtt(url=h_data['ip']))
+                grid.add_widget(label)
+                grid.add_widget(button_origin_set)
+                layout.add_widget(grid)
+            popup = Popup(
+                title="Send MTT",
+                content=layout,
+                size_hint=(None, None),
+                size=(1050, 960),
+                auto_dismiss=True
+            )
+            popup.open()
+        except Exception as e:
+            print("error show_popup_mtt "+f"{e}")
+            # print("error show_popup_mtt "+ f"{e}")
+
+    def show_popup_force_off_auto_warning(self):
+        message = "Warning, are you sure to off auto mode?"
+        title = "Warning"
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=30)
+        label = Label(text=message)
+        layout.add_widget(label)
+        grid = GridLayout(cols=2, size_hint=(1,.3) ,height=30)
+        popup = Popup(title=title,
+                            content=layout,
+                            auto_dismiss=False,
+                            size_hint=(None, None), size=(1000, 600))
+            
+        button_con = Button(text="Exit")
+        button_con.bind(on_release=lambda instance: self.close_popup_force_off(popup=popup, process="Exit"))
+        grid.add_widget(button_con)
+        button_con = Button(text="Force off auto")
+        button_con.bind(on_release=lambda instance: self.close_popup_force_off(popup=popup, process="Continue"))
+        grid.add_widget(button_con)
+        layout.add_widget(grid)
+        popup.open()
+    
+    def close_popup_force_off(self,popup, process):
+        popup.dismiss() 
+        if process == "Continue":
+            self.force_off_auto()
+
+    def handler_force_off_btn(self):
+        try:
+            self.ids.logging_process = "Stopping heliostats..."
+            response = requests.post("http://"+self.__light_checking_ip_operate+"/update-data", json={"topic":"stop"}, timeout=30)
+            if response.status_code != 200:
+                self.ids.logging_process = "Connection error POST " + f"{self.__light_checking_ip_operate}"
+                print("handler_force_off_btn => error equests.post"+ f"{response.status_code}")
+                self.show_popup(title="Connection error", message="func handler_force_off_btn command stop"+ f"{response.status_code}")
+            self.ids.logging_process = "Heliostats is stop."
+            time.sleep(1)
+
+            self.ids.logging_process = "Try to get current POS..."
+            payload = requests.get(url="http://"+self.  __light_checking_ip_operate, timeout=30)
+            if payload.status_code != 200:
+                self.ids.logging_process = "Connection error GET " + f"{self.__light_checking_ip_operate}"
+                print("handler_force_off_btn => error requests.get"+ f"{payload.status_code}")
+                self.show_popup(title="Connection error", message="func handler_force_off_btn command get current pos "+ f"{payload.status_code}")
+            setJson = payload.json()
+            self.ids.logging_process = "Success GET cu"
+            with open('./data/setting/setting.json', 'r') as file:
+                setting_data = json.load(file)
+            ### Notic หลักการทำงาสน
+            self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] - setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+            self.current_pos_heliostats_for_moveout['y'] =  setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+            self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+            status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
+            if status['is_fail']:
+                print("handler_force_off_btn => error move_helio_out"+ f"{response.status_code}")
+                self.show_popup(title="Connection error", message="func handler_force_off_btn command move_helio_out"+ f"{response.status_code}")
+            time.sleep(2)
+            self.force_off_auto()
+        except Exception as e:
+            self.ids.logging_process = "Connection error " + f"{self.__light_checking_ip_operate}"
+            print("handler_force_off_btn error" + f"{e}")
+            self.show_popup(title="Connection error", message="func handler_force_off_btn connection error \n"+ f"{e}" + "\n please try agian.") 
+
+    ## Notic 
+    def move_all_by_using_path(self):
+        if len(self.list_success_set_origin) <= 0 :
+            self.show_popup(title="Alert", message="set origin to heliostats first.")
+        else:
+            if len(self.path_data_heliostats) <= 0:
+                for h_data in self.list_success_set_origin:
+                    list_path_data = CrudData.open_previous_data(self, target=self.camera_url_id.text,heliostats_id=h_data['id'])
+                    if list_path_data['found'] == False:
+                        self.path_data_not_found_list.append(h_data['id'])
+                    else:
+                        self.path_data_heliostats.append({"path":list_path_data['data'],"id":h_data['id'],"ip":h_data['ip']}) 
+                
+                for h_path_data in self.path_data_heliostats:
+                    status = ControlHelioStats.find_nearest_time_and_send(
+                        self, list_path_data=h_path_data['path'], ip=h_path_data['ip']
+                    )
+                    if status['is_fail']:
+                        print("Fail to send path data: " + f"{h_path_data['ip']}")
+            else:
+                for h_path_data in self.path_data_heliostats:
+                    status = ControlHelioStats.find_nearest_time_and_send(
+                        self, list_path_data=h_path_data['path'], ip=h_path_data['ip']
+                    )
+                    if status['is_fail']:
+                        print("Fail to send path data: " + f"{h_path_data['ip']}")

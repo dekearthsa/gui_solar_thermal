@@ -999,8 +999,6 @@ MainFrameWidget:
         Label:
             id: logging_process
             text: "-"
-        
-
         Button:
             id: label_auto_mode
             text: 'Auto off'
@@ -1015,10 +1013,25 @@ MainFrameWidget:
                     Ellipse:
                         pos: self.pos
                         size: self.size
-        Button:
-            id: set_origin_id
-            text: 'Set origin'
-            on_press: root.handler_set_origin()
+        GridLayout:
+            id: control_origin_mtt_stop_all
+            cols: 4
+            Button:
+                id: set_mtt_id
+                text: 'MTT'
+                on_press: root.show_popup_mtt()
+            Button:
+                id: set_origin_id
+                text: 'Set origin'
+                on_press: root.handler_set_origin()
+            Button:
+                id: set_stop_id
+                text: 'Stop All'
+                on_press: root.handler_force_off_btn()
+            Button: 
+                id: set_move_all_path
+                text: 'Move Center'
+                on_press: root.move_all_by_using_path()
         GridLayout:
             cols: 5
             Button:
@@ -1041,11 +1054,6 @@ MainFrameWidget:
                 id: force_set_origin
                 text: 'Force origin off'
                 on_press: root.button_force_origin()
-            # Button:
-            #     id: set_origin_id
-            #     text: 'Set origin'
-            #     on_press: root.handler_set_origin()
-
 
 
 <ListHelioStatsIp>:
