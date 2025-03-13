@@ -16,7 +16,7 @@ from kivy.properties import StringProperty
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
-
+import time
 # cv2.setLogLevel(0) ## hide log video file damage.
 
 class SetAutoScreen(Screen):
@@ -626,7 +626,9 @@ class SetAutoScreen(Screen):
                     #     self.show_popup("Error", str(e))
                     #     return
                 # else:
-                #     print("(ret) frame damage pass frame...")
+                #     print("(ret) frame damage pass frame... sleep 5 sec")
+                #     time.sleep(5)
+                    
             except Exception as e:
                 print("Video stream file damage pass frame...")
     def __description_light_detected(self, number_center_light):
