@@ -1476,14 +1476,16 @@ class ControllerAuto(BoxLayout):
                     "x":300.0,
                     "y": 300.0
                 }
-                
+                print("payload => ",url)
                 if url == "all":
                     for h_data in connection_list['helio_stats_ip'][1:]:
                         response = requests.post("http://"+h_data['ip']+"/update-data", json=payload, timeout=5)
+                        print("all => ",response.status_code)
                         if response.status_code != 200:
                             self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
                 else:
                     response = requests.post("http://"+url+"/update-data", json=payload, timeout=5)
+                    print(f"url: {url} => ",response.status_code)
                     if response.status_code != 200:
                         self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
             except Exception as e:
