@@ -1073,21 +1073,6 @@ class ControllerAuto(BoxLayout):
 
     def insert_into_db(self, data_in):
         try:
-            # print(data_in)
-            # print(type(data_in['heliostats_id']))
-            # print(type(data_in['timestamp']))
-            # print(type(data_in['string_date']))
-            # print(type(data_in['is_day']))
-            # print(type(data_in['is_month']))
-            # print(type(data_in['is_year']))
-            # print(type(data_in['camera']))
-            # print(type(data_in['altitude']))
-            # print(type(data_in['azimuth']))
-            # print(type(data_in['declination']))
-            # print(type(data_in['hour_angle']))
-            # print(type(data_in['radiation']))
-            # print(type(data_in['x']))
-            # print(type(data_in['y']))
             
             conn = mysql.connector.connect(
                 host=self.db_host,
@@ -1480,28 +1465,24 @@ class ControllerAuto(BoxLayout):
                     
     def handler_set_mtt(self, url):
             try:
-                if url == "all":
-                    with open('./data/setting/connection.json', 'r') as file:
+                with open('./data/setting/connection.json', 'r') as file:
                         connection_list = json.load(file)
-                    with open('./data/setting/setting.json', 'r') as file:
-                        setting_data = json.load(file) 
+                with open('./data/setting/setting.json', 'r') as file:
+                    setting_data = json.load(file) 
+                
+                payload = {
+                    "topic": "mtt",
+                    "speed": setting_data['control_speed_distance']['auto_mode']['speed'],
+                    "x":300.0,
+                    "y": 300.0
+                }
+                
+                if url == "all":
                     for h_data in connection_list['helio_stats_ip'][1:]:
-                        payload = {
-                            "topic": "mtt",
-                            "speed": setting_data['control_speed_distance']['auto_mode']['speed'],
-                            "x":300.0,
-                            "y": 300.0
-                        }
                         response = requests.post("http://"+h_data['ip']+"/update-data", json=payload, timeout=5)
                         if response.status_code != 200:
                             self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
                 else:
-                    payload = {
-                        "topic": "mtt",
-                        "speed": setting_data['control_speed_distance']['auto_mode']['speed'],
-                        "x":300.0,
-                        "y": 300.0
-                    }
                     response = requests.post("http://"+url+"/update-data", json=payload, timeout=5)
                     if response.status_code != 200:
                         self.show_popup("Error connection", f"Requests status code {str(response.status_code)}")
