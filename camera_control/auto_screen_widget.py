@@ -625,8 +625,8 @@ class SetAutoScreen(Screen):
                     # except Exception as e:
                     #     self.show_popup("Error", str(e))
                     #     return
-                else:
-                    print("(ret) frame damage pass frame...")
+                # else:
+                #     print("(ret) frame damage pass frame...")
             except Exception as e:
                 print("Video stream file damage pass frame...")
     def __description_light_detected(self, number_center_light):
