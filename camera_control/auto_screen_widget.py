@@ -61,6 +61,10 @@ class SetAutoScreen(Screen):
         self.menu_now="auto_mode"
         self.camera_perspective = ""
 
+        ### STORE ERROR X Y ###
+        self.error_x = 0
+        self.error_y = 0
+
         # self.logging_process_data = StringProperty("-")
         
     def get_image_display_size_and_pos(self):
@@ -620,6 +624,9 @@ class SetAutoScreen(Screen):
                             self.ids.auto_center_frame_position.text = f"X: {centers_frame[0]}px Y: {centers_frame[1]}px"
                             error_x = centers_frame[0] - centers_light[0][0]
                             error_y = centers_frame[1] - centers_light[1][0]
+                            ### STORE ERROR X Y ###
+                            self.error_x = error_x
+                            self.error_y = error_y
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                     # except Exception as e:
@@ -631,6 +638,11 @@ class SetAutoScreen(Screen):
                     
             except Exception as e:
                 print("Video stream file damage pass frame...")
+
+    ### STORE ERROR X Y ###
+    def get_error_x_y(self):
+        return self.error_x, self.error_y
+
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
             return "Description: light detected status healthy!"

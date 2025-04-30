@@ -21,6 +21,7 @@ from pysolar.radiation import get_radiation_direct
 import mysql.connector
 import pytz
 logging.getLogger('urllib3').setLevel(logging.WARNING)
+from camera_control.auto_screen_widget import SetAutoScreen
 
 class ControllerAuto(BoxLayout):
     def __init__(self,**kwargs ):
@@ -905,8 +906,6 @@ class ControllerAuto(BoxLayout):
                 if abs(center_x - target_x) <= self.stop_move_helio_x_stats and abs(center_y - target_y) <= self.stop_move_helio_y_stats:
                     try:
                         payload = requests.get(url="http://"+self.__light_checking_ip_operate, timeout=30)
-                        # print("function update_loop_calulate_diff get method http://"+self.__light_checking_ip_operate)
-                        # print("payload => ", payload) 
                         setJson = payload.json()
                         # print("Start Save pos...")
                         self.__haddle_save_positon(
@@ -1073,6 +1072,8 @@ class ControllerAuto(BoxLayout):
 
     def insert_into_db(self, data_in):
         try:
+            ### STORE ERROR X Y ###
+            error_x, error_y = SetAutoScreen.get_error_x_y(self)
             
             conn = mysql.connector.connect(
                 host=self.db_host,
@@ -1082,7 +1083,7 @@ class ControllerAuto(BoxLayout):
                 port=self.db_port
             )
             cursor = conn.cursor()
-            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year,is_lat ,is_lng ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year,is_lat ,is_lng ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y, error_x, error_y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['heliostats_id'],
@@ -1102,7 +1103,9 @@ class ControllerAuto(BoxLayout):
                 data_in['hour_angle'],
                 data_in['radiation'],
                 data_in['x'],
-                data_in['y']
+                data_in['y'],
+                float(error_x),
+                float(error_y)
                 )
             
             cursor.execute(query, values)
@@ -1186,119 +1189,77 @@ class ControllerAuto(BoxLayout):
             path_file_by_date = f"./data/calibrate/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/calibrate/result/{path_time_stamp}" 
             path_file_by_date_gyro = f"./data/calibrate_gyro/{path_time_stamp}.txt" #### Edit
+            # path_folder_by_date_gryo = f"./data/calibrate_gyro/{path_time_stamp}"
             # path_folder_by_date_gyro = f"./data/calibrate_gyro/{path_time_stamp}.txt"  #### Edit
             # filepath = os.path.join(os.getcwd(), filename)
             filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
             check_file_path = os.path.isdir(filepath_by_date) 
 
-            filepath_by_date_gyro = os.path.join(os.getcwd(), path_file_by_date_gyro) #### Edit
-            check_file_path_gyro = os.path.isdir(filepath_by_date_gyro) #### Edit
-            try:
-                # fieldnames = adding_time.keys()
-                # with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                #     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                #     writer.writerow(adding_time)
-
-                if check_file_path == False:
+            # filepath_by_date_gyro = os.path.join(os.getcwd(), path_folder_by_date_gryo) #### Edit
+            # check_file_path_gyro = os.path.isdir(filepath_by_date_gyro) #### Edit
+            # try:
+            if check_file_path == False:
                     os.mkdir(path_folder_by_date)
                     with open(path_file_by_date, mode='w', newline='') as text_f:
                         text_f.write(perfixed_json+"\n")
+                    with open(path_file_by_date_gyro, mode='a', newline='') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     
                     self.__on_delay_move_out()
-                else:
+            else:
                     with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
                         text_f.write(perfixed_json+"\n")
-                    self.__off_loop_auto_calculate_diff()
-                    print("move heliostats out...")
-                    self.ids.logging_process.text = "move heliostats out"
-                    self.__on_delay_move_out()
-
-                if check_file_path_gyro == False:
-                    os.mkdir(path_file_by_date_gyro)
-                    with open(path_file_by_date_gyro, mode='w', newline='') as text_f:
-                        text_f.write(perfixed_gyro_json+"\n")
-                    self.__off_loop_auto_calculate_diff()
-                    print("move heliostats out...")
-                    self.ids.logging_process.text = "move heliostats out"
-                    
-                    self.__on_delay_move_out()
-                else:
-                    with open(path_file_by_date_gyro, mode='a', newline='', encoding='utf-8') as text_f:
+                    with open(path_file_by_date_gyro, mode='a', newline='') as text_f:
                         text_f.write(perfixed_gyro_json+"\n")
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     self.__on_delay_move_out()
 
-            except Exception as e:
-                self.turn_on_auto_mode = False
-                self.ids.label_auto_mode.text = "Auto off"
-                self.__off_loop_auto_calculate_diff()
-                self.show_popup("Error",f"Error saving file:\n{str(e)}")  
+            # except Exception as e:
+            #     self.turn_on_auto_mode = False
+            #     self.ids.label_auto_mode.text = "Auto off"
+            #     self.__off_loop_auto_calculate_diff()
+            #     self.show_popup("Error",f"Error saving file:\n{str(e)}")  
 
         else:
             adding_in_database['camera'] = "top"
-            # print("Try to save in db")
             self.insert_into_db(data_in=adding_in_database)
-            # print("Success save in db")
-            # filename = "./data/receiver/result/error_data.csv"
             path_file_by_date = f"./data/receiver/result/{path_time_stamp}/data.txt"
             path_folder_by_date = f"./data/receiver/result/{path_time_stamp}"
-            # filepath = os.path.join(os.getcwd(), filename)
             path_file_by_date_gyro = f"./data/receiver_gyro/{path_time_stamp}.txt" #### Edit
-            # path_folder_by_date_gyro = f"./data/receiver_gyro/{path_time_stamp}.txt"  #### Edit
-
             filepath_by_date = os.path.join(os.getcwd(), path_folder_by_date)
             check_file_path = os.path.isdir(filepath_by_date)
-
-            filepath_by_date_gyro = os.path.join(os.getcwd(), path_file_by_date_gyro) #### Edit
-            check_file_path_gyro = os.path.isdir(filepath_by_date_gyro) #### Edit
-            try:
-                # fieldnames = adding_time.keys()
-                # with open(filepath, mode='a', newline='', encoding='utf-8') as csv_file:
-                #     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                #     writer.writerow(adding_time)
-
-                if check_file_path == False:
+            # try:
+            if check_file_path == False:
                     os.mkdir(path_folder_by_date)
                     with open(path_file_by_date, mode='w', newline='') as text_f:
                         text_f.write(perfixed_json+"\n")
+                    with open(path_file_by_date_gyro, mode='a', newline='') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     self.__on_delay_move_out()
-                else:
+            else:
                     with open(path_file_by_date, mode='a', newline='', encoding='utf-8') as text_f:
                         text_f.write(perfixed_json+"\n")
+                    with open(path_file_by_date_gyro, mode='a', newline='') as text_f:
+                        text_f.write(perfixed_gyro_json+"\n")
+
                     self.__off_loop_auto_calculate_diff()
                     print("move heliostats out...")
                     self.ids.logging_process.text = "move heliostats out"
                     self.__on_delay_move_out()
 
-                if check_file_path_gyro == False:
-                    os.mkdir(path_file_by_date_gyro)
-                    with open(path_file_by_date_gyro, mode='w', newline='') as text_f:
-                        text_f.write(perfixed_gyro_json+"\n")
-                    self.__off_loop_auto_calculate_diff()
-                    print("move heliostats out...")
-                    self.ids.logging_process.text = "move heliostats out"
-                    self.__on_delay_move_out()
-                else:
-                    with open(path_file_by_date_gyro, mode='a', newline='', encoding='utf-8') as text_f:
-                        text_f.write(perfixed_gyro_json+"\n")
-                    self.__off_loop_auto_calculate_diff()
-                    print("move heliostats out...")
-                    self.ids.logging_process.text = "move heliostats out"
-                    self.__on_delay_move_out()
-
-            except Exception as e:
-                self.turn_on_auto_mode = False
-                self.ids.label_auto_mode.text = "Auto off"
-                self.__off_loop_auto_calculate_diff()
-                self.show_popup("Error",f"Error saving file:\n{str(e)}") 
+            # except Exception as e:
+            #     self.turn_on_auto_mode = False
+            #     self.ids.label_auto_mode.text = "Auto off"
+            #     self.__off_loop_auto_calculate_diff()
+            #     self.show_popup("Error",f"Error saving file:\n{str(e)}") 
 
     def haddle_extact_boarding_frame(self):
         data = self.bounding_box_frame_data.text
@@ -1428,7 +1389,7 @@ class ControllerAuto(BoxLayout):
                 label = Label(text=str(url), size_hint=(0.3,1))
                 button_origin_set = Button(text="Add", size_hint=(0.2,1))
                 button_origin_set.bind(on_release= lambda instance, url=url:self.adding_origin(url=url))
-                print(url)
+                # print(url)
                 grid.add_widget(label)
                 grid.add_widget(button_origin_set)
                 layout.add_widget(grid)
@@ -1497,14 +1458,15 @@ class ControllerAuto(BoxLayout):
         try:
             with open('./data/setting/connection.json', 'r') as file:
                 connection_list = json.load(file)
+
             layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
             for h_data in connection_list['helio_stats_ip']:
                 grid = GridLayout(cols=2, size_hint=(1,1), height=40, spacing=10)
                 label = Label(text=str(h_data), size_hint=(0.3,1))
-                button_origin_set = Button(text="Send MTT", size_hint=(0.2,1))
-                button_origin_set.bind(on_release= lambda instance, url=h_data['ip']:self.handler_set_mtt(url=h_data['ip']))
+                button_mtt_set = Button(text="Send MTT", size_hint=(0.2,1))
+                button_mtt_set.bind(on_release= lambda instance, url_d=h_data['ip']:self.handler_set_mtt(url=url_d))
                 grid.add_widget(label)
-                grid.add_widget(button_origin_set)
+                grid.add_widget(button_mtt_set)
                 layout.add_widget(grid)
             popup = Popup(
                 title="Send MTT",

@@ -7,6 +7,7 @@ class ControlCalSolar():
     
     def get_solar_declination(self, date: datetime):
         ## day_of_year 1 for January 1 to 365 for December 31
+        
         day_of_year = date.timetuple().tm_yday
         ## 23.44 is the Earth's axial tilt.
         declination = -23.44 * math.cos(math.radians(360/365) * (day_of_year + 10))
