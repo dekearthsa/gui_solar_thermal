@@ -12,11 +12,13 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
-from kivy.properties import StringProperty
+# from kivy.properties import StringProperty
+from camera_control.handle_thread_cpu import CameraThread
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
-import time
+# import time
+# import threading
 # cv2.setLogLevel(0) ## hide log video file damage.
 
 class SetAutoScreen(Screen):
@@ -533,6 +535,8 @@ class SetAutoScreen(Screen):
                                 # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
                                 try:
                                     self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                                    self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
+
                                     if not self.capture.isOpened():
                                         self.show_popup("Error", "Could not open camera.")
                                         self.ids.auto_camera_status.text = "Error: Could not open camera"
@@ -559,11 +563,13 @@ class SetAutoScreen(Screen):
                 else:
                     pass
         return True
+    # def on_threading(self, dt):
 
     def update_frame(self, dt):
         if self.capture:
             try:
-                ret, frame = self.capture.read()
+                # ret, frame = self.capture.read()
+                ret, frame = CameraThread.update(self,src=self.camera_connection)
                 if  frame is None:
                     print("(frame) Frame damage pass the process...")
                 if ret:
@@ -629,12 +635,6 @@ class SetAutoScreen(Screen):
                             self.error_y = error_y
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
-                    # except Exception as e:
-                    #     self.show_popup("Error", str(e))
-                    #     return
-                # else:
-                #     print("(ret) frame damage pass frame... sleep 5 sec")
-                #     time.sleep(5)
                     
             except Exception as e:
                 print("Video stream file damage pass frame...")
@@ -664,6 +664,7 @@ class SetAutoScreen(Screen):
                 self.capture.release()
                 self.capture = None
                 Clock.unschedule(self.update_frame)
+                CameraThread.stop()
                 image_standby_path = "./images/sample_image_2.png"
                 core_image = CoreImage(image_standby_path).texture
                 self.ids.auto_cam_image.texture = core_image

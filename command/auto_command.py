@@ -46,8 +46,8 @@ class ControllerAuto(BoxLayout):
         self.static_title_mode = "Auto menu || Camera status:On"
         self.time_loop_update = 1.5 ## default 1 sec test update frame แก้ตรงนี้นะครับปรับ loop เวลาคำนวณ diff auto mode
         self.time_check_light_update = 1
-        self.stop_move_helio_x_stats = 8 ### Stop move axis x when diff in theshold
-        self.stop_move_helio_y_stats = 8 ### Stop move axis y when diff in theshold
+        self.stop_move_helio_x_stats = 4 ### Stop move axis x when diff in theshold
+        self.stop_move_helio_y_stats = 4 ### Stop move axis y when diff in theshold
         self.set_axis = "x"
         self.set_kp = 1
         self.set_ki = 1
@@ -1084,7 +1084,7 @@ class ControllerAuto(BoxLayout):
             )
             cursor = conn.cursor()
             query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year,is_lat ,is_lng ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y, error_x, error_y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
-            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year ,camera, altitude, azimuth,  radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
+            # query = """INSERT INTO solar_data (heliostats_id, timestamp_s, string_date,is_day, is_month, is_year,is_lat ,is_lng ,camera, altitude, azimuth,azimuth_gyro, elevation_gyro, declination, hour_angle, radiation, x, y) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) """
             values = (
                 data_in['heliostats_id'],
                 data_in['timestamp'],
