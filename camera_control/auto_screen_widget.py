@@ -531,11 +531,9 @@ class SetAutoScreen(Screen):
                     if self.camera_connection != "" and self.helio_stats_connection != "":
                         if self.camera_connection != "":
                             if not self.capture:
-                                # camera_connection = self.static_mp4  # For video file vid_1.avi, vid_2.avi
-                                # camera_connection = "rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/"  # Replace with your RTSP URL or use 0 for webcam
                                 try:
-                                    self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
-                                    self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
+                                    # self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                                    # self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
 
                                     if not self.capture.isOpened():
                                         self.show_popup("Error", "Could not open camera.")

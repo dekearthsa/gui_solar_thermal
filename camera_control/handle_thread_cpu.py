@@ -5,7 +5,8 @@ import threading
 
 class CameraThread:
     def __init__(self, src):
-        self.cap = cv2.VideoCapture(src)
+        self.cap = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.ret, self.frame = self.cap.read()
         self.running = True
         self.lock = threading.Lock()
