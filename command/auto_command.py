@@ -1070,6 +1070,7 @@ class ControllerAuto(BoxLayout):
             print("error send pyload diff", e)
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
     def button_debug_insertDB(self):
+        # error_x, error_y = SetAutoScreen.get_error_x_y(self)
         now = datetime.now()
         data_in = {
             "heliostats_id": "test",
