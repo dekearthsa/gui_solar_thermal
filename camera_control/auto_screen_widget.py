@@ -564,7 +564,7 @@ class SetAutoScreen(Screen):
     # def on_threading(self, dt):
 
     def update_frame(self, dt):
-        if self.capture:
+        # if self.capture:
             try:
                 # ret, frame = self.capture.read()
                 ret, frame = CameraThread.update(self,src=self.camera_connection)
