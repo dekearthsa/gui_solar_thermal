@@ -17,9 +17,9 @@ class CameraThread:
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             ret, frame = self.cap.read()
             return ret, frame
-            with self.lock:
-                print(frame)
-                return ret, frame
+            # with self.lock:
+            #     print(frame)
+            #     return ret, frame
                 # self.ret, self.frame = ret, frame
 
     def read(self):
