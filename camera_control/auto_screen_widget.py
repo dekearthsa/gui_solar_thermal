@@ -13,7 +13,7 @@ from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
 # from kivy.properties import StringProperty
-from camera_control.handle_thread_cpu import CameraThread
+# from camera_control.handle_thread_cpu import CameraThread
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
@@ -532,13 +532,13 @@ class SetAutoScreen(Screen):
                         if self.camera_connection != "":
                             if not self.capture:
                                 try:
-                                    # self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
-                                    # self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
+                                    self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
+                                    self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
 
-                                    # if not self.capture.isOpened():
-                                    #     self.show_popup("Error", "Could not open camera.")
-                                    #     self.ids.auto_camera_status.text = "Error: Could not open camera"
-                                    #     return
+                                    if not self.capture.isOpened():
+                                        self.show_popup("Error", "Could not open camera.")
+                                        self.ids.auto_camera_status.text = "Error: Could not open camera"
+                                        return
                                     # controller_manual =self.ids.controller_manual
                                     Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
                                     self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
@@ -564,10 +564,10 @@ class SetAutoScreen(Screen):
     # def on_threading(self, dt):
 
     def update_frame(self, dt):
-        # if self.capture:
+        if self.capture:
             try:
-                # ret, frame = self.capture.read()
-                ret, frame = CameraThread.update(self,src=self.camera_connection)
+                ret, frame = self.capture.read()
+                # ret, frame = CameraThread.update(self,src=self.camera_connection)
                 if  frame is None:
                     print("(frame) Frame damage pass the process...")
                 if ret:
@@ -663,7 +663,7 @@ class SetAutoScreen(Screen):
                 self.capture.release()
                 self.capture = None
                 Clock.unschedule(self.update_frame)
-                CameraThread.stop()
+                # CameraThread.stop()
                 image_standby_path = "./images/sample_image_2.png"
                 core_image = CoreImage(image_standby_path).texture
                 self.ids.auto_cam_image.texture = core_image
