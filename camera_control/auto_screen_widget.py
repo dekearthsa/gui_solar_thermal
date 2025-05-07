@@ -535,10 +535,10 @@ class SetAutoScreen(Screen):
                                     # self.capture = cv2.VideoCapture(self.camera_connection, cv2.CAP_FFMPEG)
                                     # self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1) ## new setup 
 
-                                    if not self.capture.isOpened():
-                                        self.show_popup("Error", "Could not open camera.")
-                                        self.ids.auto_camera_status.text = "Error: Could not open camera"
-                                        return
+                                    # if not self.capture.isOpened():
+                                    #     self.show_popup("Error", "Could not open camera.")
+                                    #     self.ids.auto_camera_status.text = "Error: Could not open camera"
+                                    #     return
                                     # controller_manual =self.ids.controller_manual
                                     Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
                                     self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
