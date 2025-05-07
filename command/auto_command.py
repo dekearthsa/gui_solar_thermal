@@ -1069,6 +1069,31 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             print("error send pyload diff", e)
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
+    def button_debug_insertDB(self):
+        now = datetime.now()
+        data_in = {
+            "heliostats_id": "test",
+            "timestamp": str(now),
+            "string_date":str(now.strftime("%d/%m/%y %H:%M:%S")),
+            "is_day": 1,
+            "is_month": 1,
+            "is_year": 1,
+            "is_lat": 15.01,
+            "is_lng": 15.01,
+            "camera": "top",
+            "altitude": 12.333,
+            "azimuth": 12.333,
+            "azimuth_gyro": 13.444,
+            "elevation_gyro": 123.222,
+            "declination": 13.443,
+            "hour_angle": 33.443,
+            "radiation": 31.232,
+            "x": 13.44,
+            "y": 12.32,
+            "error_x": 12.33,
+            "error_y": 12.33
+        }
+        self.insert_into_db(data_in=data_in)
 
     def insert_into_db(self, data_in):
         try:

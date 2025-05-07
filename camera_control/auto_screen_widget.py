@@ -639,7 +639,8 @@ class SetAutoScreen(Screen):
 
     ### STORE ERROR X Y ###
     def get_error_x_y(self):
-        return self.error_x, self.error_y
+        # return self.error_x, self.error_y
+        return 11.11, 11.11
 
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
