@@ -16,6 +16,7 @@ class CameraThread:
             self.cap = cv2.VideoCapture("rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/", cv2.CAP_FFMPEG)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
             ret, frame = self.cap.read()
+            return ret, frame
             with self.lock:
                 print(frame)
                 return ret, frame
