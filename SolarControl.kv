@@ -723,6 +723,7 @@ MainFrameWidget:
                 
 
 <SetAutoScreen>:
+    id: set_auto_screen_2
     BoxLayout:
         orientation: 'vertical'
         padding: 5
@@ -905,6 +906,7 @@ MainFrameWidget:
                     height: '30dp'
 
                     Label:
+                        id: error_center_auto_screen_label
                         text: 'Error Center'
                         bold: True
                         font_size: 14
@@ -977,6 +979,14 @@ MainFrameWidget:
                     # size: 200, 44
                     pos_hint: {'center_x': 0.5}
                     on_text: root.select_drop_down_menu_helio_stats(self, self.text)
+            # GridLayout:
+            #     rows: 2
+            #     size_hint_x: .23
+            #     Button:
+            #         id: debug_cap
+            #         text: 'DD'
+            #         on_press: root.get_error_x_y()
+                
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_x: .75
@@ -989,6 +999,7 @@ MainFrameWidget:
                     camera_url_id: selected_label_camera
                     number_center_light: number_of_center_light_detected
                     bounding_box_frame_data: auto_bounding_frame_position
+                    error_center_auto: auto_error_center
                     
 
 <ControllerAuto>:
@@ -1054,10 +1065,10 @@ MainFrameWidget:
                 id: force_set_origin
                 text: 'Force origin off'
                 on_press: root.button_force_origin()
-            # Button:
-            #     id: debug_cap
-            #     text: 'DD'
-            #     on_press: root.button_debug_insertDB()
+            Button:
+                id: debug_cap
+                text: 'DD'
+                on_press: root.button_debug_insertDB()
 
 
 <ListHelioStatsIp>:
@@ -1301,33 +1312,88 @@ MainFrameWidget:
 <UploadConnectionPage>:
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Syntax for adding Helio stats and camera ip'
-        Image:
-            source: './images/connection_array.png'
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 10
-        spacing: 10
-        Label:
-            text: 'Upload and Display JSON File'
-            font_size: '20sp'
-            size_hint_y: None
-            height: '40dp'
-        Button:
-            text: 'Select JSON File'
-            size_hint_y: None
-            height: '50dp'
-            on_release: root.open_file_dialog()
-        ScrollView:
-            GridLayout:
-                id: json_display
-                cols: 1
-                size_hint_y: None
-                height: self.minimum_height
-                padding: 10
-                spacing: 10
-
+        # size_hint_y: .9
+        GridLayout:
+            cols: 2
+            
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: 'Upload File'
+                    font_size: '20sp'
+                    size_hint_y: None
+                    height: '40dp'
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Syntax for adding Helio stats and camera ip'
+                    Image:
+                        source: './images/connection_array.png'
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: 10
+                    spacing: 10
+                    Button:
+                        text: 'Select JSON File'
+                        size_hint_y: None
+                        height: '50dp'
+                        on_release: root.open_file_dialog()
+                    ScrollView:
+                        GridLayout:
+                            id: json_display
+                            cols: 1
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: 10
+                            spacing: 10
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    size_hint_y: .1
+                    text: 'Predict'
+                GridLayout:
+                    rows: 4
+                    GridLayout:
+                        # size_hint_y: .1
+                        cols: 2
+                        Label:
+                            text: 'Heliostats: '
+                        TextInput:
+                            # text: 'Heliostats: '
+                            id: heliostats_id
+                    GridLayout:
+                        # size_hint_y: .1
+                        cols: 2
+                        Label:
+                            text: 'Day: '
+                        TextInput:
+                            # text: 'Day: '
+                            id: is_day_predict
+                    GridLayout:
+                        # size_hint_y: .1
+                        cols: 2
+                        Label:
+                            text: 'Month: '
+                        TextInput:
+                            # text: 'Month: '
+                            id: is_month_predict
+                    GridLayout:
+                        # size_hint_y: .1
+                        cols: 2
+                        Label:
+                            text: 'Year: '
+                        TextInput:
+                            # text: 'Year: '
+                            id: is_year_predict
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: 10
+                    spacing: 10
+                    height: 30
+                    size_hint_y: .2
+                    Button:
+                        text: 'Generate File'
+                        on_press: root.generate_data()
 <LabHeaderWidget>:
     orientation: 'vertical'
     BoxLayout:
@@ -1360,7 +1426,7 @@ MainFrameWidget:
             on_press: root.change_screen('description', 'description')
             # on_press: root.ids.screen_manager.current = 'description'
         Button:
-            text: "Connection upload"
+            text: "Forecasting"
             on_press: root.change_screen('upload_connection', 'connection_upload')
             # on_press: root.ids.screen_manager.current = 'upload_connection'
 
@@ -1371,6 +1437,7 @@ MainFrameWidget:
         ManualScreen:
             name: 'manual'
         SetAutoScreen:
+            id: set_auto_screen
             name: 'auto'
         PathControlWidget:
             name: 'path_control'

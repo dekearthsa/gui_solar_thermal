@@ -13,7 +13,7 @@ from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
 # from kivy.properties import StringProperty
-# from camera_control.handle_thread_cpu import CameraThread
+from camera_control.handle_thread_cpu import CameraThread
 # import paho.mqtt.client as mqtt
 # import re
 from functools import partial
@@ -64,8 +64,8 @@ class SetAutoScreen(Screen):
         self.camera_perspective = ""
 
         ### STORE ERROR X Y ###
-        self.error_x = 0
-        self.error_y = 0
+        # self.error_x = 0
+        # self.error_y = 0
 
         # self.logging_process_data = StringProperty("-")
         
@@ -540,6 +540,9 @@ class SetAutoScreen(Screen):
                                         self.ids.auto_camera_status.text = "Error: Could not open camera"
                                         return
                                     # controller_manual =self.ids.controller_manual
+                                    self.capture = CameraThread(0)
+                                    
+                                    # self.capture = CameraThread(self.camera_connection)
                                     Clock.schedule_interval(self.update_frame, 1.0 / 30.0)  # 30 FPS
                                     self.ids.auto_camera_status.text = "Auto menu || Camera status:On"
                                 except Exception as e:
@@ -564,13 +567,23 @@ class SetAutoScreen(Screen):
     # def on_threading(self, dt):
 
     def update_frame(self, dt):
+        # self.capture.start()
+        # if not hasattr(self, 'capture'):
+        #     return 
+                
+        # ret, frame = self.capture.read()
         if self.capture:
             try:
+                # ret, frame = self.capture.read()
+                # if not hasattr(self, 'capture'):
+                #     return 
+                
                 ret, frame = self.capture.read()
-                # ret, frame = CameraThread.update(self,src=self.camera_connection)
-                if  frame is None:
-                    print("(frame) Frame damage pass the process...")
-                if ret:
+                
+                if not ret or frame is None:
+                    print(frame)
+                    return
+                else:
                         frame = cv2.flip(frame, 0) ### <= flip
                         frame, max_width, max_height = self.apply_crop_methods(frame) 
                         ### frame bottom ###
@@ -629,8 +642,8 @@ class SetAutoScreen(Screen):
                             error_x = centers_frame[0] - centers_light[0][0]
                             error_y = centers_frame[1] - centers_light[1][0]
                             ### STORE ERROR X Y ###
-                            self.error_x = error_x
-                            self.error_y = error_y
+                            # self.error_x = error_x
+                            # self.error_y = error_y
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                     
@@ -638,9 +651,10 @@ class SetAutoScreen(Screen):
                 print("Video stream file damage pass frame...")
 
     ### STORE ERROR X Y ###
-    def get_error_x_y(self):
-        return self.error_x, self.error_y
-        # return 11.11, 11.11
+    # def get_error_x_y(self):
+    #     print(self.error_x, self.error_y)
+    #     return self.error_x, self.error_y
+    #     # return 11.11, 11.11
 
     def __description_light_detected(self, number_center_light):
         if number_center_light == 1:
@@ -663,7 +677,8 @@ class SetAutoScreen(Screen):
                 self.capture.release()
                 self.capture = None
                 Clock.unschedule(self.update_frame)
-                # CameraThread.stop()
+                if hasattr(self, 'capture'):
+                    self.cam_thread.stop()
                 image_standby_path = "./images/sample_image_2.png"
                 core_image = CoreImage(image_standby_path).texture
                 self.ids.auto_cam_image.texture = core_image

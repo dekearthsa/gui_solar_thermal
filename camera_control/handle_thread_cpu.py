@@ -1,26 +1,33 @@
-import cv2
-import threading
+import cv2, threading, time
 
-class CameraThread:
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.cap = None
+class CameraThread(threading.Thread):
+    def __init__(self, src=0):
+        super().__init__(daemon=True)
+        self.src = src
         self.running = True
         self.lock = threading.Lock()
-        threading.Thread(target=self.update, daemon=True).start()
+        self.ret, self.frame = False, None
+        self.start()             # run() จะทำงานอัตโนมัติ
 
-    def update(self, src):
-        # print("on update frame")
-        while self.running:
-            self.cap = cv2.VideoCapture("rtsp://admin:Nu12131213@192.168.1.170:554/Streaming/Channels/101/", cv2.CAP_FFMPEG)
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
+    def run(self):
+        self.cap = cv2.VideoCapture(self.src, cv2.CAP_AVFOUNDATION)
+        if not self.cap.isOpened():
+            raise RuntimeError("Cannot open camera (macOS)")
+        
+        # รอเฟรมแรก
+        for _ in range(30):
             ret, frame = self.cap.read()
-            return ret, frame
-            # with self.lock:
-            #     print(frame)
-            #     return ret, frame
-                # self.ret, self.frame = ret, frame
+            if ret:
+                with self.lock:
+                    self.ret, self.frame = ret, frame
+                break
+            time.sleep(0.03)
+
+        while self.running:
+            ret, frame = self.cap.read()
+            with self.lock:
+                self.ret, self.frame = ret, frame
+        self.cap.release()
 
     def read(self):
         with self.lock:
@@ -28,4 +35,3 @@ class CameraThread:
 
     def stop(self):
         self.running = False
-        self.cap.release()

@@ -1,4 +1,6 @@
 from kivy.uix.actionbar import Button
+import re
+# from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 import csv
@@ -1069,37 +1071,22 @@ class ControllerAuto(BoxLayout):
         except Exception as e:
             print("error send pyload diff", e)
             self.show_popup_continued(title="Error connection", message="Error connection "+f"{self.__light_checking_ip_operate}"+"\nplease check connection and click retry.", action="reconnect-auto-mode")
-    def button_debug_insertDB(self):
-        # error_x, error_y = SetAutoScreen.get_error_x_y(self)
-        now = datetime.now()
-        data_in = {
-            "heliostats_id": "test",
-            "timestamp": str(now),
-            "string_date":str(now.strftime("%d/%m/%y %H:%M:%S")),
-            "is_day": 1,
-            "is_month": 1,
-            "is_year": 1,
-            "is_lat": 15.01,
-            "is_lng": 15.01,
-            "camera": "top",
-            "altitude": 12.333,
-            "azimuth": 12.333,
-            "azimuth_gyro": 13.444,
-            "elevation_gyro": 123.222,
-            "declination": 13.443,
-            "hour_angle": 33.443,
-            "radiation": 31.232,
-            "x": 13.44,
-            "y": 12.32,
-            "error_x": 12.33,
-            "error_y": 12.33
-        }
-        self.insert_into_db(data_in=data_in)
-
+    def convert_string_error_center_data(self):
+        try:
+            string_error_data =  self.error_center_auto.text
+            matches = re.findall(r'(-?\d+)', string_error_data)
+            if len(matches) >= 2:
+                x = int(matches[0])
+                y = int(matches[1])
+                return x, y
+        except:
+            return 0,0
+    
+    
     def insert_into_db(self, data_in):
         try:
             ### STORE ERROR X Y ###
-            error_x, error_y = SetAutoScreen.get_error_x_y(self)
+            error_x, error_y = self.convert_string_error_center_data()
             
             conn = mysql.connector.connect(
                 host=self.db_host,

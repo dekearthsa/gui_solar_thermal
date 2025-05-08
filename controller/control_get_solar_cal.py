@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 class ControlCalSolar():
     def __init__(self, **kwargs):
+        
         super().__init__(**kwargs)
     
     def get_solar_declination(self, date: datetime):
