@@ -75,6 +75,7 @@ class UploadConnectionPage(Screen):
                 self.show_popup("Invalid json format", f'Invalid json format! \n{str(data)}')
 
         else:
+            print("No")
             self.show_popup("Selection Error", "No file selected.")
 
 
