@@ -960,9 +960,19 @@ class ControllerAuto(BoxLayout):
                     setJson = payload.json()
                     with open('./data/setting/setting.json', 'r') as file:
                         setting_data = json.load(file)
-                    self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] -  setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
-                    self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
-                    self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+
+                    cuz_now = datetime.now().time()
+                    cuz_start = time(7, 30)    
+                    cuz_end = time(12, 1)     
+                    if cuz_start <= cuz_now <= cuz_end:
+                        self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] +  setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+                        self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] -  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+                        self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+                    else:
+                        self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] -  setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+                        self.current_pos_heliostats_for_moveout['y'] = setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+                        self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+
                     status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
                     if status == False:
                         print("Helio stats error move out!")
@@ -1183,9 +1193,17 @@ class ControllerAuto(BoxLayout):
         json_str_gyro = json.dumps(adding_path_data_gyro)
         perfixed_json = f"*{json_str}"
         perfixed_gyro_json = f"*{json_str_gyro}"
-        self.current_pos_heliostats_for_moveout['x'] = currentX -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
-        self.current_pos_heliostats_for_moveout['y'] = currentY +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
-        self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
+        cuz_now = datetime.now().time()
+        cuz_start = time(7, 30)    
+        cuz_end = time(12, 1) 
+        if cuz_start <= cuz_now <= cuz_end: 
+            self.current_pos_heliostats_for_moveout['x'] = currentX +  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
+            self.current_pos_heliostats_for_moveout['y'] = currentY -  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
+            self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
+        else:
+            self.current_pos_heliostats_for_moveout['x'] = currentX -  storage['control_speed_distance']['auto_mode']['moveout_x_stay']
+            self.current_pos_heliostats_for_moveout['y'] = currentY +  storage['control_speed_distance']['auto_mode']['moveout_y_stay']
+            self.current_pos_heliostats_for_moveout['speed'] = storage['control_speed_distance']['auto_mode']['speed']
         # print("Try to move-out")
         ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
         # print("Move out success.")
@@ -1541,9 +1559,17 @@ class ControllerAuto(BoxLayout):
             with open('./data/setting/setting.json', 'r') as file:
                 setting_data = json.load(file)
             ### Notic หลักการทำงาสน
-            self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] - setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
-            self.current_pos_heliostats_for_moveout['y'] =  setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
-            self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+            cuz_now = datetime.now().time()
+            cuz_start = time(7, 30)    
+            cuz_end = time(12, 1)   
+            if cuz_start <= cuz_now <= cuz_end:
+                self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] + setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+                self.current_pos_heliostats_for_moveout['y'] =  setJson['currentY'] -  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+                self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
+            else:
+                self.current_pos_heliostats_for_moveout['x'] = setJson['currentX'] - setting_data['control_speed_distance']['auto_mode']['moveout_x_stay']
+                self.current_pos_heliostats_for_moveout['y'] =  setJson['currentY'] +  setting_data['control_speed_distance']['auto_mode']['moveout_y_stay']
+                self.current_pos_heliostats_for_moveout['speed'] = setting_data['control_speed_distance']['auto_mode']['speed']
             status = ControlHelioStats.move_helio_out(self, ip=self.__light_checking_ip_operate, payload=self.current_pos_heliostats_for_moveout)
             if status['is_fail']:
                 print("handler_force_off_btn => error move_helio_out"+ f"{response.status_code}")

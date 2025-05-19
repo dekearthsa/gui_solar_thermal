@@ -10,7 +10,6 @@ class ControlHelioStats():
         pass
 
     
-    
     ### handle path heliostats ### 
     def find_nearest_time_and_send(self, list_path_data, ip):
         # print("find_nearest_time_and_send => " + ip)
@@ -34,22 +33,6 @@ class ControlHelioStats():
                 return {"is_fail": False}
         except Exception as e:
             return {"is_fail": True}
-
-    def fine_tune_heliostats(self):
-        pass
-
-    def move_left(self):
-        pass
-
-    def move_right(self):
-        pass
-
-    def move_down(self):
-        pass
-
-    def move_up(self):
-        
-        pass
 
     ## function move back (pos right) ##
     def move_helio_in(self, target, heliostats_id,ip):
@@ -107,6 +90,7 @@ class ControlHelioStats():
 
 
     def stop_move(self, ip):
+        
         
         payload_set = {"topic":"stop"}
         print("stop_move => ", ip)
