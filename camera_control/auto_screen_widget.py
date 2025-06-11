@@ -64,8 +64,8 @@ class SetAutoScreen(Screen):
         self.camera_perspective = ""
 
         ### STORE ERROR X Y ###
-        self.error_x = 0
-        self.error_y = 0
+        # self.error_x = 0
+        # self.error_y = 0
 
         # self.logging_process_data = StringProperty("-")
         
@@ -629,17 +629,20 @@ class SetAutoScreen(Screen):
                             error_x = centers_frame[0] - centers_light[0][0]
                             error_y = centers_frame[1] - centers_light[1][0]
                             ### STORE ERROR X Y ###
-                            self.error_x = error_x
-                            self.error_y = error_y
+                            # self.error_x = error_x
+                            # self.error_y = error_y
                             self.ids.auto_error_center.text = f"X: {error_x}px Y: {error_y}px"
                             self.ids.auto_bounding_frame_position.text = f"X: {bounding_box_frame_x}px Y: {bounding_box_frame_y}px W: {bounding_box_frame_w}px H: {bounding_box_frame_h}px"
                     
             except Exception as e:
                 print("Video stream file damage pass frame...")
 
-    ### STORE ERROR X Y ###
-    def get_error_x_y(self):
-        return self.error_x, self.error_y
+    # ### STORE ERROR X Y ###
+    # def get_error_x_y(self):
+    #     try:
+    #         return self.error_x , self.error_y
+    #     except:
+            return 0 ,0
         # return 11.11, 11.11
 
     def __description_light_detected(self, number_center_light):

@@ -10,7 +10,7 @@ class ControlGetCurrentPOS():
     
     def handler_get_current_pos(self, list_url):
         print("Start handler_get_current_pos....")
-        print("list_url => ", list_url)
+        # print("list_url => ", list_url)
         try:
             # list_url = CrudData.open_list_connection()
             standby_json = CrudData.read_standby(self)

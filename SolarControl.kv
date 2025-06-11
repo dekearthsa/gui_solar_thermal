@@ -989,6 +989,7 @@ MainFrameWidget:
                     camera_url_id: selected_label_camera
                     number_center_light: number_of_center_light_detected
                     bounding_box_frame_data: auto_bounding_frame_position
+                    error_center_auto: auto_error_center
                     
 
 <ControllerAuto>:
@@ -1033,7 +1034,7 @@ MainFrameWidget:
                 text: 'Move Center'
                 on_press: root.move_all_by_using_path()
         GridLayout:
-            cols: 5
+            cols: 6
             Button:
                 id: label_loop_mode
                 text: 'Loop off'
@@ -1054,10 +1055,10 @@ MainFrameWidget:
                 id: force_set_origin
                 text: 'Force origin off'
                 on_press: root.button_force_origin()
-            # Button:
-            #     id: debug_cap
-            #     text: 'DD'
-            #     on_press: root.button_debug_insertDB()
+            Button:
+                id: debug_cap
+                text: 'DD'
+                on_press: root.button_debug_insertDB()
 
 
 <ListHelioStatsIp>:

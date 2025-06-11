@@ -12,7 +12,7 @@ class ControlCheckConnHelioStats():
 
     def handler_checking_connection(self, list_conn):  ## data from connection.json {}
         print("checking connection helio stats....")
-        print("list_conn => ", list_conn)
+        # print("list_conn => ", list_conn)
         i=0
         for el in list_conn:
             if el['ip'] != 'all':
